@@ -1,6 +1,19 @@
 import { z } from "zod";
 import { TaskStatus, TaskPriority, TaskSize, AssignedByType } from "@prisma/client";
 
+// Helper to normalize datetime-local input (adds seconds if missing)
+const datetimeLocalSchema = z
+  .string()
+  .transform((val) => {
+    // datetime-local produces "YYYY-MM-DDTHH:mm" (16 chars), add seconds
+    if (val.length === 16 && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val)) {
+      return val + ":00";
+    }
+    return val;
+  })
+  .pipe(z.string().datetime())
+  .or(z.date());
+
 export const createTaskSchema = z.object({
   title: z
     .string()
@@ -15,8 +28,8 @@ export const createTaskSchema = z.object({
     .int()
     .min(5, "Minimum 5 minutes")
     .max(480, "Maximum 8 hours"),
-  deadline: z.string().datetime().or(z.date()),
-  startDate: z.string().datetime().or(z.date()).optional(),
+  deadline: datetimeLocalSchema,
+  startDate: datetimeLocalSchema.optional(),
   assigneeId: z.string().optional(), // For managers assigning to subordinates
 });
 
@@ -37,8 +50,8 @@ export const updateTaskSchema = z.object({
     .max(480, "Maximum 8 hours")
     .optional(),
   actualMinutes: z.number().int().min(0).optional(),
-  deadline: z.string().datetime().or(z.date()).optional(),
-  startDate: z.string().datetime().or(z.date()).optional().nullable(),
+  deadline: datetimeLocalSchema.optional(),
+  startDate: datetimeLocalSchema.optional().nullable(),
 });
 
 export const transitionTaskSchema = z.object({

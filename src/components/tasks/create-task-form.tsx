@@ -138,7 +138,10 @@ export function CreateTaskForm({
           {/* KPI Bucket */}
           <div className="space-y-2">
             <Label>KPI Bucket *</Label>
-            <Select onValueChange={(value) => setValue("kpiBucketId", value)}>
+            <Select
+              value={watch("kpiBucketId") || ""}
+              onValueChange={(value) => setValue("kpiBucketId", value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select KPI bucket" />
               </SelectTrigger>
@@ -160,7 +163,7 @@ export function CreateTaskForm({
             <div className="space-y-2">
               <Label>Priority *</Label>
               <Select
-                defaultValue={TaskPriority.NOT_URGENT_IMPORTANT}
+                value={watch("priority")}
                 onValueChange={(value) => setValue("priority", value as TaskPriority)}
               >
                 <SelectTrigger>
@@ -179,7 +182,7 @@ export function CreateTaskForm({
             <div className="space-y-2">
               <Label>Size *</Label>
               <Select
-                defaultValue={TaskSize.MEDIUM}
+                value={watch("size")}
                 onValueChange={(value) => setValue("size", value as TaskSize)}
               >
                 <SelectTrigger>
@@ -201,7 +204,7 @@ export function CreateTaskForm({
             <div className="space-y-2">
               <Label>Time Estimate *</Label>
               <Select
-                defaultValue="60"
+                value={watch("estimatedMinutes")?.toString()}
                 onValueChange={(value) => setValue("estimatedMinutes", parseInt(value))}
               >
                 <SelectTrigger>

@@ -27,6 +27,13 @@ export async function GET(request: NextRequest) {
       subordinateIds = subordinates.map((s) => s.id);
     } else if (session.user.role === "DEPARTMENT_HEAD") {
       // Get all users in department
+      if (!session.user.departmentId) {
+        return NextResponse.json({
+          teamMembers: [],
+          pendingReviewTasks: [],
+          summary: { totalMembers: 0, totalPendingReview: 0, totalOverdue: 0 },
+        });
+      }
       const departmentUsers = await prisma.user.findMany({
         where: { departmentId: session.user.departmentId, isActive: true },
         select: { id: true },
