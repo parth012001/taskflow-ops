@@ -109,9 +109,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       updateData.completedAt = new Date();
     }
 
-    // Update task and create status history in transaction
-    const [updatedTask] = await prisma.$transaction([
-      prisma.task.update({
+    // Update task, create status history, and notifications in a single transaction
+    const updatedTask = await prisma.$transaction(async (tx) => {
+      const updated = await tx.task.update({
         where: { id: taskId },
         data: updateData,
         include: {
@@ -125,8 +125,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             select: { id: true, name: true },
           },
         },
-      }),
-      prisma.taskStatusHistory.create({
+      });
+
+      await tx.taskStatusHistory.create({
         data: {
           taskId,
           fromStatus: task.status,
@@ -138,48 +139,50 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             previousRejectionReason: task.rejectionReason,
           },
         },
-      }),
-    ]);
-
-    // Create notification for relevant parties
-    if (toStatus === TaskStatus.COMPLETED_PENDING_REVIEW && task.owner.managerId) {
-      await prisma.notification.create({
-        data: {
-          userId: task.owner.managerId,
-          type: "TASK_PENDING_REVIEW",
-          title: "Task pending review",
-          message: `${session.user.firstName} ${session.user.lastName} submitted "${task.title}" for review`,
-          entityType: "Task",
-          entityId: taskId,
-        },
       });
-    }
 
-    if (toStatus === TaskStatus.CLOSED_APPROVED) {
-      await prisma.notification.create({
-        data: {
-          userId: task.ownerId,
-          type: "TASK_APPROVED",
-          title: "Task approved",
-          message: `Your task "${task.title}" has been approved`,
-          entityType: "Task",
-          entityId: taskId,
-        },
-      });
-    }
+      // Create notification for relevant parties
+      if (toStatus === TaskStatus.COMPLETED_PENDING_REVIEW && task.owner.managerId) {
+        await tx.notification.create({
+          data: {
+            userId: task.owner.managerId,
+            type: "TASK_PENDING_REVIEW",
+            title: "Task pending review",
+            message: `${session.user.firstName} ${session.user.lastName} submitted "${task.title}" for review`,
+            entityType: "Task",
+            entityId: taskId,
+          },
+        });
+      }
 
-    if (toStatus === TaskStatus.REOPENED) {
-      await prisma.notification.create({
-        data: {
-          userId: task.ownerId,
-          type: "TASK_REOPENED",
-          title: "Task reopened",
-          message: `Your task "${task.title}" was reopened: ${reason}`,
-          entityType: "Task",
-          entityId: taskId,
-        },
-      });
-    }
+      if (toStatus === TaskStatus.CLOSED_APPROVED) {
+        await tx.notification.create({
+          data: {
+            userId: task.ownerId,
+            type: "TASK_APPROVED",
+            title: "Task approved",
+            message: `Your task "${task.title}" has been approved`,
+            entityType: "Task",
+            entityId: taskId,
+          },
+        });
+      }
+
+      if (toStatus === TaskStatus.REOPENED) {
+        await tx.notification.create({
+          data: {
+            userId: task.ownerId,
+            type: "TASK_REOPENED",
+            title: "Task reopened",
+            message: `Your task "${task.title}" was reopened: ${reason}`,
+            entityType: "Task",
+            entityId: taskId,
+          },
+        });
+      }
+
+      return updated;
+    });
 
     return NextResponse.json(updatedTask);
   } catch (error) {

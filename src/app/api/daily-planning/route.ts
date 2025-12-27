@@ -146,23 +146,25 @@ export async function POST(request: NextRequest) {
       update: updateData,
     });
 
-    // If taskIds provided, update the planned tasks
+    // If taskIds provided, update the planned tasks in a transaction
     if (taskIds !== undefined) {
-      // Delete existing session tasks
-      await prisma.dailySessionTask.deleteMany({
-        where: { sessionId: planningSession.id },
-      });
-
-      // Create new session tasks
-      if (taskIds.length > 0) {
-        await prisma.dailySessionTask.createMany({
-          data: taskIds.map((taskId, index) => ({
-            sessionId: planningSession.id,
-            taskId,
-            orderIndex: index,
-          })),
+      await prisma.$transaction(async (tx) => {
+        // Delete existing session tasks
+        await tx.dailySessionTask.deleteMany({
+          where: { sessionId: planningSession.id },
         });
-      }
+
+        // Create new session tasks
+        if (taskIds.length > 0) {
+          await tx.dailySessionTask.createMany({
+            data: taskIds.map((taskId, index) => ({
+              sessionId: planningSession.id,
+              taskId,
+              orderIndex: index,
+            })),
+          });
+        }
+      });
     }
 
     // Fetch updated session with tasks

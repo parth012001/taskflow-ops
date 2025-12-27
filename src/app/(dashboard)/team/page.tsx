@@ -74,7 +74,7 @@ export default function TeamPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
-    } else if (status === "authenticated" && session?.user.role === "EMPLOYEE") {
+    } else if (status === "authenticated" && session?.user.role === Role.EMPLOYEE) {
       router.push("/dashboard");
     }
   }, [status, session, router]);
@@ -96,7 +96,7 @@ export default function TeamPage() {
   }, []);
 
   useEffect(() => {
-    if (session && session.user.role !== "EMPLOYEE") {
+    if (session && session.user.role !== Role.EMPLOYEE) {
       fetchTeamData();
     }
   }, [session, fetchTeamData]);
