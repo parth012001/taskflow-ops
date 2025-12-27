@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { TaskStatus } from "@prisma/client";
 import { Plus, Filter, Search } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KanbanBoard } from "@/components/tasks/kanban-board";
@@ -81,10 +82,16 @@ export default function TasksPage() {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "Failed to create task");
+      toast.error("Failed to create task", {
+        description: error.error || "Please check your input and try again",
+      });
+      throw new Error(error.error || "Failed to create task");
     }
 
     await fetchTasks();
+    toast.success("Task created", {
+      description: "Your new task has been added to the board",
+    });
   };
 
   // Handle task status change (drag-drop)
@@ -106,15 +113,18 @@ export default function TasksPage() {
       if (!response.ok) {
         // Get error before reverting
         const error = await response.json();
-        console.error("Transition failed:", error);
         // Revert on failure
         await fetchTasks();
-        // Alert user
-        alert(error.error || "Failed to update task status");
+        // Show toast notification
+        toast.error("Failed to update task", {
+          description: error.error || "Please try again or use the task detail view",
+        });
       }
     } catch (error) {
       await fetchTasks();
-      console.error("Error transitioning task:", error);
+      toast.error("Connection error", {
+        description: "Failed to connect to server. Please try again.",
+      });
     }
   };
 
