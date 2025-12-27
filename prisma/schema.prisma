@@ -1,0 +1,553 @@
+// TaskFlow Database Schema
+// PostgreSQL + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  DEPARTMENT_HEAD
+  ADMIN
+}
+
+enum TaskStatus {
+  NEW
+  ACCEPTED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED_PENDING_REVIEW
+  CLOSED_APPROVED
+  REOPENED
+}
+
+enum TaskPriority {
+  URGENT_IMPORTANT
+  URGENT_NOT_IMPORTANT
+  NOT_URGENT_IMPORTANT
+  NOT_URGENT_NOT_IMPORTANT
+}
+
+enum TaskSize {
+  EASY
+  MEDIUM
+  DIFFICULT
+}
+
+enum AssignedByType {
+  SELF
+  MANAGER
+  EA
+  LEADERSHIP
+}
+
+enum RecognitionType {
+  STAR_OF_DAY
+  HIGH_PERFORMER_WEEK
+  BEST_TEAM_PLAYER
+  MOST_IMPROVED
+  EFFICIENT_STAR
+  CONSISTENCY_KING
+}
+
+// ============================================
+// 1. DEPARTMENT
+// ============================================
+
+model Department {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+
+  // Department head relationship
+  headId String? @unique
+  head   User?   @relation("DepartmentHead", fields: [headId], references: [id])
+
+  // Users in this department
+  users User[] @relation("DepartmentUsers")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([name])
+}
+
+// ============================================
+// 2. USER
+// ============================================
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         Role    @default(EMPLOYEE)
+  avatarUrl    String?
+  isActive     Boolean @default(true)
+
+  // Organization structure
+  departmentId String?
+  department   Department? @relation("DepartmentUsers", fields: [departmentId], references: [id])
+
+  // Manager-Employee relationship (self-referencing)
+  managerId    String?
+  manager      User?   @relation("ManagerSubordinates", fields: [managerId], references: [id])
+  subordinates User[]  @relation("ManagerSubordinates")
+
+  // Department Head relation
+  headOfDepartment Department? @relation("DepartmentHead")
+
+  // Tasks owned by this user
+  tasksOwned Task[] @relation("TaskOwner")
+
+  // Tasks assigned by this user (when user is manager/leadership)
+  tasksAssigned Task[] @relation("TaskAssigner")
+
+  // Task status changes made by this user
+  statusChanges TaskStatusHistory[]
+
+  // Comments made by this user
+  comments TaskComment[]
+
+  // Attachments uploaded by this user
+  attachments TaskAttachment[]
+
+  // Daily planning sessions
+  dailySessions DailyPlanningSession[]
+
+  // Weekly reflections authored
+  weeklyReflections WeeklyReflection[] @relation("ReflectionAuthor")
+
+  // Weekly reflections reviewed
+  reviewedReflections WeeklyReflection[] @relation("ReflectionReviewer")
+
+  // Carry forward logs
+  carryForwardLogs CarryForwardLog[]
+
+  // Streaks and gamification
+  streak UserStreak?
+
+  // Recognitions earned
+  recognitions UserRecognition[]
+
+  // KPIs assigned to this user
+  userKpis UserKpi[]
+
+  // Notifications for this user
+  notifications Notification[]
+
+  // Escalations directed to this user
+  escalationsReceived EscalationLog[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  lastLoginAt DateTime?
+
+  @@index([email])
+  @@index([managerId])
+  @@index([departmentId])
+  @@index([role])
+}
+
+// ============================================
+// 3. KPI BUCKET
+// ============================================
+
+model KpiBucket {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  // Which roles can use this KPI
+  applicableRoles Role[]
+
+  // Tasks in this bucket
+  tasks Task[]
+
+  // Users who have this KPI assigned
+  userKpis UserKpi[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+}
+
+// ============================================
+// 4. USER KPI
+// ============================================
+
+model UserKpi {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kpiBucketId String
+  kpiBucket   KpiBucket @relation(fields: [kpiBucketId], references: [id])
+
+  // Target and progress tracking
+  targetValue  Float?
+  currentValue Float  @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, kpiBucketId])
+  @@index([userId])
+  @@index([kpiBucketId])
+}
+
+// ============================================
+// 5. TASK (Core Entity)
+// ============================================
+
+model Task {
+  id          String  @id @default(cuid())
+  title       String
+  description String? @db.Text
+
+  // Owner and Assigner
+  ownerId        String
+  owner          User           @relation("TaskOwner", fields: [ownerId], references: [id])
+  assignerId     String?
+  assigner       User?          @relation("TaskAssigner", fields: [assignerId], references: [id])
+  assignedByType AssignedByType @default(SELF)
+
+  // Status, Priority, Size
+  status   TaskStatus   @default(NEW)
+  priority TaskPriority
+  size     TaskSize
+
+  // KPI Bucket (required - no task without KPI)
+  kpiBucketId String
+  kpiBucket   KpiBucket @relation(fields: [kpiBucketId], references: [id])
+
+  // Time tracking
+  estimatedMinutes Int
+  actualMinutes    Int @default(0)
+
+  // Dates
+  startDate   DateTime?
+  deadline    DateTime
+  completedAt DateTime?
+
+  // On-Hold reason (required when status = ON_HOLD)
+  onHoldReason String? @db.Text
+
+  // Carry-forward tracking
+  isCarriedForward  Boolean   @default(false)
+  originalDeadline  DateTime?
+  carryForwardCount Int       @default(0)
+
+  // Rejection/Reopen info
+  rejectionReason String? @db.Text
+
+  // Relationships
+  statusHistory    TaskStatusHistory[]
+  comments         TaskComment[]
+  attachments      TaskAttachment[]
+  carryForwardLogs CarryForwardLog[]
+  dailySessionTasks DailySessionTask[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([ownerId])
+  @@index([assignerId])
+  @@index([status])
+  @@index([priority])
+  @@index([deadline])
+  @@index([kpiBucketId])
+  @@index([ownerId, status])
+  @@index([ownerId, deadline])
+  @@index([status, deadline])
+}
+
+// ============================================
+// 6. TASK STATUS HISTORY (Audit Trail)
+// ============================================
+
+model TaskStatusHistory {
+  id     String @id @default(cuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  fromStatus TaskStatus?
+  toStatus   TaskStatus
+
+  // Who changed the status
+  changedById String
+  changedBy   User   @relation(fields: [changedById], references: [id])
+
+  // Reason for status change (required for ON_HOLD, REOPENED)
+  reason String? @db.Text
+
+  // Additional metadata
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([changedById])
+  @@index([createdAt])
+}
+
+// ============================================
+// 7. CARRY FORWARD LOG
+// ============================================
+
+model CarryForwardLog {
+  id     String @id @default(cuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  fromDate DateTime
+  toDate   DateTime
+  reason   String   @db.Text // Mandatory
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([fromDate])
+}
+
+// ============================================
+// 8. TASK COMMENT
+// ============================================
+
+model TaskComment {
+  id       String @id @default(cuid())
+  taskId   String
+  task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  content String @db.Text
+
+  // Thread support
+  parentId String?
+  parent   TaskComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  TaskComment[] @relation("CommentReplies")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([taskId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+// ============================================
+// 9. TASK ATTACHMENT
+// ============================================
+
+model TaskAttachment {
+  id         String @id @default(cuid())
+  taskId     String
+  task       Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploaderId String
+  uploader   User   @relation(fields: [uploaderId], references: [id])
+
+  fileName String
+  fileUrl  String
+  fileSize Int    // bytes
+  mimeType String
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@index([taskId])
+}
+
+// ============================================
+// 10. DAILY PLANNING SESSION
+// ============================================
+
+model DailyPlanningSession {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  sessionDate DateTime @db.Date
+
+  // Morning ritual completion
+  morningCompleted   Boolean   @default(false)
+  morningCompletedAt DateTime?
+
+  // Evening ritual completion
+  eveningCompleted   Boolean   @default(false)
+  eveningCompletedAt DateTime?
+
+  // Tasks planned for this day
+  tasks DailySessionTask[]
+
+  // Notes
+  morningNotes String? @db.Text
+  eveningNotes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, sessionDate])
+  @@index([userId])
+  @@index([sessionDate])
+}
+
+// ============================================
+// 11. DAILY SESSION TASK
+// ============================================
+
+model DailySessionTask {
+  id        String               @id @default(cuid())
+  sessionId String
+  session   DailyPlanningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  taskId    String
+  task      Task                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  // Planned order for the day
+  orderIndex Int
+
+  // Time window planning
+  plannedStartTime DateTime?
+  plannedEndTime   DateTime?
+
+  // End of day status
+  wasCompleted Boolean @default(false)
+
+  @@unique([sessionId, taskId])
+  @@index([sessionId])
+  @@index([taskId])
+}
+
+// ============================================
+// 12. WEEKLY REFLECTION
+// ============================================
+
+model WeeklyReflection {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("ReflectionAuthor", fields: [userId], references: [id])
+
+  weekStartDate DateTime @db.Date
+
+  // Reflection questions
+  wentWell     String? @db.Text
+  whatDelayed  String? @db.Text
+  improvements String? @db.Text
+
+  // Manager review
+  managerReview String?   @db.Text
+  reviewedById  String?
+  reviewedBy    User?     @relation("ReflectionReviewer", fields: [reviewedById], references: [id])
+  reviewedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, weekStartDate])
+  @@index([userId])
+  @@index([weekStartDate])
+}
+
+// ============================================
+// 13. USER STREAK
+// ============================================
+
+model UserStreak {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveDate DateTime?
+
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// 14. USER RECOGNITION
+// ============================================
+
+model UserRecognition {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  type        RecognitionType
+  awardedFor  String?         @db.Text
+  awardedDate DateTime        @db.Date
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([awardedDate])
+}
+
+// ============================================
+// 15. NOTIFICATION
+// ============================================
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  type    String
+  title   String
+  message String @db.Text
+
+  // Link to related entity
+  entityType String?
+  entityId   String?
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+// ============================================
+// 16. ESCALATION LOG
+// ============================================
+
+model EscalationLog {
+  id     String @id @default(cuid())
+  taskId String
+
+  escalationLevel Int    // 1 = Manager, 2 = Department Head
+  escalatedToId   String
+  escalatedTo     User   @relation(fields: [escalatedToId], references: [id])
+
+  reason     String    @db.Text
+  isResolved Boolean   @default(false)
+  resolvedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([escalatedToId])
+}
