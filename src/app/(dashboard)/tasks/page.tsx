@@ -104,10 +104,13 @@ export default function TasksPage() {
       });
 
       if (!response.ok) {
-        // Revert on failure
-        await fetchTasks();
+        // Get error before reverting
         const error = await response.json();
         console.error("Transition failed:", error);
+        // Revert on failure
+        await fetchTasks();
+        // Alert user
+        alert(error.error || "Failed to update task status");
       }
     } catch (error) {
       await fetchTasks();

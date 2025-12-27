@@ -34,12 +34,14 @@ const COLUMN_ORDER: TaskStatus[] = [
 ];
 
 // Define valid status transitions for drag-drop
+// Note: ON_HOLD and REOPENED require reasons, so they can't be drag-drop targets
+// Users must use the task detail modal for those transitions
 const VALID_DROP_TARGETS: Record<TaskStatus, TaskStatus[]> = {
   NEW: [TaskStatus.ACCEPTED, TaskStatus.IN_PROGRESS],
   ACCEPTED: [TaskStatus.IN_PROGRESS],
-  IN_PROGRESS: [TaskStatus.ON_HOLD, TaskStatus.COMPLETED_PENDING_REVIEW],
+  IN_PROGRESS: [TaskStatus.COMPLETED_PENDING_REVIEW], // ON_HOLD requires reason
   ON_HOLD: [TaskStatus.IN_PROGRESS],
-  COMPLETED_PENDING_REVIEW: [TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED],
+  COMPLETED_PENDING_REVIEW: [TaskStatus.CLOSED_APPROVED], // REOPENED requires reason
   REOPENED: [TaskStatus.IN_PROGRESS],
   CLOSED_APPROVED: [], // Terminal state
 };
