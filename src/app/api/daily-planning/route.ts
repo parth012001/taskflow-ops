@@ -32,7 +32,13 @@ export async function GET(request: NextRequest) {
 
     const validatedDate = sessionDateSchema.safeParse({ date });
     if (!validatedDate.success) {
-      return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid date format. Use YYYY-MM-DD" }, { status: 400 });
+    }
+
+    // Verify the date is valid (not NaN)
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      return NextResponse.json({ error: "Invalid date value" }, { status: 400 });
     }
 
     // Get or create daily planning session
@@ -40,7 +46,7 @@ export async function GET(request: NextRequest) {
       where: {
         userId_sessionDate: {
           userId: session.user.id,
-          sessionDate: new Date(date),
+          sessionDate: parsedDate,
         },
       },
       include: {
