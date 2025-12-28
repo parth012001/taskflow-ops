@@ -91,13 +91,17 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading }: Kanba
       // Check if this is a valid transition
       const validTargets = VALID_DROP_TARGETS[task.status];
       if (!validTargets.includes(newStatus)) {
-        // Invalid transition - could show a toast here
         console.warn(`Invalid transition from ${task.status} to ${newStatus}`);
         return;
       }
 
-      // Perform the status change
-      await onTaskMove(taskId, newStatus);
+      // Perform the status change with error handling
+      try {
+        await onTaskMove(taskId, newStatus);
+      } catch (error) {
+        // Log for debugging - caller should handle user-facing errors
+        console.error("Task move failed:", error);
+      }
     },
     [tasks, onTaskMove]
   );

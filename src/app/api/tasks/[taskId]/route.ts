@@ -22,7 +22,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       where: { id: taskId, deletedAt: null },
       include: {
         owner: {
-          select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+          select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true, managerId: true },
         },
         assigner: {
           select: { id: true, firstName: true, lastName: true },

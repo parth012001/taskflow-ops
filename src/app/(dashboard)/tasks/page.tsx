@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { TaskStatus } from "@prisma/client";
 import { Plus, Filter, Search } from "lucide-react";
@@ -27,12 +27,13 @@ export default function TasksPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null);
+  const isInitialMount = useRef(true);
 
-  // Fetch tasks
-  const fetchTasks = useCallback(async () => {
+  // Fetch tasks - accepts optional search param to avoid stale closure
+  const fetchTasks = useCallback(async (search?: string) => {
     try {
       const params = new URLSearchParams();
-      if (searchQuery) params.set("search", searchQuery);
+      if (search) params.set("search", search);
 
       const response = await fetch(`/api/tasks?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch tasks");
@@ -44,7 +45,7 @@ export default function TasksPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery]);
+  }, []);
 
   // Fetch KPI buckets
   const fetchKpiBuckets = useCallback(async () => {
@@ -59,15 +60,21 @@ export default function TasksPage() {
     }
   }, []);
 
+  // Initial load - runs once on mount
   useEffect(() => {
     fetchTasks();
     fetchKpiBuckets();
   }, [fetchTasks, fetchKpiBuckets]);
 
-  // Debounced search
+  // Debounced search - only runs on search query changes, not initial mount
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     const timeout = setTimeout(() => {
-      fetchTasks();
+      fetchTasks(searchQuery);
     }, 300);
     return () => clearTimeout(timeout);
   }, [searchQuery, fetchTasks]);
@@ -88,7 +95,7 @@ export default function TasksPage() {
       throw new Error(error.error || "Failed to create task");
     }
 
-    await fetchTasks();
+    await fetchTasks(searchQuery);
     toast.success("Task created", {
       description: "Your new task has been added to the board",
     });
@@ -114,14 +121,14 @@ export default function TasksPage() {
         // Get error before reverting
         const error = await response.json();
         // Revert on failure
-        await fetchTasks();
+        await fetchTasks(searchQuery);
         // Show toast notification
         toast.error("Failed to update task", {
           description: error.error || "Please try again or use the task detail view",
         });
       }
     } catch (error) {
-      await fetchTasks();
+      await fetchTasks(searchQuery);
       toast.error("Connection error", {
         description: "Failed to connect to server. Please try again.",
       });
@@ -187,7 +194,7 @@ export default function TasksPage() {
         taskId={selectedTask?.id || null}
         open={!!selectedTask}
         onOpenChange={(open) => !open && setSelectedTask(null)}
-        onTaskUpdate={fetchTasks}
+        onTaskUpdate={() => fetchTasks(searchQuery)}
       />
     </div>
   );

@@ -41,6 +41,7 @@ interface TaskOwner {
   lastName: string;
   email: string;
   avatarUrl?: string | null;
+  managerId?: string | null;
 }
 
 interface TaskComment {
@@ -162,7 +163,7 @@ export function TaskDetailModal({
       taskOwnerId: task.owner.id,
       currentUserId: session.user.id,
       currentUserRole: session.user.role,
-      isManager: task.owner.id !== session.user.id && session.user.role !== "EMPLOYEE",
+      isManager: task.owner.managerId === session.user.id,
       reason: transitionReason,
       onHoldReason: transitionReason,
     };
