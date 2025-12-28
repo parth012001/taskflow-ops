@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Flame,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { CarryForwardModal } from "@/components/tasks/carry-forward-modal";
 
 interface Task {
   id: string;
@@ -89,6 +91,7 @@ export default function DailyPlanningPage() {
   const [morningNotes, setMorningNotes] = useState("");
   const [eveningNotes, setEveningNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [carryForwardTask, setCarryForwardTask] = useState<Task | null>(null);
 
   const dateString = formatDate(selectedDate);
   const isToday = dateString === formatDate(new Date());
@@ -313,6 +316,19 @@ export default function DailyPlanningPage() {
                           <span>{sessionTask.task.kpiBucket.name}</span>
                         </div>
                       </div>
+                      {/* Carry Forward button - show for overdue tasks */}
+                      {new Date(sessionTask.task.deadline) <= new Date() &&
+                        sessionTask.task.status !== TaskStatus.CLOSED_APPROVED && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                            onClick={() => setCarryForwardTask(sessionTask.task)}
+                            title="Carry forward to new deadline"
+                          >
+                            <ArrowRight className="w-4 h-4" />
+                          </Button>
+                        )}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -453,6 +469,21 @@ export default function DailyPlanningPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Carry Forward Modal */}
+      {carryForwardTask && (
+        <CarryForwardModal
+          open={!!carryForwardTask}
+          onOpenChange={(open) => !open && setCarryForwardTask(null)}
+          taskId={carryForwardTask.id}
+          taskTitle={carryForwardTask.title}
+          currentDeadline={carryForwardTask.deadline}
+          onSuccess={() => {
+            setCarryForwardTask(null);
+            fetchData();
+          }}
+        />
+      )}
     </div>
   );
 }

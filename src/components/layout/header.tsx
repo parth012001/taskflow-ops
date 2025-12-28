@@ -2,8 +2,9 @@
 
 import { signOut } from "next-auth/react";
 import { Role } from "@prisma/client";
-import { Bell, LogOut, Menu } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 
 interface HeaderProps {
   user: {
@@ -35,13 +36,7 @@ export function Header({ user }: HeaderProps) {
         {/* Right side actions */}
         <div className="flex items-center gap-4">
           {/* Notifications */}
-          <button
-            type="button"
-            className="relative p-2 text-gray-400 hover:text-gray-500"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
-          </button>
+          <NotificationDropdown />
 
           {/* User dropdown - simplified for now */}
           <div className="hidden lg:flex lg:items-center lg:gap-3">
