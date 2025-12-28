@@ -121,6 +121,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid date value" }, { status: 400 });
     }
 
+    // Prevent future date completions (streak gaming prevention)
+    const now = new Date();
+    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const sessionDateUTC = new Date(Date.UTC(
+      parsedDate.getUTCFullYear(),
+      parsedDate.getUTCMonth(),
+      parsedDate.getUTCDate()
+    ));
+    if (sessionDateUTC > todayUTC) {
+      return NextResponse.json({ error: "Cannot complete rituals for future dates" }, { status: 400 });
+    }
+
     const body = await request.json();
     const validatedData = updateSessionSchema.safeParse(body);
 
@@ -140,11 +152,11 @@ export async function POST(request: NextRequest) {
     const updateData: Record<string, unknown> = {};
     if (morningCompleted !== undefined) {
       updateData.morningCompleted = morningCompleted;
-      if (morningCompleted) updateData.morningCompletedAt = new Date();
+      updateData.morningCompletedAt = morningCompleted ? new Date() : null;
     }
     if (eveningCompleted !== undefined) {
       updateData.eveningCompleted = eveningCompleted;
-      if (eveningCompleted) updateData.eveningCompletedAt = new Date();
+      updateData.eveningCompletedAt = eveningCompleted ? new Date() : null;
     }
     if (morningNotes !== undefined) updateData.morningNotes = morningNotes;
     if (eveningNotes !== undefined) updateData.eveningNotes = eveningNotes;
@@ -225,11 +237,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Update user streak if morning ritual completed
+    // Uses sessionDateUTC (computed earlier) to credit the correct date
     if (morningCompleted) {
-      // Use UTC midnight for consistent date comparisons across timezones
-      const now = new Date();
-      const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-
       const userStreak = await prisma.userStreak.findUnique({
         where: { userId: session.user.id },
       });
@@ -247,7 +256,7 @@ export async function POST(request: NextRequest) {
 
         if (lastActiveUTC) {
           const daysDiff = Math.floor(
-            (todayUTC.getTime() - lastActiveUTC.getTime()) / (1000 * 60 * 60 * 24)
+            (sessionDateUTC.getTime() - lastActiveUTC.getTime()) / (1000 * 60 * 60 * 24)
           );
 
           if (daysDiff === 1) {
@@ -260,7 +269,7 @@ export async function POST(request: NextRequest) {
                   userStreak.longestStreak,
                   userStreak.currentStreak + 1
                 ),
-                lastActiveDate: todayUTC,
+                lastActiveDate: sessionDateUTC,
               },
             });
           } else if (daysDiff > 1) {
@@ -269,11 +278,12 @@ export async function POST(request: NextRequest) {
               where: { userId: session.user.id },
               data: {
                 currentStreak: 1,
-                lastActiveDate: todayUTC,
+                lastActiveDate: sessionDateUTC,
               },
             });
           }
-          // daysDiff === 0 means already updated today
+          // daysDiff === 0 means already updated for this date
+          // daysDiff < 0 means backdating to before last active - no update needed
         } else {
           // First activity
           await prisma.userStreak.update({
@@ -281,7 +291,7 @@ export async function POST(request: NextRequest) {
             data: {
               currentStreak: 1,
               longestStreak: Math.max(userStreak.longestStreak, 1),
-              lastActiveDate: todayUTC,
+              lastActiveDate: sessionDateUTC,
             },
           });
         }
@@ -292,7 +302,7 @@ export async function POST(request: NextRequest) {
             userId: session.user.id,
             currentStreak: 1,
             longestStreak: 1,
-            lastActiveDate: todayUTC,
+            lastActiveDate: sessionDateUTC,
           },
         });
       }
