@@ -226,22 +226,28 @@ export async function POST(request: NextRequest) {
 
     // Update user streak if morning ritual completed
     if (morningCompleted) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // Use UTC midnight for consistent date comparisons across timezones
+      const now = new Date();
+      const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
       const userStreak = await prisma.userStreak.findUnique({
         where: { userId: session.user.id },
       });
 
       if (userStreak) {
-        const lastActive = userStreak.lastActiveDate
-          ? new Date(userStreak.lastActiveDate)
-          : null;
+        let lastActiveUTC: Date | null = null;
+        if (userStreak.lastActiveDate) {
+          const lastActive = new Date(userStreak.lastActiveDate);
+          lastActiveUTC = new Date(Date.UTC(
+            lastActive.getUTCFullYear(),
+            lastActive.getUTCMonth(),
+            lastActive.getUTCDate()
+          ));
+        }
 
-        if (lastActive) {
-          lastActive.setHours(0, 0, 0, 0);
+        if (lastActiveUTC) {
           const daysDiff = Math.floor(
-            (today.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24)
+            (todayUTC.getTime() - lastActiveUTC.getTime()) / (1000 * 60 * 60 * 24)
           );
 
           if (daysDiff === 1) {
@@ -254,7 +260,7 @@ export async function POST(request: NextRequest) {
                   userStreak.longestStreak,
                   userStreak.currentStreak + 1
                 ),
-                lastActiveDate: today,
+                lastActiveDate: todayUTC,
               },
             });
           } else if (daysDiff > 1) {
@@ -263,7 +269,7 @@ export async function POST(request: NextRequest) {
               where: { userId: session.user.id },
               data: {
                 currentStreak: 1,
-                lastActiveDate: today,
+                lastActiveDate: todayUTC,
               },
             });
           }
@@ -275,7 +281,7 @@ export async function POST(request: NextRequest) {
             data: {
               currentStreak: 1,
               longestStreak: Math.max(userStreak.longestStreak, 1),
-              lastActiveDate: today,
+              lastActiveDate: todayUTC,
             },
           });
         }
@@ -286,7 +292,7 @@ export async function POST(request: NextRequest) {
             userId: session.user.id,
             currentStreak: 1,
             longestStreak: 1,
-            lastActiveDate: today,
+            lastActiveDate: todayUTC,
           },
         });
       }
