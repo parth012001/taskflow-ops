@@ -6,9 +6,7 @@ import { Role } from "@prisma/client";
 import {
   LayoutDashboard,
   CheckSquare,
-  Calendar,
   Users,
-  BarChart3,
   Settings,
   Target,
 } from "lucide-react";
@@ -31,37 +29,25 @@ const navigation = [
   },
   {
     name: "Tasks",
-    href: "/dashboard/tasks",
+    href: "/tasks",
     icon: CheckSquare,
     roles: ["EMPLOYEE", "MANAGER", "DEPARTMENT_HEAD", "ADMIN"],
   },
   {
     name: "Daily Planning",
-    href: "/dashboard/daily-planning",
+    href: "/daily-planning",
     icon: Target,
     roles: ["EMPLOYEE", "MANAGER", "DEPARTMENT_HEAD", "ADMIN"],
   },
   {
-    name: "Calendar",
-    href: "/dashboard/calendar",
-    icon: Calendar,
-    roles: ["EMPLOYEE", "MANAGER", "DEPARTMENT_HEAD", "ADMIN"],
-  },
-  {
-    name: "Workload Radar",
-    href: "/manager/radar",
-    icon: BarChart3,
-    roles: ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"],
-  },
-  {
     name: "Team",
-    href: "/manager/team",
+    href: "/team",
     icon: Users,
     roles: ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"],
   },
   {
     name: "Settings",
-    href: "/dashboard/settings",
+    href: "/settings",
     icon: Settings,
     roles: ["EMPLOYEE", "MANAGER", "DEPARTMENT_HEAD", "ADMIN"],
   },

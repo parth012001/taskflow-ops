@@ -142,6 +142,12 @@ const transitions: StatusTransition[] = [
       if (ctx.taskOwnerId === ctx.currentUserId) {
         return { valid: false, error: "Cannot reject your own task" };
       }
+      if (!ctx.isManager && ctx.currentUserRole === Role.MANAGER) {
+        return {
+          valid: false,
+          error: "Only the employee's manager can reject",
+        };
+      }
       if (!ctx.reason || ctx.reason.trim().length < 10) {
         return {
           valid: false,
