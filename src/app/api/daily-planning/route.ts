@@ -103,6 +103,18 @@ export async function POST(request: NextRequest) {
     const dateParam = searchParams.get("date");
     const date = dateParam || new Date().toISOString().split("T")[0];
 
+    // Validate date format
+    const validatedDate = sessionDateSchema.safeParse({ date });
+    if (!validatedDate.success) {
+      return NextResponse.json({ error: "Invalid date format. Use YYYY-MM-DD" }, { status: 400 });
+    }
+
+    // Verify the date is valid (not NaN)
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      return NextResponse.json({ error: "Invalid date value" }, { status: 400 });
+    }
+
     const body = await request.json();
     const validatedData = updateSessionSchema.safeParse(body);
 
@@ -116,8 +128,8 @@ export async function POST(request: NextRequest) {
     const { taskIds, morningCompleted, eveningCompleted, morningNotes, eveningNotes } =
       validatedData.data;
 
-    // Upsert the daily planning session
-    const sessionDate = new Date(date);
+    // Use the already validated and parsed date
+    const sessionDate = parsedDate;
 
     const updateData: Record<string, unknown> = {};
     if (morningCompleted !== undefined) {
@@ -148,13 +160,35 @@ export async function POST(request: NextRequest) {
 
     // If taskIds provided, update the planned tasks in a transaction
     if (taskIds !== undefined) {
+      // Verify ownership of all tasks before proceeding
+      if (taskIds.length > 0) {
+        const ownedTasks = await prisma.task.findMany({
+          where: {
+            id: { in: taskIds },
+            ownerId: session.user.id,
+            deletedAt: null,
+          },
+          select: { id: true },
+        });
+
+        const ownedTaskIds = new Set(ownedTasks.map((t) => t.id));
+        const unauthorizedTaskIds = taskIds.filter((id) => !ownedTaskIds.has(id));
+
+        if (unauthorizedTaskIds.length > 0) {
+          return NextResponse.json(
+            { error: "Cannot add tasks you do not own to your daily plan" },
+            { status: 403 }
+          );
+        }
+      }
+
       await prisma.$transaction(async (tx) => {
         // Delete existing session tasks
         await tx.dailySessionTask.deleteMany({
           where: { sessionId: planningSession.id },
         });
 
-        // Create new session tasks
+        // Create new session tasks (ownership already verified above)
         if (taskIds.length > 0) {
           await tx.dailySessionTask.createMany({
             data: taskIds.map((taskId, index) => ({
