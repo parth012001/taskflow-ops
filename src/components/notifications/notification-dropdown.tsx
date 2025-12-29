@@ -13,6 +13,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface Notification {
@@ -185,24 +190,34 @@ export function NotificationDropdown() {
                   >
                     <Icon className="h-3.5 w-3.5" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={cn(
-                        "text-sm truncate",
-                        !notification.isRead && "font-medium"
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={cn(
+                            "text-sm truncate",
+                            !notification.isRead && "font-medium"
+                          )}
+                        >
+                          {notification.title || notification.message}
+                        </p>
+                        {notification.title && (
+                          <p className="text-xs text-gray-500 truncate">
+                            {notification.message}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {formatTimeAgo(notification.createdAt)}
+                        </p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="max-w-xs">
+                      <p className="font-medium">{notification.title || notification.message}</p>
+                      {notification.title && (
+                        <p className="text-xs mt-1 opacity-80">{notification.message}</p>
                       )}
-                    >
-                      {notification.title || notification.message}
-                    </p>
-                    {notification.title && (
-                      <p className="text-xs text-gray-500 truncate">
-                        {notification.message}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {formatTimeAgo(notification.createdAt)}
-                    </p>
-                  </div>
+                    </TooltipContent>
+                  </Tooltip>
                   {!notification.isRead && (
                     <div className="mt-1.5 h-2 w-2 rounded-full bg-indigo-500" />
                   )}
