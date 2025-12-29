@@ -77,22 +77,30 @@ export const authOptions: NextAuthOptions = {
 
       // Refresh user data from DB when session update is triggered
       if (trigger === "update" && token.id) {
-        const freshUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: {
-            firstName: true,
-            lastName: true,
-            role: true,
-            managerId: true,
-            departmentId: true,
-          },
-        });
-        if (freshUser) {
-          token.firstName = freshUser.firstName;
-          token.lastName = freshUser.lastName;
-          token.role = freshUser.role;
-          token.managerId = freshUser.managerId;
-          token.departmentId = freshUser.departmentId;
+        try {
+          const freshUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: {
+              firstName: true,
+              lastName: true,
+              role: true,
+              managerId: true,
+              departmentId: true,
+            },
+          });
+          if (freshUser) {
+            token.firstName = freshUser.firstName;
+            token.lastName = freshUser.lastName;
+            token.role = freshUser.role;
+            token.managerId = freshUser.managerId;
+            token.departmentId = freshUser.departmentId;
+          }
+        } catch (error) {
+          // Log error but don't break authentication - return token unchanged
+          console.error(
+            `[auth] Failed to refresh user data for token.id=${token.id}:`,
+            error instanceof Error ? error.message : error
+          );
         }
       }
 

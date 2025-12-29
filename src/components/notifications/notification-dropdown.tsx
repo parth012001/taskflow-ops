@@ -40,8 +40,16 @@ const notificationIcons: Record<string, typeof Bell> = {
 
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
+  const timestamp = date.getTime();
+
+  // Handle invalid date strings
+  if (isNaN(timestamp)) {
+    return "Just now";
+  }
+
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
+  // Clamp to 0 for future dates (clock sync issues)
+  const diffMs = Math.max(0, now.getTime() - timestamp);
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
@@ -119,7 +127,10 @@ export function NotificationDropdown() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await fetch("/api/notifications/read-all", { method: "POST" });
+      const response = await fetch("/api/notifications/read-all", { method: "POST" });
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {
