@@ -74,13 +74,26 @@ export function AnnouncementsPanel() {
     setIsLoading(true);
     try {
       const response = await fetch("/api/announcements?activeOnly=false&limit=50");
-      if (response.ok) {
-        const data = await response.json();
-        setAnnouncements(data.announcements);
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          console.error("Error fetching announcements:", response.status, errorData);
+        } catch {
+          const text = await response.text();
+          console.error("Error fetching announcements:", response.status, text);
+        }
+        throw new Error(errorMessage);
       }
+      const data = await response.json();
+      setAnnouncements(data.announcements);
     } catch (error) {
       console.error("Error fetching announcements:", error);
-      toast.error("Failed to load announcements");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to load announcements"
+      );
+      setAnnouncements([]);
     } finally {
       setIsLoading(false);
     }

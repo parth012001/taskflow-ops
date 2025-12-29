@@ -107,12 +107,15 @@ export function AnnouncementFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (title.length < 3) {
+    const trimmedTitle = title.trim();
+    const trimmedContent = content.trim();
+
+    if (trimmedTitle.length < 3) {
       toast.error("Title must be at least 3 characters");
       return;
     }
 
-    if (content.length < 10) {
+    if (trimmedContent.length < 10) {
       toast.error("Content must be at least 10 characters");
       return;
     }
@@ -129,8 +132,8 @@ export function AnnouncementFormModal({
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title,
-          content,
+          title: trimmedTitle,
+          content: trimmedContent,
           type,
           priority,
           expiresAt: expiresAt ? toEndOfDayISO(expiresAt) : null,
