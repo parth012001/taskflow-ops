@@ -32,7 +32,7 @@ const roleLabels: Record<Role, string> = {
 };
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -96,6 +96,8 @@ export default function SettingsPage() {
               }
             : null
         );
+        // Refresh the session to update header/dashboard with new name
+        await updateSession();
         toast.success("Profile updated successfully");
       } else {
         const error = await response.json();

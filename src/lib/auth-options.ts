@@ -64,7 +64,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -74,6 +74,28 @@ export const authOptions: NextAuthOptions = {
         token.managerId = user.managerId;
         token.departmentId = user.departmentId;
       }
+
+      // Refresh user data from DB when session update is triggered
+      if (trigger === "update" && token.id) {
+        const freshUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            firstName: true,
+            lastName: true,
+            role: true,
+            managerId: true,
+            departmentId: true,
+          },
+        });
+        if (freshUser) {
+          token.firstName = freshUser.firstName;
+          token.lastName = freshUser.lastName;
+          token.role = freshUser.role;
+          token.managerId = freshUser.managerId;
+          token.departmentId = freshUser.departmentId;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
