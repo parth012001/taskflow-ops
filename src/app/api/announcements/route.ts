@@ -37,24 +37,27 @@ export async function GET(request: NextRequest) {
         }
       : {};
 
-    const announcements = await prisma.announcement.findMany({
-      where: whereClause,
-      include: {
-        author: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            role: true,
+    const [announcements, total] = await Promise.all([
+      prisma.announcement.findMany({
+        where: whereClause,
+        include: {
+          author: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              role: true,
+            },
           },
         },
-      },
-      orderBy: [
-        { priority: "desc" }, // HIGH > NORMAL > LOW
-        { createdAt: "desc" },
-      ],
-      take: limit,
-    });
+        orderBy: [
+          { priority: "desc" }, // HIGH > NORMAL > LOW
+          { createdAt: "desc" },
+        ],
+        take: limit,
+      }),
+      prisma.announcement.count({ where: whereClause }),
+    ]);
 
     // Sort priority correctly (HIGH first, then NORMAL, then LOW)
     const priorityOrder = { HIGH: 0, NORMAL: 1, LOW: 2 };
@@ -67,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       announcements,
-      total: announcements.length,
+      total,
     });
   } catch (error) {
     console.error("GET /api/announcements error:", error);

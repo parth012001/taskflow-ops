@@ -1,25 +1,31 @@
 "use client";
 
+import { useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Megaphone } from "lucide-react";
 import { AnnouncementsPanel } from "@/components/announcements/announcements-panel";
 
 export default function AnnouncementsPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
 
-  // Show loading state while checking auth
-  if (status === "loading") {
+  // Redirect if not authorized
+  useEffect(() => {
+    if (status === "authenticated" &&
+        (!session?.user || !["ADMIN", "DEPARTMENT_HEAD"].includes(session.user.role))) {
+      router.push("/dashboard");
+    }
+  }, [status, session, router]);
+
+  // Show loading state while checking auth or if not authorized
+  if (status === "loading" ||
+      (status === "authenticated" && (!session?.user || !["ADMIN", "DEPARTMENT_HEAD"].includes(session.user.role)))) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     );
-  }
-
-  // Redirect if not authorized
-  if (!session?.user || !["ADMIN", "DEPARTMENT_HEAD"].includes(session.user.role)) {
-    redirect("/dashboard");
   }
 
   return (

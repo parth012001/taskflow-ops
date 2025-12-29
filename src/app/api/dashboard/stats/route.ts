@@ -185,7 +185,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Get active announcements (limit 5 for dashboard)
-    const announcements = await prisma.announcement.findMany({
+    // Fetch all active, sort by priority then date, take top 5
+    const allAnnouncements = await prisma.announcement.findMany({
       where: {
         isActive: true,
         OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
@@ -200,16 +201,18 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: [{ createdAt: "desc" }],
-      take: 5,
     });
 
-    // Sort announcements by priority (HIGH first)
+    // Sort by priority (HIGH first) then by date, then take top 5
     const priorityOrder = { HIGH: 0, NORMAL: 1, LOW: 2 };
-    announcements.sort((a, b) => {
-      const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1;
-      const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 1;
-      return aPriority - bPriority;
-    });
+    const announcements = allAnnouncements
+      .sort((a, b) => {
+        const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1;
+        const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 1;
+        if (aPriority !== bPriority) return aPriority - bPriority;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
+      .slice(0, 5);
 
     return NextResponse.json({
       statusCounts: statusMap,

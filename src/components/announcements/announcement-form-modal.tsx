@@ -22,6 +22,22 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
+// Helper to get local date string (YYYY-MM-DD) from a Date
+function toLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Helper to convert a local date string to end of day in user's timezone as ISO string
+function toEndOfDayISO(dateString: string): string {
+  // Parse as local date, set to end of day (23:59:59.999)
+  const [year, month, day] = dateString.split("-").map(Number);
+  const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+  return endOfDay.toISOString();
+}
+
 interface Announcement {
   id: string;
   title: string;
@@ -75,7 +91,7 @@ export function AnnouncementFormModal({
         setPriority(announcement.priority);
         setExpiresAt(
           announcement.expiresAt
-            ? new Date(announcement.expiresAt).toISOString().split("T")[0]
+            ? toLocalDateString(new Date(announcement.expiresAt))
             : ""
         );
       } else {
@@ -117,7 +133,7 @@ export function AnnouncementFormModal({
           content,
           type,
           priority,
-          expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+          expiresAt: expiresAt ? toEndOfDayISO(expiresAt) : null,
         }),
       });
 
@@ -218,7 +234,7 @@ export function AnnouncementFormModal({
               type="date"
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
+              min={toLocalDateString(new Date())}
             />
             <p className="text-xs text-gray-400">
               Leave empty for no expiration
