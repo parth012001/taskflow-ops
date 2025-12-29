@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus, RecognitionType } from "@prisma/client";
 
 const sessionDateSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -306,6 +306,69 @@ export async function POST(request: NextRequest) {
           },
         });
       }
+
+      // Check for streak milestones and award badges
+      const updatedStreak = await prisma.userStreak.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      let newBadge: RecognitionType | null = null;
+
+      if (updatedStreak) {
+        // 5-day streak: Award EFFICIENT_STAR
+        if (updatedStreak.currentStreak === 5) {
+          const existingBadge = await prisma.userRecognition.findUnique({
+            where: {
+              userId_type: {
+                userId: session.user.id,
+                type: RecognitionType.EFFICIENT_STAR,
+              },
+            },
+          });
+
+          if (!existingBadge) {
+            await prisma.userRecognition.create({
+              data: {
+                userId: session.user.id,
+                type: RecognitionType.EFFICIENT_STAR,
+                awardedFor: "Achieved a 5-day morning ritual streak",
+                awardedDate: new Date(),
+              },
+            });
+            newBadge = RecognitionType.EFFICIENT_STAR;
+          }
+        }
+
+        // 20-day streak: Award CONSISTENCY_KING
+        if (updatedStreak.currentStreak === 20) {
+          const existingBadge = await prisma.userRecognition.findUnique({
+            where: {
+              userId_type: {
+                userId: session.user.id,
+                type: RecognitionType.CONSISTENCY_KING,
+              },
+            },
+          });
+
+          if (!existingBadge) {
+            await prisma.userRecognition.create({
+              data: {
+                userId: session.user.id,
+                type: RecognitionType.CONSISTENCY_KING,
+                awardedFor: "Achieved a 20-day morning ritual streak",
+                awardedDate: new Date(),
+              },
+            });
+            newBadge = RecognitionType.CONSISTENCY_KING;
+          }
+        }
+      }
+
+      return NextResponse.json({
+        ...updatedSession,
+        newBadge,
+        currentStreak: updatedStreak?.currentStreak || 0,
+      });
     }
 
     return NextResponse.json(updatedSession);

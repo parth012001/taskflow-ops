@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   Card,
   CardContent,
@@ -25,7 +26,33 @@ import {
   X,
 } from "lucide-react";
 import { getStatusLabel } from "@/lib/utils/task-state-machine";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus, RecognitionType } from "@prisma/client";
+import { RecognitionWidget } from "@/components/gamification/recognition-widget";
+import { AnnouncementsWidget } from "@/components/announcements/announcements-widget";
+
+// Dynamic import for confetti (no SSR needed)
+const ConfettiCelebration = dynamic(
+  () => import("@/components/gamification/confetti-celebration").then((mod) => mod.ConfettiCelebration),
+  { ssr: false }
+);
+
+interface Recognition {
+  id: string;
+  type: RecognitionType;
+  awardedFor: string | null;
+  awardedDate: string;
+}
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  priority: string;
+  author: string;
+  createdAt: string;
+  expiresAt: string | null;
+}
 
 interface DashboardStats {
   statusCounts: Record<TaskStatus, number>;
@@ -48,6 +75,8 @@ interface DashboardStats {
     createdAt: string;
   }[];
   streak: { current: number; longest: number; lastActive: string } | null;
+  recognitions: Recognition[];
+  announcements: Announcement[];
 }
 
 function getGreeting(): string {
@@ -63,6 +92,8 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showMorningBanner, setShowMorningBanner] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [confettiType, setConfettiType] = useState<"task-completion" | "streak-milestone">("task-completion");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -209,6 +240,11 @@ export default function DashboardPage() {
         )}
       </div>
 
+      {/* Announcements Widget */}
+      {stats?.announcements && stats.announcements.length > 0 && (
+        <AnnouncementsWidget announcements={stats.announcements} maxItems={3} />
+      )}
+
       {/* Stats grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
@@ -229,6 +265,11 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Recognition Widget */}
+      {stats?.recognitions && (
+        <RecognitionWidget recognitions={stats.recognitions} />
+      )}
 
       {/* Quick actions and today's summary */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -418,6 +459,13 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Confetti Celebration */}
+      <ConfettiCelebration
+        trigger={showConfetti}
+        type={confettiType}
+        onComplete={() => setShowConfetti(false)}
+      />
     </div>
   );
 }

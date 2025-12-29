@@ -9,6 +9,7 @@ import {
   Users,
   Settings,
   Target,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,12 @@ const navigation = [
     href: "/team",
     icon: Users,
     roles: ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"],
+  },
+  {
+    name: "Announcements",
+    href: "/announcements",
+    icon: Megaphone,
+    roles: ["DEPARTMENT_HEAD", "ADMIN"],
   },
   {
     name: "Settings",

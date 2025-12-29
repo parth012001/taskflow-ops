@@ -151,6 +151,9 @@ model User {
   // Escalations directed to this user
   escalationsReceived EscalationLog[]
 
+  // Announcements authored by this user
+  announcements Announcement[] @relation("AnnouncementAuthor")
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
@@ -498,6 +501,7 @@ model UserRecognition {
 
   createdAt DateTime @default(now())
 
+  @@unique([userId, type])
   @@index([userId])
   @@index([type])
   @@index([awardedDate])
@@ -550,4 +554,31 @@ model EscalationLog {
 
   @@index([taskId])
   @@index([escalatedToId])
+}
+
+// ============================================
+// 17. ANNOUNCEMENT
+// ============================================
+
+model Announcement {
+  id       String @id @default(cuid())
+  title    String
+  content  String @db.Text
+  type     String @default("GENERAL") // GENERAL, BIRTHDAY, EVENT, POLICY
+  priority String @default("NORMAL") // LOW, NORMAL, HIGH
+
+  // Author information
+  authorId String
+  author   User   @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+
+  // Visibility
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([isActive, expiresAt])
+  @@index([createdAt])
 }

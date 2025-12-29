@@ -178,6 +178,39 @@ export async function GET(request: NextRequest) {
       where: { userId },
     });
 
+    // Get user's recognitions/badges
+    const recognitions = await prisma.userRecognition.findMany({
+      where: { userId },
+      orderBy: { awardedDate: "desc" },
+    });
+
+    // Get active announcements (limit 5 for dashboard)
+    const announcements = await prisma.announcement.findMany({
+      where: {
+        isActive: true,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: 5,
+    });
+
+    // Sort announcements by priority (HIGH first)
+    const priorityOrder = { HIGH: 0, NORMAL: 1, LOW: 2 };
+    announcements.sort((a, b) => {
+      const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1;
+      const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 1;
+      return aPriority - bPriority;
+    });
+
     return NextResponse.json({
       statusCounts: statusMap,
       totalTasks: Object.values(statusMap).reduce((a, b) => a + b, 0),
@@ -203,6 +236,22 @@ export async function GET(request: NextRequest) {
         longest: userStreak.longestStreak,
         lastActive: userStreak.lastActiveDate,
       } : null,
+      recognitions: recognitions.map((r) => ({
+        id: r.id,
+        type: r.type,
+        awardedFor: r.awardedFor,
+        awardedDate: r.awardedDate,
+      })),
+      announcements: announcements.map((a) => ({
+        id: a.id,
+        title: a.title,
+        content: a.content,
+        type: a.type,
+        priority: a.priority,
+        author: `${a.author.firstName} ${a.author.lastName}`,
+        createdAt: a.createdAt,
+        expiresAt: a.expiresAt,
+      })),
     });
   } catch (error) {
     console.error("GET /api/dashboard/stats error:", error);
