@@ -3,11 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { reassignTaskSchema } from "@/lib/validations/reassign";
+import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { Role, TaskStatus, AssignedByType } from "@prisma/client";
-
-function isManagerOrAbove(role: Role): boolean {
-  return role === Role.MANAGER || role === Role.DEPARTMENT_HEAD || role === Role.ADMIN;
-}
 
 export async function POST(
   request: NextRequest,
