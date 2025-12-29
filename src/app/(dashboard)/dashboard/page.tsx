@@ -21,6 +21,8 @@ import {
   Calendar,
   ArrowRight,
   Flame,
+  Sun,
+  X,
 } from "lucide-react";
 import { getStatusLabel } from "@/lib/utils/task-state-machine";
 import { TaskStatus } from "@prisma/client";
@@ -60,6 +62,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showMorningBanner, setShowMorningBanner] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -87,6 +90,34 @@ export default function DashboardPage() {
     }
   }, [session]);
 
+  // Check morning ritual completion
+  useEffect(() => {
+    const checkMorningRitual = async () => {
+      // Check if already dismissed for this session
+      if (typeof window !== "undefined" && sessionStorage.getItem("morningBannerDismissed") === "true") {
+        return;
+      }
+
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const response = await fetch(`/api/daily-planning?date=${today}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Show banner if morning ritual is not completed
+          if (!data.session?.morningCompleted) {
+            setShowMorningBanner(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking morning ritual:", error);
+      }
+    };
+
+    if (session) {
+      checkMorningRitual();
+    }
+  }, [session]);
+
   if (status === "loading" || !session) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -96,6 +127,11 @@ export default function DashboardPage() {
   }
 
   const user = session.user;
+
+  const dismissMorningBanner = () => {
+    sessionStorage.setItem("morningBannerDismissed", "true");
+    setShowMorningBanner(false);
+  };
 
   const statCards = [
     {
@@ -130,6 +166,29 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Morning Ritual Banner */}
+      {showMorningBanner && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Sun className="h-5 w-5 text-amber-600" />
+            <p className="text-amber-800">
+              Start your day right! Complete your morning planning ritual.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/daily-planning">
+              <Button variant="outline" size="sm" className="border-amber-300 text-amber-700 hover:bg-amber-100">
+                Start Planning
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+            <Button variant="ghost" size="sm" onClick={dismissMorningBanner} className="text-amber-600 hover:text-amber-700 hover:bg-amber-100">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Welcome section */}
       <div className="flex items-center justify-between">
         <div>

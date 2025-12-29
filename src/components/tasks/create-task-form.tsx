@@ -3,12 +3,19 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
 import { TaskPriority, TaskSize } from "@prisma/client";
 import { createTaskSchema, CreateTaskInput } from "@/lib/validations/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -23,7 +30,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface KpiBucket {
   id: string;
@@ -67,6 +75,8 @@ export function CreateTaskForm({
   kpiBuckets,
 }: CreateTaskFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deadlineDate, setDeadlineDate] = useState<Date | undefined>(undefined);
+  const [deadlineTime, setDeadlineTime] = useState("17:00");
 
   const {
     register,
@@ -84,10 +94,24 @@ export function CreateTaskForm({
     },
   });
 
+  // Update the deadline value when date or time changes
+  useEffect(() => {
+    if (deadlineDate) {
+      const [hours, minutes] = deadlineTime.split(":").map(Number);
+      const combined = new Date(deadlineDate);
+      combined.setHours(hours, minutes, 0, 0);
+      // Format as ISO datetime local: YYYY-MM-DDTHH:mm
+      const isoString = format(combined, "yyyy-MM-dd'T'HH:mm");
+      setValue("deadline", isoString);
+    }
+  }, [deadlineDate, deadlineTime, setValue]);
+
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
       reset();
+      setDeadlineDate(undefined);
+      setDeadlineTime("17:00");
     }
   }, [open, reset]);
 
@@ -221,12 +245,38 @@ export function CreateTaskForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="deadline">Deadline *</Label>
-              <Input
-                id="deadline"
-                type="datetime-local"
-                {...register("deadline")}
-              />
+              <Label>Deadline *</Label>
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal",
+                        !deadlineDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {deadlineDate ? format(deadlineDate, "MMM dd, yyyy") : "Pick date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={deadlineDate}
+                      onSelect={setDeadlineDate}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Input
+                  type="time"
+                  value={deadlineTime}
+                  onChange={(e) => setDeadlineTime(e.target.value)}
+                  className="w-24"
+                />
+              </div>
               {errors.deadline && (
                 <p className="text-sm text-red-500">{errors.deadline.message}</p>
               )}

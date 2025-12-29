@@ -13,6 +13,7 @@ import {
   Check,
   X,
   ChevronRight,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,6 +28,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { getStatusLabel, getStatusColor } from "@/lib/utils/task-state-machine";
 import { cn } from "@/lib/utils";
+import { ReassignTaskModal } from "@/components/team/reassign-task-modal";
 
 interface TeamMember {
   id: string;
@@ -70,6 +72,9 @@ export default function TeamPage() {
   const [reviewingTask, setReviewingTask] = useState<PendingTask | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reassign modal state
+  const [reassigningTask, setReassigningTask] = useState<PendingTask | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -340,6 +345,17 @@ export default function TeamPage() {
               <DialogFooter className="gap-2">
                 <Button
                   variant="outline"
+                  onClick={() => {
+                    setReassigningTask(reviewingTask);
+                    setReviewingTask(null);
+                  }}
+                  disabled={isSubmitting}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Reassign
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={() => handleReject(reviewingTask.id)}
                   disabled={rejectionReason.length < 10 || isSubmitting}
                   className="text-red-600 border-red-300 hover:bg-red-50"
@@ -360,6 +376,28 @@ export default function TeamPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Reassign Task Modal */}
+      {reassigningTask && (
+        <ReassignTaskModal
+          open={!!reassigningTask}
+          onOpenChange={(open) => !open && setReassigningTask(null)}
+          taskId={reassigningTask.id}
+          taskTitle={reassigningTask.title}
+          currentOwnerId={reassigningTask.owner.id}
+          currentOwnerName={`${reassigningTask.owner.firstName} ${reassigningTask.owner.lastName}`}
+          teamMembers={teamMembers.map((m) => ({
+            id: m.id,
+            firstName: m.firstName,
+            lastName: m.lastName,
+            email: m.email,
+          }))}
+          onSuccess={() => {
+            setReassigningTask(null);
+            fetchTeamData();
+          }}
+        />
+      )}
     </div>
   );
 }
