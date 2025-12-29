@@ -83,7 +83,19 @@ export default function SettingsPage() {
 
       if (response.ok) {
         const updatedUser = await response.json();
-        setProfile((prev) => (prev ? { ...prev, ...updatedUser } : null));
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                id: updatedUser.id,
+                email: updatedUser.email,
+                firstName: updatedUser.firstName,
+                lastName: updatedUser.lastName,
+                role: updatedUser.role,
+                avatarUrl: updatedUser.avatarUrl,
+              }
+            : null
+        );
         toast.success("Profile updated successfully");
       } else {
         const error = await response.json();

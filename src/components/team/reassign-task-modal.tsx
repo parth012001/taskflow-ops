@@ -165,6 +165,7 @@ export function ReassignTaskModal({
               rows={3}
               required
               minLength={10}
+              maxLength={500}
             />
             <p className="text-xs text-gray-500">
               {reason.length}/500 characters (min 10)

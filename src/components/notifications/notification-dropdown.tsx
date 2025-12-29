@@ -82,25 +82,30 @@ export function NotificationDropdown() {
     }
   }, [isOpen, fetchNotifications]);
 
-  const handleNotificationClick = async (notification: Notification) => {
-    // Mark as read if unread
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read if unread (fire-and-forget, don't block navigation)
     if (!notification.isRead) {
-      try {
-        await fetch(`/api/notifications/${notification.id}`, {
-          method: "PATCH",
+      // Optimistically update UI
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notification.id ? { ...n, isRead: true } : n
+        )
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+
+      // Fire PATCH in background
+      fetch(`/api/notifications/${notification.id}`, { method: "PATCH" })
+        .then((response) => {
+          if (!response.ok) {
+            console.error("Failed to mark notification as read:", response.status);
+          }
+        })
+        .catch((error) => {
+          console.error("Error marking notification as read:", error);
         });
-        setNotifications((prev) =>
-          prev.map((n) =>
-            n.id === notification.id ? { ...n, isRead: true } : n
-          )
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      } catch (error) {
-        console.error("Error marking notification as read:", error);
-      }
     }
 
-    // Navigate to entity
+    // Navigate to entity immediately
     if (notification.entityType === "Task" && notification.entityId) {
       router.push(`/tasks?taskId=${notification.entityId}`);
       setIsOpen(false);

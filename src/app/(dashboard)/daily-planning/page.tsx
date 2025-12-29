@@ -316,8 +316,13 @@ export default function DailyPlanningPage() {
                           <span>{sessionTask.task.kpiBucket.name}</span>
                         </div>
                       </div>
-                      {/* Carry Forward button - show for overdue tasks */}
-                      {new Date(sessionTask.task.deadline) <= new Date() &&
+                      {/* Carry Forward button - show for overdue tasks (deadline before today) */}
+                      {(() => {
+                        const deadline = new Date(sessionTask.task.deadline);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return deadline < today;
+                      })() &&
                         sessionTask.task.status !== TaskStatus.CLOSED_APPROVED && (
                           <Button
                             variant="ghost"

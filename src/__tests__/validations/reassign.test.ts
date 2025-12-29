@@ -147,12 +147,20 @@ describe("Reassign Task Validation Schema", () => {
       expect(result.success).toBe(true);
     });
 
-    it("should accept very long reason", () => {
+    it("should accept reason at maximum length (500 chars)", () => {
       const result = reassignTaskSchema.safeParse({
         newOwnerId: "user-123",
-        reason: "a".repeat(1000),
+        reason: "a".repeat(500),
       });
       expect(result.success).toBe(true);
+    });
+
+    it("should reject reason exceeding 500 characters", () => {
+      const result = reassignTaskSchema.safeParse({
+        newOwnerId: "user-123",
+        reason: "a".repeat(501),
+      });
+      expect(result.success).toBe(false);
     });
 
     it("should accept reason with newlines", () => {

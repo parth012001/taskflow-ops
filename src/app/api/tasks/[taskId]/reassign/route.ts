@@ -39,6 +39,27 @@ export async function POST(
 
     const { newOwnerId, reason, newDeadline } = validatedData.data;
 
+    // Validate newDeadline if provided
+    let parsedDeadline: Date | undefined;
+    if (newDeadline) {
+      parsedDeadline = new Date(newDeadline);
+      if (isNaN(parsedDeadline.getTime())) {
+        return NextResponse.json(
+          { error: "Invalid deadline date format" },
+          { status: 400 }
+        );
+      }
+      // Deadline must be in the future (at least tomorrow)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (parsedDeadline <= today) {
+        return NextResponse.json(
+          { error: "Deadline must be in the future" },
+          { status: 400 }
+        );
+      }
+    }
+
     const task = await prisma.task.findUnique({
       where: { id: taskId, deletedAt: null },
       include: {
@@ -136,8 +157,8 @@ export async function POST(
         assignedByType: AssignedByType.MANAGER,
       };
 
-      if (newDeadline) {
-        updateData.deadline = new Date(newDeadline);
+      if (parsedDeadline) {
+        updateData.deadline = parsedDeadline;
       }
 
       const updated = await tx.task.update({
