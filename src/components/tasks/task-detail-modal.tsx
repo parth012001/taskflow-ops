@@ -251,6 +251,9 @@ export function TaskDetailModal({
       <DialogContent className="max-w-2xl max-h-[90vh] p-0">
         {isLoading || !task ? (
           <div className="flex items-center justify-center h-64">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Loading task details</DialogTitle>
+            </DialogHeader>
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
           </div>
         ) : (

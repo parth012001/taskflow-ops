@@ -1,17 +1,21 @@
 import { z } from "zod";
 import { TaskStatus, TaskPriority, TaskSize, AssignedByType } from "@prisma/client";
 
-// Helper to normalize datetime-local input (adds seconds if missing)
+// Helper to normalize datetime-local input
+// Accepts: "YYYY-MM-DDTHH:mm", "YYYY-MM-DDTHH:mm:ss", or Date objects
 const datetimeLocalSchema = z
   .string()
-  .transform((val) => {
-    // datetime-local produces "YYYY-MM-DDTHH:mm" (16 chars), add seconds
-    if (val.length === 16 && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val)) {
-      return val + ":00";
-    }
-    return val;
-  })
-  .pipe(z.string().datetime())
+  .refine(
+    (val) => {
+      // Match datetime-local format: YYYY-MM-DDTHH:mm or YYYY-MM-DDTHH:mm:ss
+      const pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
+      if (!pattern.test(val)) return false;
+      // Verify it's a valid date
+      const date = new Date(val);
+      return !isNaN(date.getTime());
+    },
+    { message: "Invalid date format" }
+  )
   .or(z.date());
 
 export const createTaskSchema = z.object({
