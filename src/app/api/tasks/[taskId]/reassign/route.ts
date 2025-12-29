@@ -6,6 +6,19 @@ import { reassignTaskSchema } from "@/lib/validations/reassign";
 import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { Role, TaskStatus, AssignedByType } from "@prisma/client";
 
+function roleToAssignedByType(role: Role): AssignedByType {
+  switch (role) {
+    case Role.MANAGER:
+      return AssignedByType.MANAGER;
+    case Role.DEPARTMENT_HEAD:
+    case Role.ADMIN:
+      return AssignedByType.LEADERSHIP;
+    default:
+      // This shouldn't happen since isManagerOrAbove check runs before this
+      throw new Error(`Cannot derive AssignedByType for role: ${role}`);
+  }
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ taskId: string }> }
@@ -151,7 +164,7 @@ export async function POST(
       } = {
         ownerId: newOwnerId,
         assignerId: session.user.id,
-        assignedByType: AssignedByType.MANAGER,
+        assignedByType: roleToAssignedByType(userRole),
       };
 
       if (parsedDeadline) {
