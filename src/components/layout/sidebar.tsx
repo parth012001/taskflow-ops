@@ -10,6 +10,7 @@ import {
   Settings,
   Target,
   Megaphone,
+  PieChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +52,12 @@ const navigation = [
     href: "/announcements",
     icon: Megaphone,
     roles: ["DEPARTMENT_HEAD", "ADMIN"],
+  },
+  {
+    name: "KPI Management",
+    href: "/kpi-management",
+    icon: PieChart,
+    roles: ["ADMIN"],
   },
   {
     name: "Settings",
