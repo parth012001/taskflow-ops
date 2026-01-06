@@ -1,31 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: NextRequest) {
+// GET /api/users/me/kpis - Get current user's assigned KPIs
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ADMIN sees all active KPIs (for management and task creation)
-    if (session.user.role === "ADMIN") {
-      const kpiBuckets = await prisma.kpiBucket.findMany({
-        where: { isActive: true },
-        orderBy: { name: "asc" },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          applicableRoles: true,
-        },
-      });
-      return NextResponse.json(kpiBuckets);
-    }
-
-    // Non-admin users: Only see KPIs explicitly assigned to them via UserKpi
     const userKpis = await prisma.userKpi.findMany({
       where: { userId: session.user.id },
       include: {
@@ -34,7 +19,6 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             description: true,
-            applicableRoles: true,
             isActive: true,
           },
         },
@@ -42,18 +26,20 @@ export async function GET(request: NextRequest) {
     });
 
     // Filter to only active KPIs and format response
-    const kpiBuckets = userKpis
+    const assignedKpis = userKpis
       .filter((uk) => uk.kpiBucket.isActive)
       .map((uk) => ({
-        id: uk.kpiBucket.id,
-        name: uk.kpiBucket.name,
+        userKpiId: uk.id,
+        kpiBucketId: uk.kpiBucket.id,
+        kpiBucketName: uk.kpiBucket.name,
         description: uk.kpiBucket.description,
-        applicableRoles: uk.kpiBucket.applicableRoles,
+        targetValue: uk.targetValue,
+        currentValue: uk.currentValue,
       }));
 
-    return NextResponse.json(kpiBuckets);
+    return NextResponse.json({ assignedKpis });
   } catch (error) {
-    console.error("GET /api/kpi-buckets error:", error);
+    console.error("GET /api/users/me/kpis error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -148,12 +148,37 @@ export async function POST(request: NextRequest) {
       estimatedMinutes, deadline, startDate, assigneeId
     } = validatedData.data;
 
-    // Verify KPI bucket exists
+    // Verify KPI bucket exists and is active
     const kpiBucket = await prisma.kpiBucket.findUnique({
-      where: { id: kpiBucketId },
+      where: { id: kpiBucketId, isActive: true },
     });
     if (!kpiBucket) {
-      return NextResponse.json({ error: "KPI bucket not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "KPI bucket not found or inactive" },
+        { status: 404 }
+      );
+    }
+
+    // For non-admin: Verify the task owner has this KPI assigned
+    // Note: We check assigneeId first (manager assigning to subordinate),
+    // otherwise check the current user (self-assignment)
+    if (session.user.role !== "ADMIN") {
+      const targetUserId = assigneeId || session.user.id;
+      const userKpi = await prisma.userKpi.findUnique({
+        where: {
+          userId_kpiBucketId: {
+            userId: targetUserId,
+            kpiBucketId,
+          },
+        },
+      });
+
+      if (!userKpi) {
+        return NextResponse.json(
+          { error: "This KPI is not assigned to the task owner" },
+          { status: 403 }
+        );
+      }
     }
 
     // Determine owner and assignment type
