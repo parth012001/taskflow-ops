@@ -65,12 +65,15 @@ export function KpiBucketsPanel() {
     try {
       const response = await fetch("/api/kpi-management/buckets");
       if (!response.ok) {
+        const text = await response.text();
         let errorMessage = `HTTP ${response.status}`;
         try {
-          const errorData = await response.json();
+          const errorData = JSON.parse(text);
           errorMessage = errorData.error || errorMessage;
         } catch {
-          const text = await response.text();
+          if (text) {
+            errorMessage = text;
+          }
           console.error("Error fetching KPI buckets:", response.status, text);
         }
         throw new Error(errorMessage);
@@ -107,8 +110,17 @@ export function KpiBucketsPanel() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to deactivate KPI bucket");
+        const text = await response.text();
+        let errorMessage = "Failed to deactivate KPI bucket";
+        try {
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          if (text) {
+            errorMessage = text;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       toast.success("KPI bucket deactivated");
