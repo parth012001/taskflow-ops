@@ -27,12 +27,12 @@ export const updateKpiBucketSchema = createKpiBucketSchema.partial().extend({
 export const assignKpiSchema = z.object({
   userId: z.string().min(1, "User is required"),
   kpiBucketId: z.string().min(1, "KPI bucket is required"),
-  targetValue: z.number().min(0, "Target must be positive").optional().nullable(),
+  targetValue: z.number().min(0, "Target must be non-negative").optional().nullable(),
 });
 
 // For updating a KPI assignment (target value)
 export const updateKpiAssignmentSchema = z.object({
-  targetValue: z.number().min(0, "Target must be positive").optional().nullable(),
+  targetValue: z.number().min(0, "Target must be non-negative").optional().nullable(),
 });
 
 export type CreateKpiBucketInput = z.infer<typeof createKpiBucketSchema>;
