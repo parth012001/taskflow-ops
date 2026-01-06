@@ -130,26 +130,51 @@ export function UserKpiModal({
     setIsSaving(true);
 
     try {
-      const toAdd: { kpiBucketId: string; targetValue?: number }[] = [];
-      const toRemove: string[] = [];
-      const toUpdate: { userKpiId: string; targetValue: number | null }[] = [];
+      // Build operation descriptors with metadata for tracking
+      interface Operation {
+        type: "add" | "remove" | "update";
+        label: string;
+        execute: () => Promise<Response>;
+      }
+
+      const operations: Operation[] = [];
 
       assignments.forEach((assignment) => {
         const wasAssigned = user.assignedKpis.some(
           (a) => a.kpiBucketId === assignment.kpiBucketId
         );
+        const bucket = kpiBuckets.find((b) => b.id === assignment.kpiBucketId);
+        const bucketName = bucket?.name || assignment.kpiBucketId;
 
         if (assignment.isAssigned && !wasAssigned) {
           // New assignment
-          toAdd.push({
-            kpiBucketId: assignment.kpiBucketId,
-            targetValue: assignment.targetValue
-              ? parseFloat(assignment.targetValue)
-              : undefined,
+          const targetValue = assignment.targetValue
+            ? parseFloat(assignment.targetValue)
+            : undefined;
+          operations.push({
+            type: "add",
+            label: `Assign "${bucketName}"`,
+            execute: () =>
+              fetch("/api/kpi-management/assign", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  userId: user.id,
+                  kpiBucketId: assignment.kpiBucketId,
+                  targetValue,
+                }),
+              }),
           });
         } else if (!assignment.isAssigned && wasAssigned && assignment.userKpiId) {
           // Remove assignment
-          toRemove.push(assignment.userKpiId);
+          operations.push({
+            type: "remove",
+            label: `Remove "${bucketName}"`,
+            execute: () =>
+              fetch(`/api/kpi-management/assign/${assignment.userKpiId}`, {
+                method: "DELETE",
+              }),
+          });
         } else if (assignment.isAssigned && wasAssigned && assignment.userKpiId) {
           // Check if target changed
           const original = user.assignedKpis.find(
@@ -159,76 +184,93 @@ export function UserKpiModal({
             ? parseFloat(assignment.targetValue)
             : null;
           if (original && original.targetValue !== newTarget) {
-            toUpdate.push({
-              userKpiId: assignment.userKpiId,
-              targetValue: newTarget,
+            operations.push({
+              type: "update",
+              label: `Update "${bucketName}" target`,
+              execute: () =>
+                fetch(`/api/kpi-management/assign/${assignment.userKpiId}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ targetValue: newTarget }),
+                }),
             });
           }
         }
       });
 
-      // Execute all operations
-      const operations: Promise<Response>[] = [];
-
-      // Add new assignments
-      for (const add of toAdd) {
-        operations.push(
-          fetch("/api/kpi-management/assign", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: user.id,
-              kpiBucketId: add.kpiBucketId,
-              targetValue: add.targetValue,
-            }),
-          })
-        );
-      }
-
-      // Remove assignments
-      for (const userKpiId of toRemove) {
-        operations.push(
-          fetch(`/api/kpi-management/assign/${userKpiId}`, {
-            method: "DELETE",
-          })
-        );
-      }
-
-      // Update target values
-      for (const update of toUpdate) {
-        operations.push(
-          fetch(`/api/kpi-management/assign/${update.userKpiId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ targetValue: update.targetValue }),
-          })
-        );
-      }
-
-      const results = await Promise.all(operations);
-
-      // Check for errors
-      for (const result of results) {
-        if (!result.ok) {
-          const error = await result.json();
-          throw new Error(error.error || "Failed to save changes");
-        }
-      }
-
-      const changeCount = toAdd.length + toRemove.length + toUpdate.length;
-      if (changeCount > 0) {
-        toast.success(`Updated ${changeCount} KPI assignment(s)`);
-      } else {
+      if (operations.length === 0) {
         toast.info("No changes made");
+        onOpenChange(false);
+        return;
       }
 
-      onSuccess();
-      onOpenChange(false);
+      // Execute all operations and track individual results
+      const results = await Promise.allSettled(
+        operations.map(async (op) => {
+          const response = await op.execute();
+          if (!response.ok) {
+            const text = await response.text();
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+              const errorData = JSON.parse(text);
+              errorMessage = errorData.error || errorMessage;
+            } catch {
+              if (text) errorMessage = text;
+            }
+            throw new Error(`${op.label}: ${errorMessage}`);
+          }
+          return { operation: op, response };
+        })
+      );
+
+      // Analyze results
+      const succeeded = results.filter(
+        (r): r is PromiseFulfilledResult<{ operation: Operation; response: Response }> =>
+          r.status === "fulfilled"
+      );
+      const failed = results.filter(
+        (r): r is PromiseRejectedResult => r.status === "rejected"
+      );
+
+      // Report results to user
+      if (failed.length === 0) {
+        // All succeeded
+        toast.success(`Updated ${succeeded.length} KPI assignment(s)`);
+        onSuccess();
+        onOpenChange(false);
+      } else if (succeeded.length === 0) {
+        // All failed
+        const firstError = failed[0].reason;
+        toast.error(
+          firstError instanceof Error ? firstError.message : "All operations failed"
+        );
+        // Still refresh to show current state
+        onSuccess();
+      } else {
+        // Partial success - this is the critical case
+        const failedMessages = failed
+          .map((f) => (f.reason instanceof Error ? f.reason.message : "Unknown error"))
+          .slice(0, 3); // Limit to first 3 errors
+
+        toast.warning(
+          `Partial update: ${succeeded.length} succeeded, ${failed.length} failed`,
+          {
+            description: failedMessages.join("; ") + (failed.length > 3 ? "..." : ""),
+            duration: 6000,
+          }
+        );
+        // Refresh to show actual state - crucial for partial success
+        onSuccess();
+        // Keep modal open so user can retry failed operations
+      }
     } catch (error) {
+      // Unexpected error (network failure, etc.)
       console.error("Error saving KPI assignments:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to save changes"
       );
+      // Refresh in case any operations succeeded before the error
+      onSuccess();
     } finally {
       setIsSaving(false);
     }
