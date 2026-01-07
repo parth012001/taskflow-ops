@@ -14,7 +14,10 @@ import {
   X,
   ChevronRight,
   AlertCircle,
+  Trash2,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +29,16 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   getStatusLabel,
   getStatusColor,
@@ -129,6 +142,8 @@ export function TaskDetailModal({
   const [transitionReason, setTransitionReason] = useState("");
   const [showReasonInput, setShowReasonInput] = useState<TaskStatus | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch task details
   useEffect(() => {
@@ -244,9 +259,45 @@ export function TaskDetailModal({
     }
   };
 
+  // Check if current user can delete this task
+  const canDelete = (): boolean => {
+    if (!task || !session?.user) return false;
+    return task.owner.id === session.user.id || session.user.role === "ADMIN";
+  };
+
+  // Handle task deletion
+  const handleDelete = async () => {
+    if (!task) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete task");
+      }
+
+      toast.success("Task deleted successfully");
+      onOpenChange(false);
+      onTaskUpdate?.();
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete task"
+      );
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   if (!open) return null;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0">
         {isLoading || !task ? (
@@ -404,7 +455,18 @@ export function TaskDetailModal({
                             {getStatusLabel(status)}
                           </Button>
                         ))}
-                        {getAvailableTransitions().length === 0 && (
+                        {canDelete() && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                            onClick={() => setShowDeleteConfirm(true)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </Button>
+                        )}
+                        {getAvailableTransitions().length === 0 && !canDelete() && (
                           <p className="text-sm text-gray-500">No available actions</p>
                         )}
                       </div>
@@ -542,5 +604,28 @@ export function TaskDetailModal({
         )}
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Task</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete &quot;{task?.title}&quot;? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
