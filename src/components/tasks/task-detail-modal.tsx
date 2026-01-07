@@ -276,8 +276,15 @@ export function TaskDetailModal({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to delete task");
+        const text = await response.text();
+        let errorMessage = `HTTP ${response.status}: Failed to delete task`;
+        try {
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          if (text) errorMessage = `HTTP ${response.status}: ${text}`;
+        }
+        throw new Error(errorMessage);
       }
 
       toast.success("Task deleted successfully");
