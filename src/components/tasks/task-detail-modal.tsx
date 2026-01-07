@@ -170,6 +170,13 @@ export function TaskDetailModal({
     fetchTask();
   }, [taskId, open]);
 
+  // Reset delete confirmation state when modal closes or task changes
+  useEffect(() => {
+    if (!open) {
+      setShowDeleteConfirm(false);
+    }
+  }, [open, taskId]);
+
   // Get valid transitions for current user
   const getAvailableTransitions = (): TaskStatus[] => {
     if (!task || !session?.user) return [];
