@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { TaskStatus, TaskPriority, TaskSize } from "@prisma/client";
+import { TaskStatus, TaskPriority, TaskSize, Role } from "@prisma/client";
 import {
   Calendar,
   Clock,
@@ -262,7 +262,7 @@ export function TaskDetailModal({
   // Check if current user can delete this task
   const canDelete = (): boolean => {
     if (!task || !session?.user) return false;
-    return task.owner.id === session.user.id || session.user.role === "ADMIN";
+    return task.owner.id === session.user.id || session.user.role === Role.ADMIN;
   };
 
   // Handle task deletion
