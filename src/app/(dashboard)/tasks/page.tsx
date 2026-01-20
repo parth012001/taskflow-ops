@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus, Role } from "@prisma/client";
 import { Plus, Filter, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KanbanBoard } from "@/components/tasks/kanban-board";
-import { CreateTaskForm } from "@/components/tasks/create-task-form";
+import { CreateTaskForm, AssignableUser } from "@/components/tasks/create-task-form";
 import { TaskDetailModal } from "@/components/tasks/task-detail-modal";
 import { TaskCardData } from "@/components/tasks/task-card";
 import { CreateTaskInput } from "@/lib/validations/task";
@@ -23,6 +23,7 @@ export default function TasksPage() {
   const { data: session } = useSession();
   const [tasks, setTasks] = useState<TaskCardData[]>([]);
   const [kpiBuckets, setKpiBuckets] = useState<KpiBucket[]>([]);
+  const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -60,11 +61,25 @@ export default function TasksPage() {
     }
   }, []);
 
+  // Fetch assignable users (for managers+ to assign tasks)
+  const fetchAssignableUsers = useCallback(async () => {
+    try {
+      const response = await fetch("/api/tasks/assignees");
+      if (!response.ok) throw new Error("Failed to fetch assignable users");
+
+      const data = await response.json();
+      setAssignableUsers(data);
+    } catch (error) {
+      console.error("Error fetching assignable users:", error);
+    }
+  }, []);
+
   // Initial load - runs once on mount
   useEffect(() => {
     fetchTasks();
     fetchKpiBuckets();
-  }, [fetchTasks, fetchKpiBuckets]);
+    fetchAssignableUsers();
+  }, [fetchTasks, fetchKpiBuckets, fetchAssignableUsers]);
 
   // Debounced search - only runs on search query changes, not initial mount
   useEffect(() => {
@@ -187,6 +202,7 @@ export default function TasksPage() {
         onOpenChange={setShowCreateForm}
         onSubmit={handleCreateTask}
         kpiBuckets={kpiBuckets}
+        assignableUsers={assignableUsers}
       />
 
       {/* Task Detail Modal */}

@@ -30,8 +30,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Loader2, CalendarIcon } from "lucide-react";
+import { Loader2, CalendarIcon, UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Role } from "@prisma/client";
 
 interface KpiBucket {
   id: string;
@@ -39,11 +40,20 @@ interface KpiBucket {
   description?: string | null;
 }
 
+export interface AssignableUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: Role;
+}
+
 interface CreateTaskFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateTaskInput) => Promise<void>;
   kpiBuckets: KpiBucket[];
+  assignableUsers?: AssignableUser[];
 }
 
 const priorityOptions = [
@@ -73,6 +83,7 @@ export function CreateTaskForm({
   onOpenChange,
   onSubmit,
   kpiBuckets,
+  assignableUsers = [],
 }: CreateTaskFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deadlineDate, setDeadlineDate] = useState<Date | undefined>(undefined);
@@ -181,6 +192,33 @@ export function CreateTaskForm({
               <p className="text-sm text-red-500">{errors.kpiBucketId.message}</p>
             )}
           </div>
+
+          {/* Assign To (only shown if user can assign tasks) */}
+          {assignableUsers.length > 0 && (
+            <div className="space-y-2">
+              <Label>Assign To</Label>
+              <Select
+                value={watch("assigneeId") || "self"}
+                onValueChange={(value) => setValue("assigneeId", value === "self" ? undefined : value)}
+              >
+                <SelectTrigger>
+                  <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="Myself (default)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="self">Myself (default)</SelectItem>
+                  {assignableUsers.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Select a team member to assign this task to
+              </p>
+            </div>
+          )}
 
           {/* Priority & Size */}
           <div className="grid grid-cols-2 gap-4">
