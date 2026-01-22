@@ -5,9 +5,11 @@ import { useSession } from "next-auth/react";
 import { TaskStatus, TaskPriority, TaskSize, Role } from "@prisma/client";
 import {
   Calendar,
+  CalendarClock,
   Clock,
   MessageSquare,
   Paperclip,
+  Pencil,
   User,
   History,
   Send,
@@ -83,6 +85,32 @@ interface StatusHistoryItem {
   };
 }
 
+interface CarryForwardLogItem {
+  id: string;
+  fromDate: string;
+  toDate: string;
+  reason: string;
+  createdAt: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+interface EditHistoryItem {
+  id: string;
+  fieldName: string;
+  oldValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+  editedBy: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
 interface TaskDetail {
   id: string;
   title: string;
@@ -104,6 +132,8 @@ interface TaskDetail {
   kpiBucket: { id: string; name: string; description?: string | null };
   comments: TaskComment[];
   statusHistory: StatusHistoryItem[];
+  carryForwardLogs?: CarryForwardLogItem[];
+  editHistory?: EditHistoryItem[];
   _count: { comments: number; attachments: number };
 }
 
@@ -577,39 +607,181 @@ export function TaskDetailModal({
 
                 {activeTab === "history" && (
                   <div className="space-y-4">
-                    {task.statusHistory.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-8">
-                        No history yet
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {task.statusHistory.map((item) => (
-                          <div key={item.id} className="flex gap-3 text-sm">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                              <History className="w-4 h-4 text-gray-500" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">
-                                  {item.changedBy.firstName} {item.changedBy.lastName}
-                                </span>
-                                <span className="text-gray-400">
-                                  {item.fromStatus
-                                    ? `changed status from ${getStatusLabel(item.fromStatus)} to ${getStatusLabel(item.toStatus)}`
-                                    : `created task as ${getStatusLabel(item.toStatus)}`}
-                                </span>
-                              </div>
-                              {item.reason && (
-                                <p className="text-gray-600 mt-1">Reason: {item.reason}</p>
-                              )}
-                              <p className="text-xs text-gray-400 mt-1">
-                                {new Date(item.createdAt).toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {(() => {
+                      // Combine all history items into a single timeline
+                      type TimelineItem =
+                        | { type: "status"; data: StatusHistoryItem; createdAt: Date }
+                        | { type: "carryForward"; data: CarryForwardLogItem; createdAt: Date }
+                        | { type: "edit"; data: EditHistoryItem; createdAt: Date };
+
+                      const timelineItems: TimelineItem[] = [
+                        ...task.statusHistory.map((item) => ({
+                          type: "status" as const,
+                          data: item,
+                          createdAt: new Date(item.createdAt),
+                        })),
+                        ...(task.carryForwardLogs || []).map((item) => ({
+                          type: "carryForward" as const,
+                          data: item,
+                          createdAt: new Date(item.createdAt),
+                        })),
+                        ...(task.editHistory || []).map((item) => ({
+                          type: "edit" as const,
+                          data: item,
+                          createdAt: new Date(item.createdAt),
+                        })),
+                      ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+                      if (timelineItems.length === 0) {
+                        return (
+                          <p className="text-sm text-gray-500 text-center py-8">
+                            No history yet
+                          </p>
+                        );
+                      }
+
+                      const formatFieldName = (name: string) => {
+                        const labels: Record<string, string> = {
+                          title: "Title",
+                          description: "Description",
+                          priority: "Priority",
+                          size: "Size",
+                          estimatedMinutes: "Time Estimate",
+                          actualMinutes: "Actual Time",
+                          deadline: "Deadline",
+                          startDate: "Start Date",
+                          kpiBucketId: "KPI Bucket",
+                        };
+                        return labels[name] || name;
+                      };
+
+                      const formatValue = (field: string, value: string | null) => {
+                        if (!value || value === "null" || value === "undefined") return "empty";
+                        if (field === "deadline" || field === "startDate") {
+                          try {
+                            return new Date(value).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            });
+                          } catch {
+                            return value;
+                          }
+                        }
+                        if (field === "estimatedMinutes" || field === "actualMinutes") {
+                          const mins = parseInt(value);
+                          if (mins >= 60) return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+                          return `${mins}m`;
+                        }
+                        return value;
+                      };
+
+                      return (
+                        <div className="space-y-3">
+                          {timelineItems.map((item) => {
+                            if (item.type === "status") {
+                              const status = item.data;
+                              return (
+                                <div key={`status-${status.id}`} className="flex gap-3 text-sm">
+                                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                    <History className="w-4 h-4 text-gray-500" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-medium">
+                                        {status.changedBy.firstName} {status.changedBy.lastName}
+                                      </span>
+                                      <span className="text-gray-400">
+                                        {status.fromStatus
+                                          ? `changed status from ${getStatusLabel(status.fromStatus)} to ${getStatusLabel(status.toStatus)}`
+                                          : `created task as ${getStatusLabel(status.toStatus)}`}
+                                      </span>
+                                    </div>
+                                    {status.reason && (
+                                      <p className="text-gray-600 mt-1">Reason: {status.reason}</p>
+                                    )}
+                                    <p className="text-xs text-gray-400 mt-1">
+                                      {item.createdAt.toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            if (item.type === "carryForward") {
+                              const cf = item.data;
+                              return (
+                                <div key={`cf-${cf.id}`} className="flex gap-3 text-sm">
+                                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                                    <CalendarClock className="w-4 h-4 text-orange-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-medium">
+                                        {cf.user.firstName} {cf.user.lastName}
+                                      </span>
+                                      <span className="text-gray-400">
+                                        extended deadline from{" "}
+                                        <span className="font-medium text-gray-600">
+                                          {new Date(cf.fromDate).toLocaleDateString("en-US", {
+                                            month: "short",
+                                            day: "numeric",
+                                          })}
+                                        </span>
+                                        {" to "}
+                                        <span className="font-medium text-gray-600">
+                                          {new Date(cf.toDate).toLocaleDateString("en-US", {
+                                            month: "short",
+                                            day: "numeric",
+                                          })}
+                                        </span>
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-600 mt-1">Reason: {cf.reason}</p>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                      {item.createdAt.toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            if (item.type === "edit") {
+                              const edit = item.data;
+                              return (
+                                <div key={`edit-${edit.id}`} className="flex gap-3 text-sm">
+                                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                                    <Pencil className="w-4 h-4 text-blue-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-medium">
+                                        {edit.editedBy.firstName} {edit.editedBy.lastName}
+                                      </span>
+                                      <span className="text-gray-400">
+                                        changed {formatFieldName(edit.fieldName)} from{" "}
+                                        <span className="font-medium text-gray-600">
+                                          {formatValue(edit.fieldName, edit.oldValue)}
+                                        </span>
+                                        {" to "}
+                                        <span className="font-medium text-gray-600">
+                                          {formatValue(edit.fieldName, edit.newValue)}
+                                        </span>
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                      {item.createdAt.toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return null;
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

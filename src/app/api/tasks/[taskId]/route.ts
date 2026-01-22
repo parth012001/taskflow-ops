@@ -60,6 +60,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           },
           orderBy: { createdAt: "desc" },
         },
+        carryForwardLogs: {
+          include: {
+            user: {
+              select: { id: true, firstName: true, lastName: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        editHistory: {
+          include: {
+            editedBy: {
+              select: { id: true, firstName: true, lastName: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
         _count: {
           select: { comments: true, attachments: true },
         },
@@ -162,21 +178,70 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       updateData.kpiBucketId = validatedData.data.kpiBucketId;
     }
 
-    const updatedTask = await prisma.task.update({
-      where: { id: taskId },
-      data: updateData,
-      include: {
-        owner: {
-          select: { id: true, firstName: true, lastName: true, email: true },
+    // Detect field changes for audit history
+    const fieldsToTrack = [
+      "title",
+      "description",
+      "priority",
+      "size",
+      "estimatedMinutes",
+      "actualMinutes",
+      "deadline",
+      "startDate",
+      "kpiBucketId",
+    ] as const;
+
+    const editHistoryEntries: {
+      taskId: string;
+      editedById: string;
+      fieldName: string;
+      oldValue: string | null;
+      newValue: string | null;
+    }[] = [];
+
+    for (const field of fieldsToTrack) {
+      if (updateData[field] !== undefined) {
+        const oldVal = task[field as keyof typeof task];
+        const newVal = updateData[field];
+
+        // Convert to comparable strings
+        const oldStr = oldVal instanceof Date ? oldVal.toISOString() : String(oldVal ?? "");
+        const newStr = newVal instanceof Date ? newVal.toISOString() : String(newVal ?? "");
+
+        // Only log if actually changed
+        if (oldStr !== newStr) {
+          editHistoryEntries.push({
+            taskId,
+            editedById: session.user.id,
+            fieldName: field,
+            oldValue: oldStr || null,
+            newValue: newStr || null,
+          });
+        }
+      }
+    }
+
+    // Use transaction to update task + create edit history
+    const [updatedTask] = await prisma.$transaction([
+      prisma.task.update({
+        where: { id: taskId },
+        data: updateData,
+        include: {
+          owner: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
+          assigner: {
+            select: { id: true, firstName: true, lastName: true },
+          },
+          kpiBucket: {
+            select: { id: true, name: true },
+          },
         },
-        assigner: {
-          select: { id: true, firstName: true, lastName: true },
-        },
-        kpiBucket: {
-          select: { id: true, name: true },
-        },
-      },
-    });
+      }),
+      ...editHistoryEntries.map((entry) =>
+        prisma.taskEditHistory.create({ data: entry })
+      ),
+    ]);
 
     return NextResponse.json(updatedTask);
   } catch (error) {
@@ -210,10 +275,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Soft delete
+    // Soft delete with actor tracking
     await prisma.task.update({
       where: { id: taskId },
-      data: { deletedAt: new Date() },
+      data: {
+        deletedAt: new Date(),
+        deletedById: session.user.id,
+      },
     });
 
     return NextResponse.json({ message: "Task deleted successfully" });

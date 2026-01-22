@@ -115,6 +115,12 @@ model User {
   // Tasks assigned by this user (when user is manager/leadership)
   tasksAssigned Task[] @relation("TaskAssigner")
 
+  // Tasks deleted by this user
+  tasksDeleted Task[] @relation("DeletedTasks")
+
+  // Task edit history by this user
+  taskEdits TaskEditHistory[]
+
   // Task status changes made by this user
   statusChanges TaskStatusHistory[]
 
@@ -265,9 +271,14 @@ model Task {
   carryForwardLogs CarryForwardLog[]
   dailySessionTasks DailySessionTask[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  // Edit history for audit trail
+  editHistory TaskEditHistory[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("DeletedTasks", fields: [deletedById], references: [id])
 
   @@index([ownerId])
   @@index([assignerId])
@@ -306,6 +317,31 @@ model TaskStatusHistory {
 
   @@index([taskId])
   @@index([changedById])
+  @@index([createdAt])
+}
+
+// ============================================
+// 6B. TASK EDIT HISTORY (Field-Level Audit Trail)
+// ============================================
+
+model TaskEditHistory {
+  id     String @id @default(cuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  // Who edited the task
+  editedById String
+  editedBy   User   @relation(fields: [editedById], references: [id])
+
+  // What changed
+  fieldName String  // "title", "description", "priority", "size", "deadline", "kpiBucketId", etc.
+  oldValue  String? @db.Text
+  newValue  String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([editedById])
   @@index([createdAt])
 }
 
