@@ -13,41 +13,35 @@ import {
 } from "@dnd-kit/core";
 import { TaskStatus } from "@prisma/client";
 import { KanbanColumn } from "./kanban-column";
-import { TaskCard, TaskCardData } from "./task-card";
+import { TaskCard, TaskCardData, QuickActionContext } from "./task-card";
+import { TransitionReasonModal } from "./transition-reason-modal";
+import {
+  COLUMN_ORDER,
+  KANBAN_COLUMNS,
+  KanbanColumnId,
+  getColumnForStatus,
+  getDropTargetStatus,
+  isValidDropTarget,
+} from "@/lib/utils/kanban-columns";
 
 interface KanbanBoardProps {
   tasks: TaskCardData[];
-  onTaskMove?: (taskId: string, newStatus: TaskStatus) => Promise<void>;
+  onTaskMove?: (taskId: string, newStatus: TaskStatus, reason?: string) => Promise<void>;
   onTaskClick?: (task: TaskCardData) => void;
   isLoading?: boolean;
+  quickActionContext?: QuickActionContext;
 }
 
-// Define the display order of columns
-const COLUMN_ORDER: TaskStatus[] = [
-  TaskStatus.NEW,
-  TaskStatus.ACCEPTED,
-  TaskStatus.IN_PROGRESS,
-  TaskStatus.ON_HOLD,
-  TaskStatus.COMPLETED_PENDING_REVIEW,
-  TaskStatus.REOPENED,
-  TaskStatus.CLOSED_APPROVED,
-];
+interface PendingTransition {
+  taskId: string;
+  taskTitle: string;
+  fromStatus: TaskStatus;
+  toStatus: TaskStatus;
+}
 
-// Define valid status transitions for drag-drop
-// Note: ON_HOLD and REOPENED require reasons, so they can't be drag-drop targets
-// Users must use the task detail modal for those transitions
-const VALID_DROP_TARGETS: Record<TaskStatus, TaskStatus[]> = {
-  NEW: [TaskStatus.ACCEPTED, TaskStatus.IN_PROGRESS],
-  ACCEPTED: [TaskStatus.IN_PROGRESS],
-  IN_PROGRESS: [TaskStatus.COMPLETED_PENDING_REVIEW], // ON_HOLD requires reason
-  ON_HOLD: [TaskStatus.IN_PROGRESS],
-  COMPLETED_PENDING_REVIEW: [TaskStatus.CLOSED_APPROVED], // REOPENED requires reason
-  REOPENED: [TaskStatus.IN_PROGRESS],
-  CLOSED_APPROVED: [], // Terminal state
-};
-
-export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading, quickActionContext }: KanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<TaskCardData | null>(null);
+  const [pendingTransition, setPendingTransition] = useState<PendingTransition | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -57,11 +51,12 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading }: Kanba
     })
   );
 
-  // Group tasks by status
-  const tasksByStatus = COLUMN_ORDER.reduce((acc, status) => {
-    acc[status] = tasks.filter((task) => task.status === status);
+  // Group tasks by column (each column can have multiple statuses)
+  const tasksByColumn = COLUMN_ORDER.reduce((acc, columnId) => {
+    const columnStatuses = KANBAN_COLUMNS[columnId].statuses;
+    acc[columnId] = tasks.filter((task) => columnStatuses.includes(task.status));
     return acc;
-  }, {} as Record<TaskStatus, TaskCardData[]>);
+  }, {} as Record<KanbanColumnId, TaskCardData[]>);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const task = tasks.find((t) => t.id === event.active.id);
@@ -82,24 +77,85 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading }: Kanba
       if (!task) return;
 
       // Check if dropped on a column
-      const newStatus = over.id as TaskStatus;
-      if (!COLUMN_ORDER.includes(newStatus)) return;
+      const targetColumnId = over.id as KanbanColumnId;
+      if (!COLUMN_ORDER.includes(targetColumnId)) return;
 
-      // Skip if same status
-      if (task.status === newStatus) return;
+      // Skip if same column
+      const currentColumnId = getColumnForStatus(task.status);
+      if (currentColumnId === targetColumnId) return;
 
       // Check if this is a valid transition
-      const validTargets = VALID_DROP_TARGETS[task.status];
-      if (!validTargets.includes(newStatus)) {
-        console.warn(`Invalid transition from ${task.status} to ${newStatus}`);
+      if (!isValidDropTarget(task.status, targetColumnId)) {
+        console.warn(`Invalid transition from ${task.status} to column ${targetColumnId}`);
+        return;
+      }
+
+      // Get the target status for this column
+      const dropTarget = getDropTargetStatus(task.status, targetColumnId);
+      if (!dropTarget) return;
+
+      // If transition requires a reason, show the modal
+      if (dropTarget.requiresReason) {
+        setPendingTransition({
+          taskId,
+          taskTitle: task.title,
+          fromStatus: task.status,
+          toStatus: dropTarget.status,
+        });
         return;
       }
 
       // Perform the status change with error handling
       try {
-        await onTaskMove(taskId, newStatus);
+        await onTaskMove(taskId, dropTarget.status);
       } catch (error) {
         // Log for debugging - caller should handle user-facing errors
+        console.error("Task move failed:", error);
+      }
+    },
+    [tasks, onTaskMove]
+  );
+
+  const handleTransitionConfirm = useCallback(
+    async (reason: string) => {
+      if (!pendingTransition || !onTaskMove) return;
+
+      try {
+        await onTaskMove(pendingTransition.taskId, pendingTransition.toStatus, reason);
+      } catch (error) {
+        console.error("Task move failed:", error);
+      } finally {
+        setPendingTransition(null);
+      }
+    },
+    [pendingTransition, onTaskMove]
+  );
+
+  const handleTransitionCancel = useCallback(() => {
+    setPendingTransition(null);
+  }, []);
+
+  // Handle quick action from task card
+  const handleQuickAction = useCallback(
+    async (taskId: string, toStatus: TaskStatus, requiresReason: boolean) => {
+      if (!onTaskMove) return;
+
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
+
+      if (requiresReason) {
+        setPendingTransition({
+          taskId,
+          taskTitle: task.title,
+          fromStatus: task.status,
+          toStatus,
+        });
+        return;
+      }
+
+      try {
+        await onTaskMove(taskId, toStatus);
+      } catch (error) {
         console.error("Task move failed:", error);
       }
     },
@@ -109,9 +165,9 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading }: Kanba
   if (isLoading) {
     return (
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {COLUMN_ORDER.map((status) => (
+        {COLUMN_ORDER.map((columnId) => (
           <div
-            key={status}
+            key={columnId}
             className="min-w-[280px] max-w-[320px] rounded-lg bg-gray-100 animate-pulse h-[400px]"
           />
         ))}
@@ -120,28 +176,42 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading }: Kanba
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {COLUMN_ORDER.map((status) => (
-          <KanbanColumn
-            key={status}
-            status={status}
-            tasks={tasksByStatus[status] || []}
-            onTaskClick={onTaskClick}
-          />
-        ))}
-      </div>
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {COLUMN_ORDER.map((columnId) => (
+            <KanbanColumn
+              key={columnId}
+              columnId={columnId}
+              tasks={tasksByColumn[columnId] || []}
+              onTaskClick={onTaskClick}
+              quickActionContext={quickActionContext}
+              onQuickAction={handleQuickAction}
+            />
+          ))}
+        </div>
 
-      <DragOverlay>
-        {activeTask ? (
-          <TaskCard task={activeTask} isDragging />
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay>
+          {activeTask ? (
+            <TaskCard task={activeTask} isDragging />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+
+      {/* Transition Reason Modal */}
+      <TransitionReasonModal
+        open={!!pendingTransition}
+        onOpenChange={(open) => !open && handleTransitionCancel()}
+        taskTitle={pendingTransition?.taskTitle || ""}
+        toStatus={pendingTransition?.toStatus || TaskStatus.ON_HOLD}
+        onConfirm={handleTransitionConfirm}
+        onCancel={handleTransitionCancel}
+      />
+    </>
   );
 }

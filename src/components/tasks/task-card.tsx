@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { TaskStatus, TaskPriority, TaskSize } from "@prisma/client";
-import { Calendar, Clock, MessageSquare, Paperclip, User } from "lucide-react";
+import { TaskStatus, TaskPriority, TaskSize, Role } from "@prisma/client";
+import { Calendar, Clock, MessageSquare, Paperclip, User, Pause, RotateCcw, AlertCircle } from "lucide-react";
 import { getStatusColor } from "@/lib/utils/task-state-machine";
 import { cn } from "@/lib/utils";
+import { getStatusBadge } from "@/lib/utils/kanban-columns";
+import { QuickActions } from "./quick-actions";
 
 export interface TaskCardData {
   id: string;
@@ -31,10 +34,18 @@ export interface TaskCardData {
   };
 }
 
+export interface QuickActionContext {
+  currentUserId: string;
+  currentUserRole: Role;
+  isManagerOfOwner: boolean;
+}
+
 interface TaskCardProps {
   task: TaskCardData;
   onClick?: (task: TaskCardData) => void;
   isDragging?: boolean;
+  quickActionContext?: QuickActionContext;
+  onQuickAction?: (taskId: string, toStatus: TaskStatus, requiresReason: boolean) => void;
 }
 
 const priorityConfig: Record<TaskPriority, { label: string; color: string }> = {
@@ -73,7 +84,8 @@ function formatDeadline(deadline: string | Date): { text: string; isOverdue: boo
   }
 }
 
-export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
+export function TaskCard({ task, onClick, isDragging, quickActionContext, onQuickAction }: TaskCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const {
     attributes,
     listeners,
@@ -92,6 +104,14 @@ export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
   const size = sizeConfig[task.size];
   const deadline = formatDeadline(task.deadline);
   const statusColors = getStatusColor(task.status);
+  const statusBadge = getStatusBadge(task.status);
+
+  const showQuickActions = isHovered && quickActionContext && onQuickAction && !isDragging && !isSortableDragging;
+  const isOwner = quickActionContext?.currentUserId === task.owner.id;
+
+  const handleQuickAction = (toStatus: TaskStatus, requiresReason: boolean) => {
+    onQuickAction?.(task.id, toStatus, requiresReason);
+  };
 
   return (
     <div
@@ -101,12 +121,38 @@ export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
       {...listeners}
       className={cn(
         "bg-white rounded-lg border p-3 cursor-grab active:cursor-grabbing",
-        "hover:shadow-md transition-shadow",
+        "hover:shadow-md transition-shadow relative group",
         (isDragging || isSortableDragging) && "opacity-50 shadow-lg",
         statusColors.border
       )}
       onClick={() => onClick?.(task)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Status Badges - On Hold, Reopened, Overdue */}
+      {(statusBadge || deadline.isOverdue) && (
+        <div className="flex items-center gap-1.5 mb-2">
+          {statusBadge?.variant === "warning" && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
+              <Pause className="w-3 h-3" />
+              {statusBadge.label}
+            </span>
+          )}
+          {statusBadge?.variant === "danger" && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 border border-red-300">
+              <RotateCcw className="w-3 h-3" />
+              {statusBadge.label}
+            </span>
+          )}
+          {deadline.isOverdue && task.status !== TaskStatus.CLOSED_APPROVED && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 border border-red-300 animate-pulse">
+              <AlertCircle className="w-3 h-3" />
+              Overdue
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Priority & Size Badges */}
       <div className="flex items-center gap-1.5 mb-2">
         <span className={cn("px-1.5 py-0.5 rounded text-xs font-semibold", priority.color)}>
@@ -182,6 +228,18 @@ export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
         <span className="text-xs text-gray-600">
           {task.owner.firstName} {task.owner.lastName}
         </span>
+
+        {/* Quick Actions (on hover) */}
+        {showQuickActions && quickActionContext && (
+          <QuickActions
+            currentStatus={task.status}
+            userRole={quickActionContext.currentUserRole}
+            isOwner={isOwner}
+            isManager={quickActionContext.isManagerOfOwner}
+            onAction={handleQuickAction}
+            className="ml-auto"
+          />
+        )}
       </div>
     </div>
   );

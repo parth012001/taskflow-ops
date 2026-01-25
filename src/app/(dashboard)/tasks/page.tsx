@@ -3,14 +3,19 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { TaskStatus, Role } from "@prisma/client";
-import { Plus, Filter, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KanbanBoard } from "@/components/tasks/kanban-board";
 import { CreateTaskForm, AssignableUser } from "@/components/tasks/create-task-form";
 import { TaskDetailModal } from "@/components/tasks/task-detail-modal";
-import { TaskCardData } from "@/components/tasks/task-card";
+import { TaskCardData, QuickActionContext } from "@/components/tasks/task-card";
+import { ViewTabs, ViewMode } from "@/components/tasks/view-tabs";
+import { FilterBar } from "@/components/tasks/filter-bar";
+import { ReviewQueueBanner } from "@/components/tasks/review-queue-banner";
+import { useTaskFilters } from "@/hooks/use-task-filters";
+import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { CreateTaskInput } from "@/lib/validations/task";
 
 interface KpiBucket {
@@ -26,15 +31,51 @@ export default function TasksPage() {
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("my");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null);
+  const [pendingReviewCount, setPendingReviewCount] = useState(0);
   const isInitialMount = useRef(true);
 
+  const userRole = session?.user?.role as Role | undefined;
+  const userId = session?.user?.id;
+  const showReviewBanner = userRole && isManagerOrAbove(userRole);
+
+  // Quick action context for task cards
+  const quickActionContext: QuickActionContext | undefined =
+    userId && userRole
+      ? {
+          currentUserId: userId,
+          currentUserRole: userRole,
+          isManagerOfOwner: isManagerOrAbove(userRole), // Simplified: managers can approve team tasks
+        }
+      : undefined;
+
+  // Filter state
+  const {
+    filters,
+    setStatuses,
+    toggleStatus,
+    togglePriority,
+    setKpiBucketId,
+    setDatePreset,
+    clearFilters,
+    hasActiveFilters,
+    toQueryParams,
+  } = useTaskFilters();
+
   // Fetch tasks - accepts optional search param to avoid stale closure
-  const fetchTasks = useCallback(async (search?: string) => {
+  const fetchTasks = useCallback(async (search?: string, view?: ViewMode, filterParams?: URLSearchParams) => {
     try {
-      const params = new URLSearchParams();
+      const params = filterParams ?? toQueryParams();
       if (search) params.set("search", search);
+
+      // Apply view mode filter
+      const currentView = view ?? viewMode;
+      if (currentView === "my" && session?.user?.id) {
+        params.set("ownerId", session.user.id);
+      }
+      // 'team' and 'all' views - API handles based on user role
 
       const response = await fetch(`/api/tasks?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch tasks");
@@ -46,7 +87,7 @@ export default function TasksPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [viewMode, session?.user?.id, toQueryParams]);
 
   // Fetch KPI buckets
   const fetchKpiBuckets = useCallback(async () => {
@@ -74,12 +115,31 @@ export default function TasksPage() {
     }
   }, []);
 
+  // Fetch pending review count for managers+
+  const fetchPendingReviewCount = useCallback(async () => {
+    if (!showReviewBanner) return;
+
+    try {
+      const params = new URLSearchParams();
+      params.set("status", TaskStatus.COMPLETED_PENDING_REVIEW);
+
+      const response = await fetch(`/api/tasks?${params.toString()}`);
+      if (!response.ok) return;
+
+      const data = await response.json();
+      setPendingReviewCount(data.tasks?.length || 0);
+    } catch (error) {
+      console.error("Error fetching pending review count:", error);
+    }
+  }, [showReviewBanner]);
+
   // Initial load - runs once on mount
   useEffect(() => {
     fetchTasks();
     fetchKpiBuckets();
     fetchAssignableUsers();
-  }, [fetchTasks, fetchKpiBuckets, fetchAssignableUsers]);
+    fetchPendingReviewCount();
+  }, [fetchTasks, fetchKpiBuckets, fetchAssignableUsers, fetchPendingReviewCount]);
 
   // Debounced search - only runs on search query changes, not initial mount
   useEffect(() => {
@@ -93,6 +153,28 @@ export default function TasksPage() {
     }, 300);
     return () => clearTimeout(timeout);
   }, [searchQuery, fetchTasks]);
+
+  // Handle view mode changes
+  const handleViewChange = useCallback((view: ViewMode) => {
+    setViewMode(view);
+    setIsLoading(true);
+    fetchTasks(searchQuery, view);
+  }, [fetchTasks, searchQuery]);
+
+  // Refetch when filters change
+  useEffect(() => {
+    if (isInitialMount.current) return;
+    fetchTasks(searchQuery);
+  }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle review banner click - filter to pending review tasks
+  const handleViewPendingReviews = useCallback(() => {
+    // Switch to team view and filter to pending review status
+    if (viewMode === "my") {
+      setViewMode("team");
+    }
+    setStatuses([TaskStatus.COMPLETED_PENDING_REVIEW]);
+  }, [viewMode, setStatuses]);
 
   // Handle task creation
   const handleCreateTask = async (data: CreateTaskInput) => {
@@ -117,7 +199,7 @@ export default function TasksPage() {
   };
 
   // Handle task status change (drag-drop)
-  const handleTaskMove = async (taskId: string, newStatus: TaskStatus) => {
+  const handleTaskMove = async (taskId: string, newStatus: TaskStatus, reason?: string) => {
     // Optimistic update
     setTasks((prev) =>
       prev.map((task) =>
@@ -126,10 +208,18 @@ export default function TasksPage() {
     );
 
     try {
+      // Build request body with optional reason
+      const body: Record<string, string> = { toStatus: newStatus };
+      if (newStatus === TaskStatus.ON_HOLD && reason) {
+        body.onHoldReason = reason;
+      } else if (newStatus === TaskStatus.REOPENED && reason) {
+        body.reason = reason;
+      }
+
       const response = await fetch(`/api/tasks/${taskId}/transition`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toStatus: newStatus }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -171,22 +261,45 @@ export default function TasksPage() {
         </Button>
       </div>
 
-      {/* Search & Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Button variant="outline" size="sm">
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
+      {/* View Tabs */}
+      {userRole && (
+        <ViewTabs
+          role={userRole}
+          activeView={viewMode}
+          onViewChange={handleViewChange}
+        />
+      )}
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Input
+          placeholder="Search tasks..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
       </div>
+
+      {/* Filters */}
+      <FilterBar
+        filters={filters}
+        kpiBuckets={kpiBuckets}
+        onStatusToggle={toggleStatus}
+        onPriorityToggle={togglePriority}
+        onKpiBucketChange={setKpiBucketId}
+        onDatePresetChange={setDatePreset}
+        onClearFilters={clearFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
+
+      {/* Review Queue Banner (Managers+) */}
+      {showReviewBanner && (
+        <ReviewQueueBanner
+          pendingCount={pendingReviewCount}
+          onViewClick={handleViewPendingReviews}
+        />
+      )}
 
       {/* Kanban Board */}
       <KanbanBoard
@@ -194,6 +307,7 @@ export default function TasksPage() {
         onTaskMove={handleTaskMove}
         onTaskClick={handleTaskClick}
         isLoading={isLoading}
+        quickActionContext={quickActionContext}
       />
 
       {/* Create Task Form */}
