@@ -76,9 +76,17 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading, quickAc
       const task = tasks.find((t) => t.id === taskId);
       if (!task) return;
 
-      // Check if dropped on a column
-      const targetColumnId = over.id as KanbanColumnId;
-      if (!COLUMN_ORDER.includes(targetColumnId)) return;
+      // Determine target column - could be a column ID or a task ID
+      let targetColumnId: KanbanColumnId;
+      if (COLUMN_ORDER.includes(over.id as KanbanColumnId)) {
+        // Dropped directly on a column
+        targetColumnId = over.id as KanbanColumnId;
+      } else {
+        // Dropped on a task card - find which column that task belongs to
+        const overTask = tasks.find((t) => t.id === over.id);
+        if (!overTask) return;
+        targetColumnId = getColumnForStatus(overTask.status);
+      }
 
       // Skip if same column
       const currentColumnId = getColumnForStatus(task.status);
