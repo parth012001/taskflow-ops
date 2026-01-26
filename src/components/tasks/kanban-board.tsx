@@ -93,13 +93,13 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading, quickAc
       if (currentColumnId === targetColumnId) return;
 
       // Check if this is a valid transition
-      if (!isValidDropTarget(task.status, targetColumnId)) {
+      if (!isValidDropTarget(task.status, targetColumnId, task.requiresReview)) {
         console.warn(`Invalid transition from ${task.status} to column ${targetColumnId}`);
         return;
       }
 
       // Get the target status for this column
-      const dropTarget = getDropTargetStatus(task.status, targetColumnId);
+      const dropTarget = getDropTargetStatus(task.status, targetColumnId, task.requiresReview);
       if (!dropTarget) return;
 
       // If transition requires a reason, show the modal

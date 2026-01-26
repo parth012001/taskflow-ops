@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KanbanBoard } from "@/components/tasks/kanban-board";
-import { CreateTaskForm, AssignableUser } from "@/components/tasks/create-task-form";
+import { CreateTaskForm, AssignableUser, ReviewerUser } from "@/components/tasks/create-task-form";
 import { TaskDetailModal } from "@/components/tasks/task-detail-modal";
 import { TaskCardData, QuickActionContext } from "@/components/tasks/task-card";
 import { ViewTabs, ViewMode } from "@/components/tasks/view-tabs";
@@ -29,6 +29,7 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<TaskCardData[]>([]);
   const [kpiBuckets, setKpiBuckets] = useState<KpiBucket[]>([]);
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
+  const [availableReviewers, setAvailableReviewers] = useState<ReviewerUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("my");
@@ -115,6 +116,21 @@ export default function TasksPage() {
     }
   }, []);
 
+  // Fetch available reviewers (for managers to pick a reviewer)
+  const fetchAvailableReviewers = useCallback(async () => {
+    if (userRole !== "MANAGER") return;
+
+    try {
+      const response = await fetch("/api/tasks/reviewers");
+      if (!response.ok) return;
+
+      const data = await response.json();
+      setAvailableReviewers(data);
+    } catch (error) {
+      console.error("Error fetching reviewers:", error);
+    }
+  }, [userRole]);
+
   // Fetch pending review count for managers+
   const fetchPendingReviewCount = useCallback(async () => {
     if (!showReviewBanner) return;
@@ -138,8 +154,9 @@ export default function TasksPage() {
     fetchTasks();
     fetchKpiBuckets();
     fetchAssignableUsers();
+    fetchAvailableReviewers();
     fetchPendingReviewCount();
-  }, [fetchTasks, fetchKpiBuckets, fetchAssignableUsers, fetchPendingReviewCount]);
+  }, [fetchTasks, fetchKpiBuckets, fetchAssignableUsers, fetchAvailableReviewers, fetchPendingReviewCount]);
 
   // Debounced search - only runs on search query changes, not initial mount
   useEffect(() => {
@@ -317,6 +334,8 @@ export default function TasksPage() {
         onSubmit={handleCreateTask}
         kpiBuckets={kpiBuckets}
         assignableUsers={assignableUsers}
+        currentUserRole={userRole}
+        availableReviewers={availableReviewers}
       />
 
       {/* Task Detail Modal */}

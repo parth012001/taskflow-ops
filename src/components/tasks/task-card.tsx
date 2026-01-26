@@ -19,6 +19,7 @@ export interface TaskCardData {
   size: TaskSize;
   deadline: string | Date;
   estimatedMinutes: number;
+  requiresReview: boolean;
   owner: {
     id: string;
     firstName: string;
@@ -236,6 +237,7 @@ export function TaskCard({ task, onClick, isDragging, quickActionContext, onQuic
             userRole={quickActionContext.currentUserRole}
             isOwner={isOwner}
             isManager={quickActionContext.isManagerOfOwner}
+            requiresReview={task.requiresReview}
             onAction={handleQuickAction}
             className="ml-auto"
           />

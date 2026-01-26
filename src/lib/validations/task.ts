@@ -35,6 +35,8 @@ export const createTaskSchema = z.object({
   deadline: datetimeLocalSchema,
   startDate: datetimeLocalSchema.optional(),
   assigneeId: z.string().optional(), // For managers assigning to subordinates
+  requiresReview: z.boolean().optional(),
+  reviewerId: z.string().optional(),
 });
 
 export const updateTaskSchema = z.object({

@@ -142,7 +142,7 @@ export interface DropTarget {
  * Get valid drop targets from a source status
  * Returns statuses that the task can transition to via drag-drop
  */
-export function getValidDropTargets(fromStatus: TaskStatus): DropTarget[] {
+export function getValidDropTargets(fromStatus: TaskStatus, requiresReview: boolean = true): DropTarget[] {
   switch (fromStatus) {
     case TaskStatus.NEW:
       return [
@@ -154,9 +154,15 @@ export function getValidDropTargets(fromStatus: TaskStatus): DropTarget[] {
         { status: TaskStatus.IN_PROGRESS, requiresReason: false },
       ];
     case TaskStatus.IN_PROGRESS:
+      if (requiresReview) {
+        return [
+          { status: TaskStatus.ON_HOLD, requiresReason: true },
+          { status: TaskStatus.COMPLETED_PENDING_REVIEW, requiresReason: false },
+        ];
+      }
       return [
         { status: TaskStatus.ON_HOLD, requiresReason: true },
-        { status: TaskStatus.COMPLETED_PENDING_REVIEW, requiresReason: false },
+        { status: TaskStatus.CLOSED_APPROVED, requiresReason: false },
       ];
     case TaskStatus.ON_HOLD:
       return [
@@ -183,9 +189,10 @@ export function getValidDropTargets(fromStatus: TaskStatus): DropTarget[] {
  */
 export function isValidDropTarget(
   fromStatus: TaskStatus,
-  toColumnId: KanbanColumnId
+  toColumnId: KanbanColumnId,
+  requiresReview: boolean = true
 ): boolean {
-  const validTargets = getValidDropTargets(fromStatus);
+  const validTargets = getValidDropTargets(fromStatus, requiresReview);
   const columnStatuses = KANBAN_COLUMNS[toColumnId].statuses;
 
   return validTargets.some((target) => columnStatuses.includes(target.status));
@@ -197,9 +204,10 @@ export function isValidDropTarget(
  */
 export function getDropTargetStatus(
   fromStatus: TaskStatus,
-  toColumnId: KanbanColumnId
+  toColumnId: KanbanColumnId,
+  requiresReview: boolean = true
 ): DropTarget | null {
-  const validTargets = getValidDropTargets(fromStatus);
+  const validTargets = getValidDropTargets(fromStatus, requiresReview);
   const columnStatuses = KANBAN_COLUMNS[toColumnId].statuses;
 
   // Find the first valid target status that belongs to the destination column

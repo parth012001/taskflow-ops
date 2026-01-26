@@ -27,6 +27,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         assigner: {
           select: { id: true, firstName: true, lastName: true },
         },
+        reviewer: {
+          select: { id: true, firstName: true, lastName: true },
+        },
         kpiBucket: {
           select: { id: true, name: true, description: true },
         },

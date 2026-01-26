@@ -17,6 +17,7 @@ interface QuickActionsProps {
   userRole: Role;
   isOwner: boolean;
   isManager: boolean;
+  requiresReview?: boolean;
   onAction: (toStatus: TaskStatus, requiresReason: boolean) => void;
   className?: string;
 }
@@ -25,7 +26,8 @@ function getQuickActions(
   status: TaskStatus,
   userRole: Role,
   isOwner: boolean,
-  isManager: boolean
+  isManager: boolean,
+  requiresReview: boolean = true
 ): QuickAction[] {
   const canApprove =
     isManager && ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"].includes(userRole);
@@ -62,7 +64,7 @@ function getQuickActions(
         {
           icon: CheckCircle,
           label: "Complete",
-          toStatus: TaskStatus.COMPLETED_PENDING_REVIEW,
+          toStatus: requiresReview ? TaskStatus.COMPLETED_PENDING_REVIEW : TaskStatus.CLOSED_APPROVED,
           requiresReason: false,
           variant: "success",
         },
@@ -126,10 +128,11 @@ export function QuickActions({
   userRole,
   isOwner,
   isManager,
+  requiresReview = true,
   onAction,
   className,
 }: QuickActionsProps) {
-  const actions = getQuickActions(currentStatus, userRole, isOwner, isManager);
+  const actions = getQuickActions(currentStatus, userRole, isOwner, isManager, requiresReview);
 
   if (actions.length === 0) {
     return null;

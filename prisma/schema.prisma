@@ -154,6 +154,9 @@ model User {
   // Notifications for this user
   notifications Notification[]
 
+  // Tasks to review
+  tasksToReview Task[] @relation("TaskReviewer")
+
   // Escalations directed to this user
   escalationsReceived EscalationLog[]
 
@@ -264,6 +267,11 @@ model Task {
   // Rejection/Reopen info
   rejectionReason String? @db.Text
 
+  // Review configuration
+  requiresReview  Boolean  @default(true)
+  reviewerId      String?
+  reviewer        User?    @relation("TaskReviewer", fields: [reviewerId], references: [id])
+
   // Relationships
   statusHistory    TaskStatusHistory[]
   comments         TaskComment[]
@@ -286,6 +294,7 @@ model Task {
   @@index([priority])
   @@index([deadline])
   @@index([kpiBucketId])
+  @@index([reviewerId])
   @@index([ownerId, status])
   @@index([ownerId, deadline])
   @@index([status, deadline])

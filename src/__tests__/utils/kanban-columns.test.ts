@@ -131,10 +131,19 @@ describe("Kanban Columns Utility", () => {
       expect(targets).toContainEqual({ status: TaskStatus.IN_PROGRESS, requiresReason: false });
     });
 
-    it("should return valid targets for IN_PROGRESS status", () => {
+    it("should return valid targets for IN_PROGRESS status (review ON, default)", () => {
       const targets = getValidDropTargets(TaskStatus.IN_PROGRESS);
       expect(targets).toContainEqual({ status: TaskStatus.ON_HOLD, requiresReason: true });
       expect(targets).toContainEqual({ status: TaskStatus.COMPLETED_PENDING_REVIEW, requiresReason: false });
+    });
+
+    it("should return CLOSED_APPROVED for IN_PROGRESS when requiresReview=false", () => {
+      const targets = getValidDropTargets(TaskStatus.IN_PROGRESS, false);
+      expect(targets).toContainEqual({ status: TaskStatus.ON_HOLD, requiresReason: true });
+      expect(targets).toContainEqual({ status: TaskStatus.CLOSED_APPROVED, requiresReason: false });
+      expect(targets).not.toContainEqual(
+        expect.objectContaining({ status: TaskStatus.COMPLETED_PENDING_REVIEW })
+      );
     });
 
     it("should return valid targets for COMPLETED_PENDING_REVIEW status", () => {
@@ -159,6 +168,14 @@ describe("Kanban Columns Utility", () => {
     it("should return false for invalid transitions", () => {
       expect(isValidDropTarget(TaskStatus.NEW, "DONE")).toBe(false);
       expect(isValidDropTarget(TaskStatus.CLOSED_APPROVED, "TODO")).toBe(false);
+    });
+
+    it("should allow IN_PROGRESS to DONE when requiresReview=false", () => {
+      expect(isValidDropTarget(TaskStatus.IN_PROGRESS, "DONE", false)).toBe(true);
+    });
+
+    it("should not allow IN_PROGRESS to IN_REVIEW when requiresReview=false", () => {
+      expect(isValidDropTarget(TaskStatus.IN_PROGRESS, "IN_REVIEW", false)).toBe(false);
     });
   });
 

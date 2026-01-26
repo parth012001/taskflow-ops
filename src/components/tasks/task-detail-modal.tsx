@@ -127,6 +127,9 @@ interface TaskDetail {
   rejectionReason?: string | null;
   isCarriedForward: boolean;
   carryForwardCount: number;
+  requiresReview: boolean;
+  reviewerId?: string | null;
+  reviewer?: { id: string; firstName: string; lastName: string } | null;
   owner: TaskOwner;
   assigner?: { id: string; firstName: string; lastName: string } | null;
   kpiBucket: { id: string; name: string; description?: string | null };
@@ -218,6 +221,8 @@ export function TaskDetailModal({
       isManager: task.owner.managerId === session.user.id,
       reason: transitionReason,
       onHoldReason: transitionReason,
+      requiresReview: task.requiresReview,
+      reviewerId: task.reviewerId,
     };
 
     return getValidTransitions(task.status, context);
@@ -423,6 +428,18 @@ export function TaskDetailModal({
                           </span>
                         </div>
                       )}
+
+                      <div className="flex items-center gap-2 text-sm">
+                        <User className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-500">Review:</span>
+                        <span className="font-medium">
+                          {task.requiresReview
+                            ? task.reviewer
+                              ? `${task.reviewer.firstName} ${task.reviewer.lastName}`
+                              : "Manager"
+                            : "Not required"}
+                        </span>
+                      </div>
 
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="w-4 h-4 text-gray-400" />

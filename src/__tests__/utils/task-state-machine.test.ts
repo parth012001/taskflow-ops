@@ -14,6 +14,7 @@ describe("Task State Machine", () => {
     currentUserId: "owner-1",
     currentUserRole: Role.EMPLOYEE,
     isManager: false,
+    requiresReview: true,
   };
 
   describe("validateTransition", () => {
@@ -89,13 +90,54 @@ describe("Task State Machine", () => {
     });
 
     describe("IN_PROGRESS → COMPLETED_PENDING_REVIEW", () => {
-      it("should allow owner to submit for review", () => {
+      it("should allow owner to submit for review when requiresReview is true", () => {
         const result = validateTransition(
           TaskStatus.IN_PROGRESS,
           TaskStatus.COMPLETED_PENDING_REVIEW,
-          baseContext
+          { ...baseContext, requiresReview: true }
         );
         expect(result.valid).toBe(true);
+      });
+
+      it("should reject when requiresReview is false", () => {
+        const result = validateTransition(
+          TaskStatus.IN_PROGRESS,
+          TaskStatus.COMPLETED_PENDING_REVIEW,
+          { ...baseContext, requiresReview: false }
+        );
+        expect(result.valid).toBe(false);
+        expect(result.error).toBe("This task does not require review. Complete it directly.");
+      });
+    });
+
+    describe("IN_PROGRESS → CLOSED_APPROVED (skip review)", () => {
+      it("should allow owner to complete directly when requiresReview is false", () => {
+        const result = validateTransition(
+          TaskStatus.IN_PROGRESS,
+          TaskStatus.CLOSED_APPROVED,
+          { ...baseContext, requiresReview: false }
+        );
+        expect(result.valid).toBe(true);
+      });
+
+      it("should reject when requiresReview is true", () => {
+        const result = validateTransition(
+          TaskStatus.IN_PROGRESS,
+          TaskStatus.CLOSED_APPROVED,
+          { ...baseContext, requiresReview: true }
+        );
+        expect(result.valid).toBe(false);
+        expect(result.error).toBe("This task requires review. Submit for review instead.");
+      });
+
+      it("should reject non-owner even when requiresReview is false", () => {
+        const result = validateTransition(
+          TaskStatus.IN_PROGRESS,
+          TaskStatus.CLOSED_APPROVED,
+          { ...baseContext, requiresReview: false, currentUserId: "other-user" }
+        );
+        expect(result.valid).toBe(false);
+        expect(result.error).toBe("Only task owner can complete the task");
       });
     });
 
@@ -207,13 +249,26 @@ describe("Task State Machine", () => {
       expect(transitions).not.toContain(TaskStatus.CLOSED_APPROVED);
     });
 
-    it("should return valid transitions for IN_PROGRESS with reason", () => {
+    it("should return valid transitions for IN_PROGRESS with reason (review ON)", () => {
       const transitions = getValidTransitions(TaskStatus.IN_PROGRESS, {
         ...baseContext,
+        requiresReview: true,
         onHoldReason: "Valid reason for holding",
       });
       expect(transitions).toContain(TaskStatus.ON_HOLD);
       expect(transitions).toContain(TaskStatus.COMPLETED_PENDING_REVIEW);
+      expect(transitions).not.toContain(TaskStatus.CLOSED_APPROVED);
+    });
+
+    it("should return CLOSED_APPROVED for IN_PROGRESS when review is OFF", () => {
+      const transitions = getValidTransitions(TaskStatus.IN_PROGRESS, {
+        ...baseContext,
+        requiresReview: false,
+        onHoldReason: "Valid reason for holding",
+      });
+      expect(transitions).toContain(TaskStatus.ON_HOLD);
+      expect(transitions).toContain(TaskStatus.CLOSED_APPROVED);
+      expect(transitions).not.toContain(TaskStatus.COMPLETED_PENDING_REVIEW);
     });
 
     it("should return approval options for manager reviewing", () => {

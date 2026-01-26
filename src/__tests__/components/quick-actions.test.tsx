@@ -9,6 +9,7 @@ describe("QuickActions", () => {
     userRole: Role.EMPLOYEE,
     isOwner: true,
     isManager: false,
+    requiresReview: true,
     onAction: jest.fn(),
   };
 
@@ -34,6 +35,38 @@ describe("QuickActions", () => {
 
       expect(screen.getByTitle("Complete")).toBeInTheDocument();
       expect(screen.getByTitle("Pause")).toBeInTheDocument();
+    });
+
+    it("should target CLOSED_APPROVED for Complete when requiresReview is false", async () => {
+      const user = userEvent.setup();
+      const onAction = jest.fn();
+      render(
+        <QuickActions
+          {...defaultProps}
+          currentStatus={TaskStatus.IN_PROGRESS}
+          requiresReview={false}
+          onAction={onAction}
+        />
+      );
+
+      await user.click(screen.getByTitle("Complete"));
+      expect(onAction).toHaveBeenCalledWith(TaskStatus.CLOSED_APPROVED, false);
+    });
+
+    it("should target COMPLETED_PENDING_REVIEW for Complete when requiresReview is true", async () => {
+      const user = userEvent.setup();
+      const onAction = jest.fn();
+      render(
+        <QuickActions
+          {...defaultProps}
+          currentStatus={TaskStatus.IN_PROGRESS}
+          requiresReview={true}
+          onAction={onAction}
+        />
+      );
+
+      await user.click(screen.getByTitle("Complete"));
+      expect(onAction).toHaveBeenCalledWith(TaskStatus.COMPLETED_PENDING_REVIEW, false);
     });
 
     it("should show Resume action for ON_HOLD status when owner", () => {

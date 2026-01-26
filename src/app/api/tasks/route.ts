@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { createTaskSchema, taskQuerySchema } from "@/lib/validations/task";
 import { canViewTask, canAssignTasks } from "@/lib/utils/permissions";
-import { Prisma, TaskStatus, AssignedByType } from "@prisma/client";
+import { Prisma, TaskStatus, AssignedByType, Role } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -145,7 +145,8 @@ export async function POST(request: NextRequest) {
 
     const {
       title, description, priority, size, kpiBucketId,
-      estimatedMinutes, deadline, startDate, assigneeId
+      estimatedMinutes, deadline, startDate, assigneeId,
+      requiresReview: reqReview, reviewerId: reqReviewerId,
     } = validatedData.data;
 
     // Verify KPI bucket exists and is active
@@ -215,6 +216,49 @@ export async function POST(request: NextRequest) {
         : AssignedByType.LEADERSHIP;
     }
 
+    // Determine review settings based on role
+    let requiresReview = reqReview ?? true;
+    let reviewerId: string | null = reqReviewerId ?? null;
+    const userRole = session.user.role;
+
+    if (userRole === Role.DEPARTMENT_HEAD || userRole === Role.ADMIN) {
+      // Dept heads and admins always skip review
+      requiresReview = false;
+      reviewerId = null;
+    } else if (requiresReview) {
+      if (userRole === Role.MANAGER) {
+        // Manager with review ON: validate reviewer exists and has correct role
+        if (reviewerId) {
+          const reviewer = await prisma.user.findFirst({
+            where: {
+              id: reviewerId,
+              isActive: true,
+              role: { in: [Role.DEPARTMENT_HEAD, Role.ADMIN] },
+              deletedAt: null,
+            },
+          });
+          if (!reviewer) {
+            return NextResponse.json(
+              { error: "Selected reviewer not found or does not have the required role" },
+              { status: 400 }
+            );
+          }
+        }
+        // reviewerId is optional for managers - if not set, fallback to managerId at review time
+      } else if (userRole === Role.EMPLOYEE) {
+        // Employee with review ON: auto-set reviewer to their manager
+        const taskOwnerId = ownerId; // could be self or assigned user
+        const taskOwner = await prisma.user.findUnique({
+          where: { id: taskOwnerId },
+          select: { managerId: true },
+        });
+        reviewerId = taskOwner?.managerId ?? null;
+      }
+    } else {
+      // Review OFF
+      reviewerId = null;
+    }
+
     // Create task
     const task = await prisma.task.create({
       data: {
@@ -229,6 +273,8 @@ export async function POST(request: NextRequest) {
         ownerId,
         assignerId,
         assignedByType,
+        requiresReview,
+        reviewerId,
         status: TaskStatus.NEW,
       },
       include: {

@@ -29,6 +29,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         owner: {
           select: { id: true, managerId: true },
         },
+        reviewer: {
+          select: { id: true, firstName: true, lastName: true },
+        },
       },
     });
 
@@ -59,6 +62,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       isManager,
       reason,
       onHoldReason,
+      requiresReview: task.requiresReview,
+      reviewerId: task.reviewerId,
     };
 
     // Validate the transition using state machine
@@ -142,20 +147,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       });
 
       // Create notification for relevant parties
-      if (toStatus === TaskStatus.COMPLETED_PENDING_REVIEW && task.owner.managerId) {
-        await tx.notification.create({
-          data: {
-            userId: task.owner.managerId,
-            type: "TASK_PENDING_REVIEW",
-            title: "Task pending review",
-            message: `${session.user.firstName} ${session.user.lastName} submitted "${task.title}" for review`,
-            entityType: "Task",
-            entityId: taskId,
-          },
-        });
+      if (toStatus === TaskStatus.COMPLETED_PENDING_REVIEW) {
+        const reviewNotifyId = task.reviewerId ?? task.owner.managerId;
+        if (reviewNotifyId) {
+          await tx.notification.create({
+            data: {
+              userId: reviewNotifyId,
+              type: "TASK_PENDING_REVIEW",
+              title: "Task pending review",
+              message: `${session.user.firstName} ${session.user.lastName} submitted "${task.title}" for review`,
+              entityType: "Task",
+              entityId: taskId,
+            },
+          });
+        }
       }
 
-      if (toStatus === TaskStatus.CLOSED_APPROVED) {
+      // Only notify on approval when it came from review (not self-close)
+      if (toStatus === TaskStatus.CLOSED_APPROVED && task.status === TaskStatus.COMPLETED_PENDING_REVIEW) {
         await tx.notification.create({
           data: {
             userId: task.ownerId,

@@ -30,6 +30,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { Loader2, CalendarIcon, UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Role } from "@prisma/client";
@@ -48,12 +49,21 @@ export interface AssignableUser {
   role: Role;
 }
 
+export interface ReviewerUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: Role;
+}
+
 interface CreateTaskFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateTaskInput) => Promise<void>;
   kpiBuckets: KpiBucket[];
   assignableUsers?: AssignableUser[];
+  currentUserRole?: Role;
+  availableReviewers?: ReviewerUser[];
 }
 
 const priorityOptions = [
@@ -84,10 +94,15 @@ export function CreateTaskForm({
   onSubmit,
   kpiBuckets,
   assignableUsers = [],
+  currentUserRole,
+  availableReviewers = [],
 }: CreateTaskFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deadlineDate, setDeadlineDate] = useState<Date | undefined>(undefined);
   const [deadlineTime, setDeadlineTime] = useState("17:00");
+
+  const showReviewToggle = currentUserRole === Role.EMPLOYEE || currentUserRole === Role.MANAGER;
+  const skipReviewByDefault = currentUserRole === Role.DEPARTMENT_HEAD || currentUserRole === Role.ADMIN;
 
   const {
     register,
@@ -102,6 +117,7 @@ export function CreateTaskForm({
       priority: TaskPriority.NOT_URGENT_IMPORTANT,
       size: TaskSize.MEDIUM,
       estimatedMinutes: 60,
+      requiresReview: !skipReviewByDefault,
     },
   });
 
@@ -217,6 +233,60 @@ export function CreateTaskForm({
               <p className="text-xs text-muted-foreground">
                 Select a team member to assign this task to
               </p>
+            </div>
+          )}
+
+          {/* Requires Review Toggle */}
+          {showReviewToggle && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="requiresReview">Requires Review?</Label>
+                <Switch
+                  id="requiresReview"
+                  checked={watch("requiresReview") ?? true}
+                  onCheckedChange={(checked) => {
+                    setValue("requiresReview", checked);
+                    if (!checked) {
+                      setValue("reviewerId", undefined);
+                    }
+                  }}
+                />
+              </div>
+              {watch("requiresReview") && currentUserRole === Role.EMPLOYEE && (
+                <p className="text-xs text-muted-foreground">
+                  Your manager will review this task
+                </p>
+              )}
+              {watch("requiresReview") && currentUserRole === Role.MANAGER && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Select who should review this task
+                  </p>
+                  {availableReviewers.length > 0 && (
+                    <Select
+                      value={watch("reviewerId") || "auto"}
+                      onValueChange={(value) => setValue("reviewerId", value === "auto" ? undefined : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Auto (your manager)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto (your manager)</SelectItem>
+                        {availableReviewers.map((reviewer) => (
+                          <SelectItem key={reviewer.id} value={reviewer.id}>
+                            {reviewer.firstName} {reviewer.lastName} ({reviewer.role === Role.DEPARTMENT_HEAD ? "Dept Head" : "Admin"})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
+              {!watch("requiresReview") && (
+                <p className="text-xs text-muted-foreground">
+                  Task will go directly to Done when completed
+                </p>
+              )}
             </div>
           )}
 

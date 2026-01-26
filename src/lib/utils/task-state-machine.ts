@@ -7,6 +7,8 @@ export interface TransitionContext {
   isManager: boolean; // Is current user the task owner's manager
   reason?: string;
   onHoldReason?: string;
+  requiresReview?: boolean;
+  reviewerId?: string | null;
 }
 
 export interface ValidationResult {
@@ -97,20 +99,43 @@ const transitions: StatusTransition[] = [
     }),
   },
 
-  // IN_PROGRESS -> COMPLETED_PENDING_REVIEW
+  // IN_PROGRESS -> COMPLETED_PENDING_REVIEW (only when review is required)
   {
     from: TaskStatus.IN_PROGRESS,
     to: TaskStatus.COMPLETED_PENDING_REVIEW,
     allowedRoles: [Role.EMPLOYEE, Role.MANAGER, Role.DEPARTMENT_HEAD, Role.ADMIN],
     requiresReason: false,
     requiresManagerApproval: false,
-    validationFn: (ctx) => ({
-      valid: ctx.taskOwnerId === ctx.currentUserId,
-      error: "Only task owner can mark task for review",
-    }),
+    validationFn: (ctx) => {
+      if (ctx.taskOwnerId !== ctx.currentUserId) {
+        return { valid: false, error: "Only task owner can mark task for review" };
+      }
+      if (ctx.requiresReview === false) {
+        return { valid: false, error: "This task does not require review. Complete it directly." };
+      }
+      return { valid: true };
+    },
   },
 
-  // COMPLETED_PENDING_REVIEW -> CLOSED_APPROVED (Manager approval required)
+  // IN_PROGRESS -> CLOSED_APPROVED (skip review)
+  {
+    from: TaskStatus.IN_PROGRESS,
+    to: TaskStatus.CLOSED_APPROVED,
+    allowedRoles: [Role.EMPLOYEE, Role.MANAGER, Role.DEPARTMENT_HEAD, Role.ADMIN],
+    requiresReason: false,
+    requiresManagerApproval: false,
+    validationFn: (ctx) => {
+      if (ctx.taskOwnerId !== ctx.currentUserId) {
+        return { valid: false, error: "Only task owner can complete the task" };
+      }
+      if (ctx.requiresReview !== false) {
+        return { valid: false, error: "This task requires review. Submit for review instead." };
+      }
+      return { valid: true };
+    },
+  },
+
+  // COMPLETED_PENDING_REVIEW -> CLOSED_APPROVED (Manager/Reviewer approval required)
   {
     from: TaskStatus.COMPLETED_PENDING_REVIEW,
     to: TaskStatus.CLOSED_APPROVED,
@@ -121,7 +146,12 @@ const transitions: StatusTransition[] = [
       if (ctx.taskOwnerId === ctx.currentUserId) {
         return { valid: false, error: "Cannot approve your own task" };
       }
-      if (!ctx.isManager && ctx.currentUserRole === Role.MANAGER) {
+      if (ctx.reviewerId && ctx.currentUserId !== ctx.reviewerId) {
+        if (ctx.currentUserRole !== Role.DEPARTMENT_HEAD && ctx.currentUserRole !== Role.ADMIN) {
+          return { valid: false, error: "Only the designated reviewer can approve this task" };
+        }
+      }
+      if (!ctx.reviewerId && !ctx.isManager && ctx.currentUserRole === Role.MANAGER) {
         return {
           valid: false,
           error: "Only the employee's manager can approve",
@@ -131,7 +161,7 @@ const transitions: StatusTransition[] = [
     },
   },
 
-  // COMPLETED_PENDING_REVIEW -> REOPENED (Manager rejects with reason)
+  // COMPLETED_PENDING_REVIEW -> REOPENED (Manager/Reviewer rejects with reason)
   {
     from: TaskStatus.COMPLETED_PENDING_REVIEW,
     to: TaskStatus.REOPENED,
@@ -142,7 +172,12 @@ const transitions: StatusTransition[] = [
       if (ctx.taskOwnerId === ctx.currentUserId) {
         return { valid: false, error: "Cannot reject your own task" };
       }
-      if (!ctx.isManager && ctx.currentUserRole === Role.MANAGER) {
+      if (ctx.reviewerId && ctx.currentUserId !== ctx.reviewerId) {
+        if (ctx.currentUserRole !== Role.DEPARTMENT_HEAD && ctx.currentUserRole !== Role.ADMIN) {
+          return { valid: false, error: "Only the designated reviewer can reject this task" };
+        }
+      }
+      if (!ctx.reviewerId && !ctx.isManager && ctx.currentUserRole === Role.MANAGER) {
         return {
           valid: false,
           error: "Only the employee's manager can reject",
