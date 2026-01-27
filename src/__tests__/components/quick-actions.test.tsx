@@ -30,11 +30,12 @@ describe("QuickActions", () => {
       expect(screen.getByTitle("Start")).toBeInTheDocument();
     });
 
-    it("should show Complete and Pause actions for IN_PROGRESS status when owner", () => {
+    it("should show Complete, Pause, and Undo actions for IN_PROGRESS status when owner", () => {
       render(<QuickActions {...defaultProps} currentStatus={TaskStatus.IN_PROGRESS} />);
 
       expect(screen.getByTitle("Complete")).toBeInTheDocument();
       expect(screen.getByTitle("Pause")).toBeInTheDocument();
+      expect(screen.getByTitle("Undo")).toBeInTheDocument();
     });
 
     it("should target CLOSED_APPROVED for Complete when requiresReview is false", async () => {
@@ -96,9 +97,22 @@ describe("QuickActions", () => {
       expect(screen.getByTitle("Reject")).toBeInTheDocument();
     });
 
-    it("should not show actions for CLOSED_APPROVED (terminal state)", () => {
-      const { container } = render(
+    it("should show Reopen action for CLOSED_APPROVED when owner", () => {
+      render(
         <QuickActions {...defaultProps} currentStatus={TaskStatus.CLOSED_APPROVED} />
+      );
+
+      expect(screen.getByTitle("Reopen")).toBeInTheDocument();
+    });
+
+    it("should not show actions for CLOSED_APPROVED when not owner and not manager", () => {
+      const { container } = render(
+        <QuickActions
+          {...defaultProps}
+          currentStatus={TaskStatus.CLOSED_APPROVED}
+          isOwner={false}
+          isManager={false}
+        />
       );
 
       expect(container).toBeEmptyDOMElement();
@@ -221,6 +235,100 @@ describe("QuickActions", () => {
       await user.click(screen.getByTitle("Approve"));
 
       expect(onAction).toHaveBeenCalledWith(TaskStatus.CLOSED_APPROVED, false);
+    });
+  });
+
+  describe("Backward / Undo actions", () => {
+    it("should show Withdraw action for owner on COMPLETED_PENDING_REVIEW", () => {
+      render(
+        <QuickActions
+          {...defaultProps}
+          currentStatus={TaskStatus.COMPLETED_PENDING_REVIEW}
+          isOwner={true}
+          isManager={false}
+        />
+      );
+
+      expect(screen.getByTitle("Withdraw")).toBeInTheDocument();
+    });
+
+    it("should show both review and Withdraw actions when owner is also manager", () => {
+      render(
+        <QuickActions
+          {...defaultProps}
+          currentStatus={TaskStatus.COMPLETED_PENDING_REVIEW}
+          userRole={Role.MANAGER}
+          isOwner={true}
+          isManager={true}
+        />
+      );
+
+      // Manager actions (self-approval is blocked at state machine level, not UI)
+      expect(screen.getByTitle("Approve")).toBeInTheDocument();
+      expect(screen.getByTitle("Reject")).toBeInTheDocument();
+      // Owner action
+      expect(screen.getByTitle("Withdraw")).toBeInTheDocument();
+    });
+
+    it("should call onAction with ACCEPTED and requiresReason=false for Undo", async () => {
+      const user = userEvent.setup();
+      const onAction = jest.fn();
+      render(
+        <QuickActions
+          {...defaultProps}
+          currentStatus={TaskStatus.IN_PROGRESS}
+          onAction={onAction}
+        />
+      );
+
+      await user.click(screen.getByTitle("Undo"));
+      expect(onAction).toHaveBeenCalledWith(TaskStatus.ACCEPTED, false);
+    });
+
+    it("should call onAction with IN_PROGRESS and requiresReason=false for Withdraw", async () => {
+      const user = userEvent.setup();
+      const onAction = jest.fn();
+      render(
+        <QuickActions
+          {...defaultProps}
+          currentStatus={TaskStatus.COMPLETED_PENDING_REVIEW}
+          isOwner={true}
+          onAction={onAction}
+        />
+      );
+
+      await user.click(screen.getByTitle("Withdraw"));
+      expect(onAction).toHaveBeenCalledWith(TaskStatus.IN_PROGRESS, false);
+    });
+
+    it("should call onAction with REOPENED and requiresReason=true for Reopen", async () => {
+      const user = userEvent.setup();
+      const onAction = jest.fn();
+      render(
+        <QuickActions
+          {...defaultProps}
+          currentStatus={TaskStatus.CLOSED_APPROVED}
+          isOwner={true}
+          onAction={onAction}
+        />
+      );
+
+      await user.click(screen.getByTitle("Reopen"));
+      expect(onAction).toHaveBeenCalledWith(TaskStatus.REOPENED, true);
+    });
+
+    it("should show Reopen for manager on CLOSED_APPROVED", () => {
+      render(
+        <QuickActions
+          {...defaultProps}
+          currentStatus={TaskStatus.CLOSED_APPROVED}
+          userRole={Role.MANAGER}
+          isOwner={false}
+          isManager={true}
+        />
+      );
+
+      expect(screen.getByTitle("Reopen")).toBeInTheDocument();
     });
   });
 

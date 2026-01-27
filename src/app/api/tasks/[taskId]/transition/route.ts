@@ -86,7 +86,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
       if (toStatus === TaskStatus.REOPENED && !reason) {
         return NextResponse.json(
-          { error: "Rejection reason is required" },
+          { error: "Reason is required to reopen this task" },
           { status: 400 }
         );
       }
@@ -104,6 +104,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (toStatus === TaskStatus.REOPENED) {
       updateData.rejectionReason = reason;
+      // Clear completedAt when reopening a completed task
+      if (task.status === TaskStatus.CLOSED_APPROVED) {
+        updateData.completedAt = null;
+      }
     }
 
     if (toStatus === TaskStatus.IN_PROGRESS && !task.startDate) {
@@ -112,6 +116,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (toStatus === TaskStatus.CLOSED_APPROVED) {
       updateData.completedAt = new Date();
+    }
+
+    // Backward: owner un-starts task (IN_PROGRESS → ACCEPTED)
+    if (toStatus === TaskStatus.ACCEPTED && task.status === TaskStatus.IN_PROGRESS) {
+      updateData.startDate = null;
     }
 
     // Update task, create status history, and notifications in a single transaction
@@ -178,16 +187,35 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
 
       if (toStatus === TaskStatus.REOPENED) {
-        await tx.notification.create({
-          data: {
-            userId: task.ownerId,
-            type: "TASK_REOPENED",
-            title: "Task reopened",
-            message: `Your task "${task.title}" was reopened: ${reason}`,
-            entityType: "Task",
-            entityId: taskId,
-          },
-        });
+        // If manager/reviewer reopened → notify the task owner
+        // If owner reopened their own completed task → notify the reviewer/manager
+        if (task.ownerId !== session.user.id) {
+          await tx.notification.create({
+            data: {
+              userId: task.ownerId,
+              type: "TASK_REOPENED",
+              title: "Task reopened",
+              message: `Your task "${task.title}" was reopened: ${reason}`,
+              entityType: "Task",
+              entityId: taskId,
+            },
+          });
+        } else {
+          // Owner reopened their own completed task — notify reviewer or manager
+          const notifyId = task.reviewerId ?? task.owner.managerId;
+          if (notifyId) {
+            await tx.notification.create({
+              data: {
+                userId: notifyId,
+                type: "TASK_REOPENED",
+                title: "Task reopened by owner",
+                message: `${session.user.firstName} ${session.user.lastName} reopened "${task.title}": ${reason}`,
+                entityType: "Task",
+                entityId: taskId,
+              },
+            });
+          }
+        }
       }
 
       return updated;

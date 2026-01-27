@@ -135,12 +135,14 @@ describe("Kanban Columns Utility", () => {
       const targets = getValidDropTargets(TaskStatus.IN_PROGRESS);
       expect(targets).toContainEqual({ status: TaskStatus.ON_HOLD, requiresReason: true });
       expect(targets).toContainEqual({ status: TaskStatus.COMPLETED_PENDING_REVIEW, requiresReason: false });
+      expect(targets).toContainEqual({ status: TaskStatus.ACCEPTED, requiresReason: false }); // backward
     });
 
     it("should return CLOSED_APPROVED for IN_PROGRESS when requiresReview=false", () => {
       const targets = getValidDropTargets(TaskStatus.IN_PROGRESS, false);
       expect(targets).toContainEqual({ status: TaskStatus.ON_HOLD, requiresReason: true });
       expect(targets).toContainEqual({ status: TaskStatus.CLOSED_APPROVED, requiresReason: false });
+      expect(targets).toContainEqual({ status: TaskStatus.ACCEPTED, requiresReason: false }); // backward
       expect(targets).not.toContainEqual(
         expect.objectContaining({ status: TaskStatus.COMPLETED_PENDING_REVIEW })
       );
@@ -150,11 +152,12 @@ describe("Kanban Columns Utility", () => {
       const targets = getValidDropTargets(TaskStatus.COMPLETED_PENDING_REVIEW);
       expect(targets).toContainEqual({ status: TaskStatus.CLOSED_APPROVED, requiresReason: false });
       expect(targets).toContainEqual({ status: TaskStatus.REOPENED, requiresReason: true });
+      expect(targets).toContainEqual({ status: TaskStatus.IN_PROGRESS, requiresReason: false }); // backward
     });
 
-    it("should return empty array for CLOSED_APPROVED (terminal state)", () => {
+    it("should return REOPENED for CLOSED_APPROVED", () => {
       const targets = getValidDropTargets(TaskStatus.CLOSED_APPROVED);
-      expect(targets).toHaveLength(0);
+      expect(targets).toContainEqual({ status: TaskStatus.REOPENED, requiresReason: true });
     });
   });
 
@@ -167,7 +170,19 @@ describe("Kanban Columns Utility", () => {
 
     it("should return false for invalid transitions", () => {
       expect(isValidDropTarget(TaskStatus.NEW, "DONE")).toBe(false);
-      expect(isValidDropTarget(TaskStatus.CLOSED_APPROVED, "TODO")).toBe(false);
+    });
+
+    // Backward drag-drop targets
+    it("should allow IN_PROGRESS to TODO (backward)", () => {
+      expect(isValidDropTarget(TaskStatus.IN_PROGRESS, "TODO")).toBe(true);
+    });
+
+    it("should allow COMPLETED_PENDING_REVIEW to IN_PROGRESS (backward)", () => {
+      expect(isValidDropTarget(TaskStatus.COMPLETED_PENDING_REVIEW, "IN_PROGRESS")).toBe(true);
+    });
+
+    it("should allow CLOSED_APPROVED to TODO (reopen)", () => {
+      expect(isValidDropTarget(TaskStatus.CLOSED_APPROVED, "TODO")).toBe(true);
     });
 
     it("should allow IN_PROGRESS to DONE when requiresReview=false", () => {

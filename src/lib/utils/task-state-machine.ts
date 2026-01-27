@@ -205,6 +205,61 @@ const transitions: StatusTransition[] = [
       error: "Only task owner can resume reopened task",
     }),
   },
+
+  // === Backward / Undo transitions ===
+
+  // IN_PROGRESS -> ACCEPTED (Owner un-starts task)
+  {
+    from: TaskStatus.IN_PROGRESS,
+    to: TaskStatus.ACCEPTED,
+    allowedRoles: [Role.EMPLOYEE, Role.MANAGER, Role.DEPARTMENT_HEAD, Role.ADMIN],
+    requiresReason: false,
+    requiresManagerApproval: false,
+    validationFn: (ctx) => ({
+      valid: ctx.taskOwnerId === ctx.currentUserId,
+      error: "Only task owner can move task back to todo",
+    }),
+  },
+
+  // COMPLETED_PENDING_REVIEW -> IN_PROGRESS (Owner withdraws from review)
+  {
+    from: TaskStatus.COMPLETED_PENDING_REVIEW,
+    to: TaskStatus.IN_PROGRESS,
+    allowedRoles: [Role.EMPLOYEE, Role.MANAGER, Role.DEPARTMENT_HEAD, Role.ADMIN],
+    requiresReason: false,
+    requiresManagerApproval: false,
+    validationFn: (ctx) => ({
+      valid: ctx.taskOwnerId === ctx.currentUserId,
+      error: "Only task owner can withdraw from review",
+    }),
+  },
+
+  // CLOSED_APPROVED -> REOPENED (Owner or Manager+ reopens completed task)
+  {
+    from: TaskStatus.CLOSED_APPROVED,
+    to: TaskStatus.REOPENED,
+    allowedRoles: [Role.EMPLOYEE, Role.MANAGER, Role.DEPARTMENT_HEAD, Role.ADMIN],
+    requiresReason: true,
+    requiresManagerApproval: false,
+    validationFn: (ctx) => {
+      const isOwner = ctx.taskOwnerId === ctx.currentUserId;
+      const isManagerPlus = (
+        ctx.currentUserRole === Role.MANAGER ||
+        ctx.currentUserRole === Role.DEPARTMENT_HEAD ||
+        ctx.currentUserRole === Role.ADMIN
+      );
+      if (!isOwner && !isManagerPlus) {
+        return { valid: false, error: "Only task owner or managers can reopen a completed task" };
+      }
+      if (!isOwner && ctx.currentUserRole === Role.MANAGER && !ctx.isManager) {
+        return { valid: false, error: "Only the employee's manager can reopen this task" };
+      }
+      if (!ctx.reason || ctx.reason.trim().length < 10) {
+        return { valid: false, error: "Reopen reason must be at least 10 characters" };
+      }
+      return { valid: true };
+    },
+  },
 ];
 
 /**

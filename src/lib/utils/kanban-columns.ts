@@ -156,11 +156,13 @@ export function getValidDropTargets(fromStatus: TaskStatus, requiresReview: bool
     case TaskStatus.IN_PROGRESS:
       if (requiresReview) {
         return [
+          { status: TaskStatus.ACCEPTED, requiresReason: false },
           { status: TaskStatus.ON_HOLD, requiresReason: true },
           { status: TaskStatus.COMPLETED_PENDING_REVIEW, requiresReason: false },
         ];
       }
       return [
+        { status: TaskStatus.ACCEPTED, requiresReason: false },
         { status: TaskStatus.ON_HOLD, requiresReason: true },
         { status: TaskStatus.CLOSED_APPROVED, requiresReason: false },
       ];
@@ -170,6 +172,7 @@ export function getValidDropTargets(fromStatus: TaskStatus, requiresReview: bool
       ];
     case TaskStatus.COMPLETED_PENDING_REVIEW:
       return [
+        { status: TaskStatus.IN_PROGRESS, requiresReason: false },
         { status: TaskStatus.CLOSED_APPROVED, requiresReason: false },
         { status: TaskStatus.REOPENED, requiresReason: true },
       ];
@@ -178,7 +181,9 @@ export function getValidDropTargets(fromStatus: TaskStatus, requiresReview: bool
         { status: TaskStatus.IN_PROGRESS, requiresReason: false },
       ];
     case TaskStatus.CLOSED_APPROVED:
-      return []; // Terminal state
+      return [
+        { status: TaskStatus.REOPENED, requiresReason: true },
+      ];
     default:
       return [];
   }

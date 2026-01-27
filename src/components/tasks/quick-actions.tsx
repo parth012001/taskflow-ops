@@ -1,7 +1,7 @@
 "use client";
 
 import { TaskStatus, Role } from "@prisma/client";
-import { Play, CheckCircle, Pause, RotateCcw, Check } from "lucide-react";
+import { Play, CheckCircle, Pause, RotateCcw, Check, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface QuickAction {
@@ -75,6 +75,13 @@ function getQuickActions(
           requiresReason: true,
           variant: "warning",
         },
+        {
+          icon: Undo2,
+          label: "Undo",
+          toStatus: TaskStatus.ACCEPTED,
+          requiresReason: false,
+          variant: "default",
+        },
       ];
 
     case TaskStatus.ON_HOLD:
@@ -89,27 +96,51 @@ function getQuickActions(
         },
       ];
 
-    case TaskStatus.COMPLETED_PENDING_REVIEW:
-      if (!canApprove) return [];
+    case TaskStatus.COMPLETED_PENDING_REVIEW: {
+      const actions: QuickAction[] = [];
+      if (canApprove) {
+        actions.push(
+          {
+            icon: Check,
+            label: "Approve",
+            toStatus: TaskStatus.CLOSED_APPROVED,
+            requiresReason: false,
+            variant: "success",
+          },
+          {
+            icon: RotateCcw,
+            label: "Reject",
+            toStatus: TaskStatus.REOPENED,
+            requiresReason: true,
+            variant: "danger",
+          }
+        );
+      }
+      if (isOwner) {
+        actions.push({
+          icon: Undo2,
+          label: "Withdraw",
+          toStatus: TaskStatus.IN_PROGRESS,
+          requiresReason: false,
+          variant: "default",
+        });
+      }
+      return actions;
+    }
+
+    case TaskStatus.CLOSED_APPROVED: {
+      const canReopen = isOwner || (isManager && ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"].includes(userRole));
+      if (!canReopen) return [];
       return [
         {
-          icon: Check,
-          label: "Approve",
-          toStatus: TaskStatus.CLOSED_APPROVED,
-          requiresReason: false,
-          variant: "success",
-        },
-        {
           icon: RotateCcw,
-          label: "Reject",
+          label: "Reopen",
           toStatus: TaskStatus.REOPENED,
           requiresReason: true,
           variant: "danger",
         },
       ];
-
-    case TaskStatus.CLOSED_APPROVED:
-      return []; // Terminal state
+    }
 
     default:
       return [];
