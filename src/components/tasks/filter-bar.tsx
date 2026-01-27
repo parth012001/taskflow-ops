@@ -1,7 +1,7 @@
 "use client";
 
 import { TaskStatus, TaskPriority } from "@prisma/client";
-import { X, ChevronDown, Calendar, Tag, Flag, Folder } from "lucide-react";
+import { X, ChevronDown, Calendar, Tag, Flag, Folder, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,12 @@ interface KpiBucket {
   name: string;
 }
 
+export interface FilterAssignableUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
 interface FilterBarProps {
   filters: TaskFilters;
   kpiBuckets: KpiBucket[];
@@ -22,6 +28,8 @@ interface FilterBarProps {
   onDatePresetChange: (preset: DatePreset | null) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
+  assignableUsers?: FilterAssignableUser[];
+  onOwnerToggle?: (id: string) => void;
 }
 
 const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string }> = {
@@ -64,6 +72,8 @@ export function FilterBar({
   onDatePresetChange,
   onClearFilters,
   hasActiveFilters,
+  assignableUsers,
+  onOwnerToggle,
 }: FilterBarProps) {
   return (
     <div className="space-y-2">
@@ -253,6 +263,49 @@ export function FilterBar({
           </PopoverContent>
         </Popover>
 
+        {/* Team Member Filter */}
+        {assignableUsers && assignableUsers.length > 0 && onOwnerToggle && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "gap-1",
+                  filters.ownerIds.length > 0 && "bg-indigo-50 border-indigo-300"
+                )}
+              >
+                <Users className="w-4 h-4" />
+                Team Member
+                {filters.ownerIds.length > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-xs">
+                    {filters.ownerIds.length}
+                  </span>
+                )}
+                <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-2" align="start">
+              <div className="max-h-60 overflow-y-auto space-y-1">
+                {assignableUsers.map((user) => (
+                  <label
+                    key={user.id}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.ownerIds.includes(user.id)}
+                      onChange={() => onOwnerToggle(user.id)}
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm">{user.firstName} {user.lastName}</span>
+                  </label>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+
         {/* Clear All */}
         {hasActiveFilters && (
           <Button
@@ -302,6 +355,18 @@ export function FilterBar({
               onRemove={() => onDatePresetChange(null)}
             />
           )}
+
+          {/* Team Member Chips */}
+          {assignableUsers && onOwnerToggle && filters.ownerIds.map((ownerId) => {
+            const user = assignableUsers.find((u) => u.id === ownerId);
+            return user ? (
+              <FilterChip
+                key={ownerId}
+                label={`${user.firstName} ${user.lastName}`}
+                onRemove={() => onOwnerToggle(ownerId)}
+              />
+            ) : null;
+          })}
         </div>
       )}
     </div>

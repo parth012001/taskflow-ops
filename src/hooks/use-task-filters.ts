@@ -10,6 +10,7 @@ export interface TaskFilters {
   datePreset: DatePreset | null;
   fromDate: string | null;
   toDate: string | null;
+  ownerIds: string[];
 }
 
 export type DatePreset = "overdue" | "today" | "this_week" | "this_month";
@@ -23,6 +24,8 @@ export interface UseTaskFiltersReturn {
   setKpiBucketId: (id: string | null) => void;
   setDatePreset: (preset: DatePreset | null) => void;
   setCustomDateRange: (fromDate: string | null, toDate: string | null) => void;
+  setOwnerIds: (ids: string[]) => void;
+  toggleOwner: (id: string) => void;
   clearFilters: () => void;
   hasActiveFilters: boolean;
   activeFilterCount: number;
@@ -36,6 +39,7 @@ const initialFilters: TaskFilters = {
   datePreset: null,
   fromDate: null,
   toDate: null,
+  ownerIds: [],
 };
 
 function getDateRangeForPreset(preset: DatePreset): { fromDate: string; toDate: string } {
@@ -141,6 +145,19 @@ export function useTaskFilters(): UseTaskFiltersReturn {
     }));
   }, []);
 
+  const setOwnerIds = useCallback((ids: string[]) => {
+    setFilters((prev) => ({ ...prev, ownerIds: ids }));
+  }, []);
+
+  const toggleOwner = useCallback((id: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      ownerIds: prev.ownerIds.includes(id)
+        ? prev.ownerIds.filter((o) => o !== id)
+        : [...prev.ownerIds, id],
+    }));
+  }, []);
+
   const clearFilters = useCallback(() => {
     setFilters(initialFilters);
   }, []);
@@ -152,7 +169,8 @@ export function useTaskFilters(): UseTaskFiltersReturn {
       filters.kpiBucketId !== null ||
       filters.datePreset !== null ||
       filters.fromDate !== null ||
-      filters.toDate !== null
+      filters.toDate !== null ||
+      filters.ownerIds.length > 0
     );
   }, [filters]);
 
@@ -162,6 +180,7 @@ export function useTaskFilters(): UseTaskFiltersReturn {
     if (filters.priorities.length > 0) count++;
     if (filters.kpiBucketId) count++;
     if (filters.datePreset || filters.fromDate || filters.toDate) count++;
+    if (filters.ownerIds.length > 0) count++;
     return count;
   }, [filters]);
 
@@ -188,6 +207,10 @@ export function useTaskFilters(): UseTaskFiltersReturn {
       params.set("toDate", filters.toDate);
     }
 
+    if (filters.ownerIds.length > 0) {
+      filters.ownerIds.forEach((id) => params.append("ownerId", id));
+    }
+
     return params;
   }, [filters]);
 
@@ -200,6 +223,8 @@ export function useTaskFilters(): UseTaskFiltersReturn {
     setKpiBucketId,
     setDatePreset,
     setCustomDateRange,
+    setOwnerIds,
+    toggleOwner,
     clearFilters,
     hasActiveFilters,
     activeFilterCount,

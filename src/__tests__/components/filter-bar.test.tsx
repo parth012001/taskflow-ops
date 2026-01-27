@@ -12,6 +12,7 @@ describe("FilterBar", () => {
     datePreset: null,
     fromDate: null,
     toDate: null,
+    ownerIds: [],
   };
 
   const mockKpiBuckets = [
@@ -223,6 +224,226 @@ describe("FilterBar", () => {
       await user.click(removeButton);
 
       expect(defaultProps.onStatusToggle).toHaveBeenCalledWith(TaskStatus.IN_PROGRESS);
+    });
+  });
+
+  describe("Team Member filter", () => {
+    const mockAssignableUsers = [
+      { id: "user-1", firstName: "Alice", lastName: "Wong" },
+      { id: "user-2", firstName: "Bob", lastName: "Chen" },
+      { id: "user-3", firstName: "Carol", lastName: "Davis" },
+    ];
+
+    it("should not render Team Member button when assignableUsers is not provided", () => {
+      render(<FilterBar {...defaultProps} />);
+
+      expect(screen.queryByText("Team Member")).not.toBeInTheDocument();
+    });
+
+    it("should not render Team Member button when assignableUsers is empty", () => {
+      render(
+        <FilterBar
+          {...defaultProps}
+          assignableUsers={[]}
+          onOwnerToggle={jest.fn()}
+        />
+      );
+
+      expect(screen.queryByText("Team Member")).not.toBeInTheDocument();
+    });
+
+    it("should not render Team Member button when onOwnerToggle is not provided", () => {
+      render(
+        <FilterBar {...defaultProps} assignableUsers={mockAssignableUsers} />
+      );
+
+      expect(screen.queryByText("Team Member")).not.toBeInTheDocument();
+    });
+
+    it("should render Team Member button when assignableUsers and onOwnerToggle are provided", () => {
+      render(
+        <FilterBar
+          {...defaultProps}
+          assignableUsers={mockAssignableUsers}
+          onOwnerToggle={jest.fn()}
+        />
+      );
+
+      expect(screen.getByText("Team Member")).toBeInTheDocument();
+    });
+
+    it("should show team members in dropdown when clicked", async () => {
+      const user = userEvent.setup();
+      render(
+        <FilterBar
+          {...defaultProps}
+          assignableUsers={mockAssignableUsers}
+          onOwnerToggle={jest.fn()}
+        />
+      );
+
+      await user.click(screen.getByText("Team Member"));
+
+      expect(screen.getByText("Alice Wong")).toBeInTheDocument();
+      expect(screen.getByText("Bob Chen")).toBeInTheDocument();
+      expect(screen.getByText("Carol Davis")).toBeInTheDocument();
+    });
+
+    it("should call onOwnerToggle when a team member is selected", async () => {
+      const user = userEvent.setup();
+      const onOwnerToggle = jest.fn();
+
+      render(
+        <FilterBar
+          {...defaultProps}
+          assignableUsers={mockAssignableUsers}
+          onOwnerToggle={onOwnerToggle}
+        />
+      );
+
+      await user.click(screen.getByText("Team Member"));
+      await user.click(screen.getByText("Alice Wong"));
+
+      expect(onOwnerToggle).toHaveBeenCalledWith("user-1");
+    });
+
+    it("should show count badge when owners are selected", () => {
+      const filtersWithOwners: TaskFilters = {
+        ...emptyFilters,
+        ownerIds: ["user-1", "user-2"],
+      };
+
+      render(
+        <FilterBar
+          {...defaultProps}
+          filters={filtersWithOwners}
+          assignableUsers={mockAssignableUsers}
+          onOwnerToggle={jest.fn()}
+        />
+      );
+
+      const teamMemberButton = screen.getByText("Team Member").closest("button");
+      expect(teamMemberButton).toHaveTextContent("2");
+    });
+
+    it("should highlight Team Member button when owners are selected", () => {
+      const filtersWithOwners: TaskFilters = {
+        ...emptyFilters,
+        ownerIds: ["user-1"],
+      };
+
+      render(
+        <FilterBar
+          {...defaultProps}
+          filters={filtersWithOwners}
+          assignableUsers={mockAssignableUsers}
+          onOwnerToggle={jest.fn()}
+        />
+      );
+
+      const teamMemberButton = screen.getByText("Team Member").closest("button");
+      expect(teamMemberButton).toHaveClass("bg-indigo-50");
+      expect(teamMemberButton).toHaveClass("border-indigo-300");
+    });
+
+    it("should show checkboxes as checked for selected owners", async () => {
+      const user = userEvent.setup();
+      const filtersWithOwners: TaskFilters = {
+        ...emptyFilters,
+        ownerIds: ["user-1"],
+      };
+
+      render(
+        <FilterBar
+          {...defaultProps}
+          filters={filtersWithOwners}
+          assignableUsers={mockAssignableUsers}
+          onOwnerToggle={jest.fn()}
+        />
+      );
+
+      await user.click(screen.getByText("Team Member"));
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      // Find the checkbox next to "Alice Wong" - it should be checked
+      const aliceLabel = screen.getByText("Alice Wong").closest("label");
+      const aliceCheckbox = aliceLabel?.querySelector("input[type='checkbox']") as HTMLInputElement;
+      expect(aliceCheckbox.checked).toBe(true);
+
+      // Bob's should not be checked
+      const bobLabel = screen.getByText("Bob Chen").closest("label");
+      const bobCheckbox = bobLabel?.querySelector("input[type='checkbox']") as HTMLInputElement;
+      expect(bobCheckbox.checked).toBe(false);
+    });
+  });
+
+  describe("Team Member filter chips", () => {
+    const mockAssignableUsers = [
+      { id: "user-1", firstName: "Alice", lastName: "Wong" },
+      { id: "user-2", firstName: "Bob", lastName: "Chen" },
+    ];
+
+    it("should show filter chips for selected team members", () => {
+      const filtersWithOwners: TaskFilters = {
+        ...emptyFilters,
+        ownerIds: ["user-1", "user-2"],
+      };
+
+      render(
+        <FilterBar
+          {...defaultProps}
+          filters={filtersWithOwners}
+          hasActiveFilters={true}
+          assignableUsers={mockAssignableUsers}
+          onOwnerToggle={jest.fn()}
+        />
+      );
+
+      expect(screen.getByText("Alice Wong")).toBeInTheDocument();
+      expect(screen.getByText("Bob Chen")).toBeInTheDocument();
+    });
+
+    it("should call onOwnerToggle when team member chip is removed", async () => {
+      const user = userEvent.setup();
+      const onOwnerToggle = jest.fn();
+
+      const filtersWithOwners: TaskFilters = {
+        ...emptyFilters,
+        ownerIds: ["user-1"],
+      };
+
+      render(
+        <FilterBar
+          {...defaultProps}
+          filters={filtersWithOwners}
+          hasActiveFilters={true}
+          assignableUsers={mockAssignableUsers}
+          onOwnerToggle={onOwnerToggle}
+        />
+      );
+
+      const removeButton = screen.getByRole("button", { name: /Remove Alice Wong filter/i });
+      await user.click(removeButton);
+
+      expect(onOwnerToggle).toHaveBeenCalledWith("user-1");
+    });
+
+    it("should not render team member chips when assignableUsers not provided", () => {
+      const filtersWithOwners: TaskFilters = {
+        ...emptyFilters,
+        ownerIds: ["user-1"],
+      };
+
+      render(
+        <FilterBar
+          {...defaultProps}
+          filters={filtersWithOwners}
+          hasActiveFilters={true}
+        />
+      );
+
+      // No chip for user-1 should appear since assignableUsers is undefined
+      expect(screen.queryByText("Alice Wong")).not.toBeInTheDocument();
     });
   });
 });

@@ -11,6 +11,7 @@ describe("useTaskFilters", () => {
       expect(result.current.filters.priorities).toEqual([]);
       expect(result.current.filters.kpiBucketId).toBeNull();
       expect(result.current.filters.datePreset).toBeNull();
+      expect(result.current.filters.ownerIds).toEqual([]);
       expect(result.current.hasActiveFilters).toBe(false);
       expect(result.current.activeFilterCount).toBe(0);
     });
@@ -155,8 +156,88 @@ describe("useTaskFilters", () => {
     });
   });
 
+  describe("owner filters", () => {
+    it("should toggle owner on", () => {
+      const { result } = renderHook(() => useTaskFilters());
+
+      act(() => {
+        result.current.toggleOwner("user-1");
+      });
+
+      expect(result.current.filters.ownerIds).toContain("user-1");
+      expect(result.current.hasActiveFilters).toBe(true);
+    });
+
+    it("should toggle owner off", () => {
+      const { result } = renderHook(() => useTaskFilters());
+
+      act(() => {
+        result.current.toggleOwner("user-1");
+      });
+
+      act(() => {
+        result.current.toggleOwner("user-1");
+      });
+
+      expect(result.current.filters.ownerIds).not.toContain("user-1");
+      expect(result.current.hasActiveFilters).toBe(false);
+    });
+
+    it("should toggle multiple owners independently", () => {
+      const { result } = renderHook(() => useTaskFilters());
+
+      act(() => {
+        result.current.toggleOwner("user-1");
+        result.current.toggleOwner("user-2");
+      });
+
+      expect(result.current.filters.ownerIds).toHaveLength(2);
+      expect(result.current.filters.ownerIds).toContain("user-1");
+      expect(result.current.filters.ownerIds).toContain("user-2");
+    });
+
+    it("should set ownerIds directly", () => {
+      const { result } = renderHook(() => useTaskFilters());
+
+      act(() => {
+        result.current.setOwnerIds(["user-1", "user-2", "user-3"]);
+      });
+
+      expect(result.current.filters.ownerIds).toEqual(["user-1", "user-2", "user-3"]);
+    });
+
+    it("should replace ownerIds when setOwnerIds is called", () => {
+      const { result } = renderHook(() => useTaskFilters());
+
+      act(() => {
+        result.current.setOwnerIds(["user-1"]);
+      });
+
+      act(() => {
+        result.current.setOwnerIds(["user-2", "user-3"]);
+      });
+
+      expect(result.current.filters.ownerIds).toEqual(["user-2", "user-3"]);
+    });
+
+    it("should clear ownerIds with empty array", () => {
+      const { result } = renderHook(() => useTaskFilters());
+
+      act(() => {
+        result.current.setOwnerIds(["user-1", "user-2"]);
+      });
+
+      act(() => {
+        result.current.setOwnerIds([]);
+      });
+
+      expect(result.current.filters.ownerIds).toEqual([]);
+      expect(result.current.hasActiveFilters).toBe(false);
+    });
+  });
+
   describe("clearFilters", () => {
-    it("should clear all filters", () => {
+    it("should clear all filters including ownerIds", () => {
       const { result } = renderHook(() => useTaskFilters());
 
       act(() => {
@@ -164,6 +245,7 @@ describe("useTaskFilters", () => {
         result.current.togglePriority(TaskPriority.URGENT_IMPORTANT);
         result.current.setKpiBucketId("bucket-1");
         result.current.setDatePreset("today");
+        result.current.setOwnerIds(["user-1", "user-2"]);
       });
 
       expect(result.current.hasActiveFilters).toBe(true);
@@ -176,6 +258,7 @@ describe("useTaskFilters", () => {
       expect(result.current.filters.priorities).toEqual([]);
       expect(result.current.filters.kpiBucketId).toBeNull();
       expect(result.current.filters.datePreset).toBeNull();
+      expect(result.current.filters.ownerIds).toEqual([]);
       expect(result.current.hasActiveFilters).toBe(false);
     });
   });
@@ -201,6 +284,31 @@ describe("useTaskFilters", () => {
       });
 
       expect(result.current.activeFilterCount).toBe(1);
+    });
+
+    it("should count ownerIds as one category regardless of count", () => {
+      const { result } = renderHook(() => useTaskFilters());
+
+      act(() => {
+        result.current.setOwnerIds(["user-1", "user-2", "user-3"]);
+      });
+
+      expect(result.current.activeFilterCount).toBe(1);
+    });
+
+    it("should count all categories together", () => {
+      const { result } = renderHook(() => useTaskFilters());
+
+      act(() => {
+        result.current.toggleStatus(TaskStatus.IN_PROGRESS);
+        result.current.togglePriority(TaskPriority.URGENT_IMPORTANT);
+        result.current.setKpiBucketId("bucket-1");
+        result.current.setDatePreset("today");
+        result.current.setOwnerIds(["user-1"]);
+      });
+
+      // 5 categories: statuses, priorities, kpiBucket, date, ownerIds
+      expect(result.current.activeFilterCount).toBe(5);
     });
   });
 
@@ -240,6 +348,29 @@ describe("useTaskFilters", () => {
       const params = result.current.toQueryParams();
 
       expect(params.toString()).toBe("");
+    });
+
+    it("should append each ownerId as separate param", () => {
+      const { result } = renderHook(() => useTaskFilters());
+
+      act(() => {
+        result.current.setOwnerIds(["user-1", "user-2"]);
+      });
+
+      const params = result.current.toQueryParams();
+      const ownerIds = params.getAll("ownerId");
+
+      expect(ownerIds).toHaveLength(2);
+      expect(ownerIds).toContain("user-1");
+      expect(ownerIds).toContain("user-2");
+    });
+
+    it("should not include ownerId param when ownerIds is empty", () => {
+      const { result } = renderHook(() => useTaskFilters());
+
+      const params = result.current.toQueryParams();
+
+      expect(params.getAll("ownerId")).toHaveLength(0);
     });
   });
 });

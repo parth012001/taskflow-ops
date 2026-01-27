@@ -60,6 +60,8 @@ export default function TasksPage() {
     togglePriority,
     setKpiBucketId,
     setDatePreset,
+    setOwnerIds,
+    toggleOwner,
     clearFilters,
     hasActiveFilters,
     toQueryParams,
@@ -175,8 +177,11 @@ export default function TasksPage() {
   const handleViewChange = useCallback((view: ViewMode) => {
     setViewMode(view);
     setIsLoading(true);
+    if (view === "my") {
+      setOwnerIds([]);
+    }
     fetchTasks(searchQuery, view);
-  }, [fetchTasks, searchQuery]);
+  }, [fetchTasks, searchQuery, setOwnerIds]);
 
   // Refetch when filters change
   useEffect(() => {
@@ -308,6 +313,8 @@ export default function TasksPage() {
         onDatePresetChange={setDatePreset}
         onClearFilters={clearFilters}
         hasActiveFilters={hasActiveFilters}
+        assignableUsers={viewMode !== "my" ? assignableUsers : undefined}
+        onOwnerToggle={viewMode !== "my" ? toggleOwner : undefined}
       />
 
       {/* Review Queue Banner (Managers+) */}

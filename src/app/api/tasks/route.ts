@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
+    const ownerIds = searchParams.getAll("ownerId");
     const queryParams = Object.fromEntries(searchParams.entries());
 
     const validatedQuery = taskQuerySchema.safeParse(queryParams);
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
 
     const {
-      status, priority, kpiBucketId, ownerId, search,
+      status, priority, kpiBucketId, search,
       fromDate, toDate, page, limit, sortBy, sortOrder
     } = validatedQuery.data;
 
@@ -48,20 +49,22 @@ export async function GET(request: NextRequest) {
         select: { id: true },
       });
       const subordinateIds = subordinates.map((s) => s.id);
+      const allowedIds = [userId, ...subordinateIds];
 
-      if (ownerId) {
-        // If specific owner requested, verify permission
-        if (ownerId !== userId && !subordinateIds.includes(ownerId)) {
+      if (ownerIds.length > 0) {
+        // Validate all requested IDs are within allowed scope
+        const unauthorized = ownerIds.find((id) => !allowedIds.includes(id));
+        if (unauthorized) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
-        where.ownerId = ownerId;
+        where.ownerId = { in: ownerIds };
       } else {
-        where.ownerId = { in: [userId, ...subordinateIds] };
+        where.ownerId = { in: allowedIds };
       }
     } else if (userRole === "DEPARTMENT_HEAD" || userRole === "ADMIN") {
-      // Can see all tasks, optionally filter by ownerId
-      if (ownerId) {
-        where.ownerId = ownerId;
+      // Can see all tasks, optionally filter by ownerIds
+      if (ownerIds.length > 0) {
+        where.ownerId = { in: ownerIds };
       }
     }
 
