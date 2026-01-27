@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -31,7 +31,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, CalendarIcon, UserIcon } from "lucide-react";
+import { Loader2, CalendarIcon, UserIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Role } from "@prisma/client";
 
@@ -100,6 +100,8 @@ export function CreateTaskForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deadlineDate, setDeadlineDate] = useState<Date | undefined>(undefined);
   const [deadlineTime, setDeadlineTime] = useState("17:00");
+  const deadlineHour = useMemo(() => deadlineTime.split(":")[0] || "17", [deadlineTime]);
+  const deadlineMinute = useMemo(() => deadlineTime.split(":")[1] || "00", [deadlineTime]);
 
   const showReviewToggle = currentUserRole === Role.EMPLOYEE || currentUserRole === Role.MANAGER;
   const skipReviewByDefault = currentUserRole === Role.DEPARTMENT_HEAD || currentUserRole === Role.ADMIN;
@@ -156,219 +158,223 @@ export function CreateTaskForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              {...register("title")}
-              placeholder="Enter task title"
-            />
-            {errors.title && (
-              <p className="text-sm text-red-500">{errors.title.message}</p>
-            )}
-          </div>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col min-h-0 flex-1">
+          <div className="flex-1 overflow-y-auto px-6 space-y-3">
+            {/* Title */}
+            <div className="space-y-1.5">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                {...register("title")}
+                placeholder="Enter task title"
+              />
+              {errors.title && (
+                <p className="text-sm text-red-500">{errors.title.message}</p>
+              )}
+            </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              {...register("description")}
-              placeholder="Describe the task (optional)"
-              rows={3}
-            />
-          </div>
+            {/* Description */}
+            <div className="space-y-1.5">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                {...register("description")}
+                placeholder="Describe the task (optional)"
+                rows={2}
+              />
+            </div>
 
-          {/* KPI Bucket */}
-          <div className="space-y-2">
-            <Label>KPI Bucket *</Label>
-            <Select
-              value={watch("kpiBucketId") || ""}
-              onValueChange={(value) => setValue("kpiBucketId", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select KPI bucket" />
-              </SelectTrigger>
-              <SelectContent>
-                {kpiBuckets.map((bucket) => (
-                  <SelectItem key={bucket.id} value={bucket.id}>
-                    {bucket.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.kpiBucketId && (
-              <p className="text-sm text-red-500">{errors.kpiBucketId.message}</p>
-            )}
-          </div>
-
-          {/* Assign To (only shown if user can assign tasks) */}
-          {assignableUsers.length > 0 && (
-            <div className="space-y-2">
-              <Label>Assign To</Label>
+            {/* KPI Bucket */}
+            <div className="space-y-1.5">
+              <Label>KPI Bucket *</Label>
               <Select
-                value={watch("assigneeId") || "self"}
-                onValueChange={(value) => setValue("assigneeId", value === "self" ? undefined : value)}
+                value={watch("kpiBucketId") || ""}
+                onValueChange={(value) => setValue("kpiBucketId", value)}
               >
                 <SelectTrigger>
-                  <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="Myself (default)" />
+                  <SelectValue placeholder="Select KPI bucket" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="self">Myself (default)</SelectItem>
-                  {assignableUsers.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.firstName} {user.lastName}
+                  {kpiBuckets.map((bucket) => (
+                    <SelectItem key={bucket.id} value={bucket.id}>
+                      {bucket.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Select a team member to assign this task to
-              </p>
+              {errors.kpiBucketId && (
+                <p className="text-sm text-red-500">{errors.kpiBucketId.message}</p>
+              )}
             </div>
-          )}
 
-          {/* Requires Review Toggle */}
-          {showReviewToggle && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="requiresReview">Requires Review?</Label>
-                <Switch
-                  id="requiresReview"
-                  checked={watch("requiresReview") ?? true}
-                  onCheckedChange={(checked) => {
-                    setValue("requiresReview", checked);
-                    if (!checked) {
-                      setValue("reviewerId", undefined);
-                    }
-                  }}
-                />
+            {/* Assign To (only shown if user can assign tasks) */}
+            {assignableUsers.length > 0 && (
+              <div className="space-y-1.5">
+                <Label>Assign To</Label>
+                <Select
+                  value={watch("assigneeId") || "self"}
+                  onValueChange={(value) => setValue("assigneeId", value === "self" ? undefined : value)}
+                >
+                  <SelectTrigger>
+                    <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Myself (default)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="self">Myself (default)</SelectItem>
+                    {assignableUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Select a team member to assign this task to
+                </p>
               </div>
-              {watch("requiresReview") && currentUserRole === Role.EMPLOYEE && (
-                <p className="text-xs text-muted-foreground">
-                  Your manager will review this task
-                </p>
-              )}
-              {watch("requiresReview") && currentUserRole === Role.MANAGER && (
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    Select who should review this task
-                  </p>
-                  {availableReviewers.length > 0 && (
-                    <Select
-                      value={watch("reviewerId") || "auto"}
-                      onValueChange={(value) => setValue("reviewerId", value === "auto" ? undefined : value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Auto (your manager)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="auto">Auto (your manager)</SelectItem>
-                        {availableReviewers.map((reviewer) => (
-                          <SelectItem key={reviewer.id} value={reviewer.id}>
-                            {reviewer.firstName} {reviewer.lastName} ({reviewer.role === Role.DEPARTMENT_HEAD ? "Dept Head" : "Admin"})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+            )}
+
+            {/* Requires Review Toggle */}
+            {showReviewToggle && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="requiresReview">Requires Review?</Label>
+                  <Switch
+                    id="requiresReview"
+                    checked={watch("requiresReview") ?? true}
+                    onCheckedChange={(checked) => {
+                      setValue("requiresReview", checked);
+                      if (!checked) {
+                        setValue("reviewerId", undefined);
+                      }
+                    }}
+                  />
                 </div>
-              )}
-              {!watch("requiresReview") && (
-                <p className="text-xs text-muted-foreground">
-                  Task will go directly to Done when completed
-                </p>
-              )}
-            </div>
-          )}
+                {watch("requiresReview") && currentUserRole === Role.EMPLOYEE && (
+                  <p className="text-xs text-muted-foreground">
+                    Your manager will review this task
+                  </p>
+                )}
+                {watch("requiresReview") && currentUserRole === Role.MANAGER && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground">
+                      Select who should review this task
+                    </p>
+                    {availableReviewers.length > 0 && (
+                      <Select
+                        value={watch("reviewerId") || "auto"}
+                        onValueChange={(value) => setValue("reviewerId", value === "auto" ? undefined : value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Auto (your manager)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="auto">Auto (your manager)</SelectItem>
+                          {availableReviewers.map((reviewer) => (
+                            <SelectItem key={reviewer.id} value={reviewer.id}>
+                              {reviewer.firstName} {reviewer.lastName} ({reviewer.role === Role.DEPARTMENT_HEAD ? "Dept Head" : "Admin"})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                )}
+                {!watch("requiresReview") && (
+                  <p className="text-xs text-muted-foreground">
+                    Task will go directly to Done when completed
+                  </p>
+                )}
+              </div>
+            )}
 
-          {/* Priority & Size */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Priority *</Label>
-              <Select
-                value={watch("priority")}
-                onValueChange={(value) => setValue("priority", value as TaskPriority)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {priorityOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Priority & Size */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Priority *</Label>
+                <Select
+                  value={watch("priority")}
+                  onValueChange={(value) => setValue("priority", value as TaskPriority)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {priorityOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Size *</Label>
+                <Select
+                  value={watch("size")}
+                  onValueChange={(value) => setValue("size", value as TaskSize)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sizeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Size *</Label>
-              <Select
-                value={watch("size")}
-                onValueChange={(value) => setValue("size", value as TaskSize)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {sizeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            {/* Time Estimate & Deadline */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Estimate *</Label>
+                <Select
+                  value={watch("estimatedMinutes")?.toString()}
+                  onValueChange={(value) => setValue("estimatedMinutes", parseInt(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {estimateOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value.toString()}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Estimate & Deadline */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Time Estimate *</Label>
-              <Select
-                value={watch("estimatedMinutes")?.toString()}
-                onValueChange={(value) => setValue("estimatedMinutes", parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {estimateOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value.toString()}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Deadline *</Label>
-              <div className="flex gap-2">
+              <div className="space-y-1.5">
+                <Label>Deadline *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
-                        "flex-1 justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal",
                         !deadlineDate && "text-muted-foreground"
                       )}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {deadlineDate ? format(deadlineDate, "MMM dd, yyyy") : "Pick date"}
+                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                      <span className="truncate">
+                        {deadlineDate
+                          ? `${format(deadlineDate, "MMM dd, yyyy")} ${deadlineHour}:${deadlineMinute}`
+                          : "Pick date & time"}
+                      </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0" align="end" collisionPadding={16}>
                     <Calendar
                       mode="single"
                       selected={deadlineDate}
@@ -376,22 +382,56 @@ export function CreateTaskForm({
                       disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                       initialFocus
                     />
+                    <div className="border-t px-3 py-3 flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <Select
+                        value={deadlineHour}
+                        onValueChange={(h) => setDeadlineTime(`${h}:${deadlineMinute}`)}
+                      >
+                        <SelectTrigger className="w-[4.25rem] h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-56">
+                          {Array.from({ length: 24 }, (_, i) => {
+                            const val = i.toString().padStart(2, "0");
+                            return (
+                              <SelectItem key={val} value={val}>
+                                {val}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-sm font-medium text-muted-foreground">:</span>
+                      <Select
+                        value={deadlineMinute}
+                        onValueChange={(m) => setDeadlineTime(`${deadlineHour}:${m}`)}
+                      >
+                        <SelectTrigger className="w-[4.25rem] h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-56">
+                          {Array.from({ length: 12 }, (_, i) => {
+                            const val = (i * 5).toString().padStart(2, "0");
+                            return (
+                              <SelectItem key={val} value={val}>
+                                {val}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </PopoverContent>
                 </Popover>
-                <Input
-                  type="time"
-                  value={deadlineTime}
-                  onChange={(e) => setDeadlineTime(e.target.value)}
-                  className="w-24"
-                />
+                {errors.deadline && (
+                  <p className="text-sm text-red-500">{errors.deadline.message}</p>
+                )}
               </div>
-              {errors.deadline && (
-                <p className="text-sm text-red-500">{errors.deadline.message}</p>
-              )}
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="border-t px-6 py-4 mt-2">
             <Button
               type="button"
               variant="outline"

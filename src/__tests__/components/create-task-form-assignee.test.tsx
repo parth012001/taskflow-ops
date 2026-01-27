@@ -121,7 +121,7 @@ describe("CreateTaskForm - Assign to Dropdown", () => {
       // The UserIcon from lucide-react should be rendered
       // It's rendered as an SVG with the class containing 'lucide-user'
       const assignToLabel = screen.getByText("Assign To");
-      const assignToSection = assignToLabel.closest("div.space-y-2");
+      const assignToSection = assignToLabel.closest("div[class*='space-y-']");
 
       // Check that the section exists and contains an SVG (the user icon)
       expect(assignToSection).not.toBeNull();
