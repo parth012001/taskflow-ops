@@ -60,7 +60,6 @@ const roleOptions: { value: Role; label: string }[] = [
   { value: "EMPLOYEE", label: "Employee" },
   { value: "MANAGER", label: "Manager" },
   { value: "DEPARTMENT_HEAD", label: "Department Head" },
-  { value: "ADMIN", label: "Administrator" },
 ];
 
 export function UserFormModal({
