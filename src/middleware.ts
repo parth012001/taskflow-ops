@@ -6,6 +6,17 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
+    // Force password change - redirect to settings if user must change password
+    // Allow access to settings, API routes, and logout
+    if (token?.mustChangePassword) {
+      const allowedPaths = ["/settings", "/api/", "/login"];
+      const isAllowedPath = allowedPaths.some((p) => path.startsWith(p));
+
+      if (!isAllowedPath) {
+        return NextResponse.redirect(new URL("/settings?passwordChange=required", req.url));
+      }
+    }
+
     // Manager-only routes
     if (path.startsWith("/manager")) {
       if (token?.role === "EMPLOYEE") {

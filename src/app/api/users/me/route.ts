@@ -100,10 +100,15 @@ export async function PATCH(request: NextRequest) {
       }
 
       // Hash new password and update
+      // Also clear mustChangePassword flag and set passwordChangedAt
       const newPasswordHash = await bcrypt.hash(newPassword, 12);
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { passwordHash: newPasswordHash },
+        data: {
+          passwordHash: newPasswordHash,
+          mustChangePassword: false,
+          passwordChangedAt: new Date(),
+        },
       });
 
       return NextResponse.json({ message: "Password updated successfully" });

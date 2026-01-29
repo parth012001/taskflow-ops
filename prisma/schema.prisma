@@ -97,6 +97,13 @@ model User {
   avatarUrl    String?
   isActive     Boolean @default(true)
 
+  // Multi-tenant support (future)
+  organizationId String? @db.VarChar(50)
+
+  // Password management
+  mustChangePassword Boolean   @default(false)
+  passwordChangedAt  DateTime?
+
   // Organization structure
   departmentId String?
   department   Department? @relation("DepartmentUsers", fields: [departmentId], references: [id])
@@ -172,6 +179,7 @@ model User {
   @@index([managerId])
   @@index([departmentId])
   @@index([role])
+  @@index([organizationId])
 }
 
 // ============================================

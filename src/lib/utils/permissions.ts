@@ -12,6 +12,7 @@ export type Permission =
   | "task:delete"
   | "user:view_team"
   | "user:view_department"
+  | "user:manage"
   | "radar:view"
   | "kpi:manage"
   | "announcement:create";
@@ -55,6 +56,7 @@ const rolePermissions: Record<Role, Permission[]> = {
     "task:delete",
     "user:view_team",
     "user:view_department",
+    "user:manage",
     "radar:view",
     "kpi:manage",
     "announcement:create",

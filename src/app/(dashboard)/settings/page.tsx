@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Role } from "@prisma/client";
-import { User, Lock, Building, Users, Loader2 } from "lucide-react";
+import { User, Lock, Building, Users, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface UserProfile {
   id: string;
@@ -33,8 +35,14 @@ const roleLabels: Record<Role, string> = {
 
 export default function SettingsPage() {
   const { data: session, update: updateSession } = useSession();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Check if password change is required
+  const mustChangePassword = session?.user?.mustChangePassword ?? false;
+  const passwordChangeRequired = searchParams.get("passwordChange") === "required";
 
   // Profile form state
   const [firstName, setFirstName] = useState("");
@@ -138,6 +146,12 @@ export default function SettingsPage() {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        // Refresh session to clear mustChangePassword flag
+        await updateSession();
+        // Redirect to dashboard if password change was required
+        if (mustChangePassword || passwordChangeRequired) {
+          router.push("/dashboard");
+        }
       } else {
         const error = await response.json();
         toast.error(error.error || "Failed to change password");
@@ -166,6 +180,18 @@ export default function SettingsPage() {
           Manage your account settings and preferences
         </p>
       </div>
+
+      {/* Force Password Change Alert */}
+      {(mustChangePassword || passwordChangeRequired) && (
+        <Alert variant="destructive" className="border-amber-500 bg-amber-50 text-amber-900">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Password Change Required</AlertTitle>
+          <AlertDescription>
+            You must change your password before you can access other parts of the application.
+            Please set a new password below.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Profile Information */}
       <Card>

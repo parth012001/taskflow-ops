@@ -59,6 +59,7 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           managerId: user.managerId,
           departmentId: user.departmentId,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),
@@ -73,6 +74,7 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.managerId = user.managerId;
         token.departmentId = user.departmentId;
+        token.mustChangePassword = user.mustChangePassword;
       }
 
       // Refresh user data from DB when session update is triggered
@@ -86,6 +88,7 @@ export const authOptions: NextAuthOptions = {
               role: true,
               managerId: true,
               departmentId: true,
+              mustChangePassword: true,
             },
           });
           if (freshUser) {
@@ -94,6 +97,7 @@ export const authOptions: NextAuthOptions = {
             token.role = freshUser.role;
             token.managerId = freshUser.managerId;
             token.departmentId = freshUser.departmentId;
+            token.mustChangePassword = freshUser.mustChangePassword;
           }
         } catch (error) {
           // Log error but don't break authentication - return token unchanged
@@ -115,6 +119,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role;
         session.user.managerId = token.managerId;
         session.user.departmentId = token.departmentId;
+        session.user.mustChangePassword = token.mustChangePassword;
       }
       return session;
     },

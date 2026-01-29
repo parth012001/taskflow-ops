@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -31,10 +32,37 @@ interface KpiBucketFormModalProps {
   onSuccess: () => void;
 }
 
-const roleOptions: { value: Role; label: string }[] = [
-  { value: "EMPLOYEE", label: "Employee" },
-  { value: "MANAGER", label: "Manager" },
-  { value: "DEPARTMENT_HEAD", label: "Department Head" },
+const roleOptions: { value: Role; label: string; colors: { bg: string; border: string; text: string; selectedBg: string } }[] = [
+  {
+    value: "EMPLOYEE",
+    label: "Employee",
+    colors: {
+      bg: "bg-gray-50",
+      border: "border-gray-200",
+      text: "text-gray-700",
+      selectedBg: "bg-gray-100",
+    },
+  },
+  {
+    value: "MANAGER",
+    label: "Manager",
+    colors: {
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      text: "text-blue-700",
+      selectedBg: "bg-blue-100",
+    },
+  },
+  {
+    value: "DEPARTMENT_HEAD",
+    label: "Department Head",
+    colors: {
+      bg: "bg-purple-50",
+      border: "border-purple-200",
+      text: "text-purple-700",
+      selectedBg: "bg-purple-100",
+    },
+  },
 ];
 
 export function KpiBucketFormModal({
@@ -172,24 +200,35 @@ export function KpiBucketFormModal({
 
           <div className="space-y-2">
             <Label>Applicable Roles *</Label>
-            <p className="text-xs text-gray-500 mb-2">
+            <p className="text-xs text-gray-500 mb-3">
               Select which roles can have tasks assigned to this KPI
             </p>
-            <div className="space-y-2">
-              {roleOptions.map((option) => (
-                <label
-                  key={option.value}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={applicableRoles.includes(option.value)}
-                    onChange={() => handleRoleToggle(option.value)}
-                    className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                  />
-                  <span className="text-sm">{option.label}</span>
-                </label>
-              ))}
+            <div className="grid grid-cols-1 gap-2">
+              {roleOptions.map((option) => {
+                const isSelected = applicableRoles.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleRoleToggle(option.value)}
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border-2 transition-all text-left",
+                      isSelected
+                        ? `${option.colors.selectedBg} ${option.colors.border} ${option.colors.text}`
+                        : `${option.colors.bg} border-transparent hover:${option.colors.border}`
+                    )}
+                  >
+                    <span className={cn("font-medium text-sm", option.colors.text)}>
+                      {option.label}
+                    </span>
+                    {isSelected && (
+                      <div className={cn("flex items-center justify-center w-5 h-5 rounded-full", option.colors.border, option.colors.selectedBg)}>
+                        <Check className={cn("h-3 w-3", option.colors.text)} />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
