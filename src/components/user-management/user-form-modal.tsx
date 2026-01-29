@@ -384,14 +384,14 @@ export function UserFormModal({
             <div className="space-y-2">
               <Label htmlFor="department">Department</Label>
               <Select
-                value={departmentId}
-                onValueChange={setDepartmentId}
+                value={departmentId || "none"}
+                onValueChange={(v) => setDepartmentId(v === "none" ? "" : v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select department (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No department</SelectItem>
+                  <SelectItem value="none">No department</SelectItem>
                   {departments.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
@@ -404,12 +404,15 @@ export function UserFormModal({
             {/* Manager */}
             <div className="space-y-2">
               <Label htmlFor="manager">Reports To</Label>
-              <Select value={managerId} onValueChange={setManagerId}>
+              <Select
+                value={managerId || "none"}
+                onValueChange={(v) => setManagerId(v === "none" ? "" : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select manager (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No manager</SelectItem>
+                  <SelectItem value="none">No manager</SelectItem>
                   {filteredManagers.map((manager) => (
                     <SelectItem key={manager.id} value={manager.id}>
                       {manager.firstName} {manager.lastName} ({manager.role.replace("_", " ")})
