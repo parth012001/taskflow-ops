@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Loader2, Target, ChevronDown, ChevronRight, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -74,6 +74,7 @@ export function UserKpiModal({
 }: UserKpiModalProps) {
   const [assignments, setAssignments] = useState<Map<string, KpiAssignment>>(new Map());
   const [isSaving, setIsSaving] = useState(false);
+  const [showNonApplicable, setShowNonApplicable] = useState(false);
 
   // Initialize assignments when modal opens
   useEffect(() => {
@@ -95,8 +96,78 @@ export function UserKpiModal({
       });
 
       setAssignments(initialAssignments);
+      setShowNonApplicable(false);
     }
   }, [open, user, kpiBuckets]);
+
+  // Separate applicable and non-applicable KPIs
+  const applicableKpis = useMemo(() =>
+    kpiBuckets.filter((bucket) => bucket.applicableRoles.includes(user.role)),
+    [kpiBuckets, user.role]
+  );
+
+  const nonApplicableKpis = useMemo(() =>
+    kpiBuckets.filter((bucket) => !bucket.applicableRoles.includes(user.role)),
+    [kpiBuckets, user.role]
+  );
+
+  // Calculate pending changes
+  const pendingChanges = useMemo(() => {
+    let added = 0;
+    let removed = 0;
+    let updated = 0;
+
+    assignments.forEach((assignment) => {
+      const wasAssigned = user.assignedKpis.some(
+        (a) => a.kpiBucketId === assignment.kpiBucketId
+      );
+
+      if (assignment.isAssigned && !wasAssigned) {
+        added++;
+      } else if (!assignment.isAssigned && wasAssigned) {
+        removed++;
+      } else if (assignment.isAssigned && wasAssigned) {
+        const original = user.assignedKpis.find(
+          (a) => a.kpiBucketId === assignment.kpiBucketId
+        );
+        const newTarget = assignment.targetValue
+          ? parseFloat(assignment.targetValue)
+          : null;
+        if (original && original.targetValue !== newTarget) {
+          updated++;
+        }
+      }
+    });
+
+    return { added, removed, updated, total: added + removed + updated };
+  }, [assignments, user.assignedKpis]);
+
+  // Quick actions
+  const handleSelectAll = () => {
+    setAssignments((prev) => {
+      const updated = new Map(prev);
+      applicableKpis.forEach((bucket) => {
+        const current = updated.get(bucket.id);
+        if (current) {
+          updated.set(bucket.id, { ...current, isAssigned: true });
+        }
+      });
+      return updated;
+    });
+  };
+
+  const handleClearAll = () => {
+    setAssignments((prev) => {
+      const updated = new Map(prev);
+      applicableKpis.forEach((bucket) => {
+        const current = updated.get(bucket.id);
+        if (current) {
+          updated.set(bucket.id, { ...current, isAssigned: false, targetValue: "" });
+        }
+      });
+      return updated;
+    });
+  };
 
   const handleToggle = (kpiBucketId: string) => {
     setAssignments((prev) => {
@@ -276,95 +347,131 @@ export function UserKpiModal({
     }
   };
 
-  // Separate applicable and non-applicable KPIs
-  const applicableKpis = kpiBuckets.filter((bucket) =>
-    bucket.applicableRoles.includes(user.role)
-  );
-  const nonApplicableKpis = kpiBuckets.filter(
-    (bucket) => !bucket.applicableRoles.includes(user.role)
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="sm:max-w-[640px] max-h-[85vh] flex flex-col">
+        {/* Header */}
+        <DialogHeader className="flex-shrink-0 pb-4 border-b">
+          <DialogTitle className="text-lg">
             Manage KPIs for {user.firstName} {user.lastName}
           </DialogTitle>
-          <DialogDescription>
-            <Badge variant="outline" className="mt-1">
-              {roleLabels[user.role]}
-            </Badge>
-            {user.department && (
-              <span className="ml-2 text-gray-500">
-                {user.department.name}
-              </span>
-            )}
+          <DialogDescription asChild>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="outline">
+                {roleLabels[user.role]}
+              </Badge>
+              {user.department && (
+                <span className="text-sm text-muted-foreground">
+                  {user.department.name}
+                </span>
+              )}
+            </div>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Applicable KPIs */}
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto py-4 space-y-4">
+          {/* Applicable KPIs Section */}
           <div>
-            <Label className="text-sm font-medium">
-              Available KPIs ({applicableKpis.length})
-            </Label>
-            <p className="text-xs text-gray-500 mb-2">
-              KPIs applicable to {roleLabels[user.role]} role
-            </p>
-            <div className="space-y-3 mt-2">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Target className="h-4 w-4 text-purple-600" />
+                <span className="text-sm font-medium">
+                  Available KPIs ({applicableKpis.length})
+                </span>
+              </div>
+              {applicableKpis.length > 0 && (
+                <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className="h-7 text-xs"
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    Select All
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearAll}
+                    className="h-7 text-xs"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear All
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
               {applicableKpis.length === 0 ? (
-                <p className="text-sm text-gray-500">
-                  No KPIs available for this role
-                </p>
+                <div className="text-center py-8 bg-muted/30 rounded-lg border border-dashed">
+                  <Target className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    No KPIs available for {roleLabels[user.role]} role
+                  </p>
+                </div>
               ) : (
                 applicableKpis.map((bucket) => {
                   const assignment = assignments.get(bucket.id);
+                  const isAssigned = assignment?.isAssigned || false;
                   return (
                     <div
                       key={bucket.id}
-                      className="flex items-start gap-3 p-3 border rounded-lg"
+                      className={`flex items-center gap-4 p-3 border rounded-lg transition-all ${
+                        isAssigned
+                          ? "border-purple-300 bg-purple-50/50 shadow-sm"
+                          : "hover:bg-muted/50 hover:border-muted-foreground/20"
+                      }`}
                     >
                       <input
                         type="checkbox"
                         id={`kpi-${bucket.id}`}
-                        checked={assignment?.isAssigned || false}
+                        checked={isAssigned}
                         onChange={() => handleToggle(bucket.id)}
-                        className="h-4 w-4 mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 focus:ring-offset-0 flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <label
                           htmlFor={`kpi-${bucket.id}`}
-                          className="font-medium text-sm cursor-pointer"
+                          className="font-medium text-sm cursor-pointer block text-foreground"
                         >
                           {bucket.name}
                         </label>
                         {bucket.description && (
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                             {bucket.description}
                           </p>
                         )}
-                        {assignment?.isAssigned && (
-                          <div className="mt-2">
+                      </div>
+                      {/* Target Value Field */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {isAssigned ? (
+                          <>
                             <Label
                               htmlFor={`target-${bucket.id}`}
-                              className="text-xs text-gray-500"
+                              className="text-xs text-muted-foreground whitespace-nowrap"
                             >
-                              Target Value (optional)
+                              Target:
                             </Label>
                             <Input
                               id={`target-${bucket.id}`}
                               type="number"
                               min="0"
                               step="0.01"
-                              placeholder="e.g., 100"
+                              placeholder="--"
                               value={assignment?.targetValue || ""}
                               onChange={(e) =>
                                 handleTargetChange(bucket.id, e.target.value)
                               }
-                              className="h-8 mt-1"
+                              className="h-8 w-20 text-sm"
                             />
-                          </div>
+                          </>
+                        ) : (
+                          <div className="w-[104px]" />
                         )}
                       </div>
                     </div>
@@ -374,47 +481,76 @@ export function UserKpiModal({
             </div>
           </div>
 
-          {/* Non-applicable KPIs */}
+          {/* Non-applicable KPIs - Collapsible */}
           {nonApplicableKpis.length > 0 && (
-            <div>
-              <Label className="text-sm font-medium text-gray-400">
-                Not Applicable ({nonApplicableKpis.length})
-              </Label>
-              <p className="text-xs text-gray-400 mb-2">
-                These KPIs are not available for {roleLabels[user.role]} role
-              </p>
-              <div className="space-y-2 opacity-50">
-                {nonApplicableKpis.map((bucket) => (
-                  <div
-                    key={bucket.id}
-                    className="flex items-center gap-3 p-2 border rounded-lg bg-gray-50"
-                  >
-                    <input
-                      type="checkbox"
-                      disabled
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <span className="text-sm text-gray-500">{bucket.name}</span>
-                  </div>
-                ))}
-              </div>
+            <div className="border-t pt-4">
+              <button
+                type="button"
+                onClick={() => setShowNonApplicable(!showNonApplicable)}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full py-1"
+              >
+                {showNonApplicable ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                <span className="font-medium">
+                  Not Applicable ({nonApplicableKpis.length})
+                </span>
+              </button>
+              {showNonApplicable && (
+                <div className="space-y-2 mt-3">
+                  {nonApplicableKpis.map((bucket) => (
+                    <div
+                      key={bucket.id}
+                      className="flex items-center gap-4 p-3 border rounded-lg bg-muted/30 opacity-60"
+                    >
+                      <input
+                        type="checkbox"
+                        disabled
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm text-muted-foreground">{bucket.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
-          </Button>
-        </DialogFooter>
+        {/* Footer - Fixed at bottom */}
+        <div className="flex-shrink-0 pt-4 border-t space-y-3">
+          {/* Pending Changes Indicator */}
+          {pendingChanges.total > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-sm">
+              <span className="font-medium text-blue-700">Pending: </span>
+              <span className="text-blue-600">
+                {[
+                  pendingChanges.added > 0 && `+${pendingChanges.added} new`,
+                  pendingChanges.removed > 0 && `-${pendingChanges.removed} removed`,
+                  pendingChanges.updated > 0 && `${pendingChanges.updated} updated`,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+              </span>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
