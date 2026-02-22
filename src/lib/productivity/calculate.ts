@@ -14,11 +14,17 @@ import {
 
 export async function calculateForUser(
   userId: string,
-  departmentId: string | null
+  departmentId: string | null,
+  windowStart?: Date,
+  windowEnd?: Date
 ): Promise<ProductivityResult> {
-  const windowEnd = new Date();
-  const windowStart = new Date();
-  windowStart.setDate(windowStart.getDate() - 28);
+  if (!windowEnd) {
+    windowEnd = new Date();
+  }
+  if (!windowStart) {
+    windowStart = new Date(windowEnd);
+    windowStart.setDate(windowStart.getDate() - 28);
+  }
 
   const data = await fetchScoringDataForUser(
     userId,
@@ -105,11 +111,11 @@ export async function calculateAndSaveForUser(
   userId: string,
   departmentId: string | null
 ): Promise<void> {
-  const result = await calculateForUser(userId, departmentId);
-
   const windowEnd = new Date();
-  const windowStart = new Date();
+  const windowStart = new Date(windowEnd);
   windowStart.setDate(windowStart.getDate() - 28);
+
+  const result = await calculateForUser(userId, departmentId, windowStart, windowEnd);
 
   await prisma.productivityScore.upsert({
     where: { userId },
