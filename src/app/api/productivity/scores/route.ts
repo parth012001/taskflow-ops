@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { productivityScoresQuerySchema } from "@/lib/validations/productivity";
 import { Role, Prisma } from "@prisma/client";
+import { generalLimiter } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +18,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: "Manager access required" },
         { status: 403 }
+      );
+    }
+
+    const rateCheck = generalLimiter.check(`scores:${session.user.id}`);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": String(rateCheck.retryAfterSeconds) } }
       );
     }
 
