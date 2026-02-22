@@ -12,6 +12,7 @@ import {
   Megaphone,
   PieChart,
   UserCog,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,12 @@ const navigation = [
     name: "Team",
     href: "/team",
     icon: Users,
+    roles: ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"],
+  },
+  {
+    name: "Productivity",
+    href: "/productivity",
+    icon: BarChart3,
     roles: ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"],
   },
   {

@@ -24,11 +24,15 @@ import {
   Flame,
   Sun,
   X,
+  BarChart3,
 } from "lucide-react";
 import { getStatusLabel } from "@/lib/utils/task-state-machine";
 import { TaskStatus, RecognitionType } from "@prisma/client";
 import { RecognitionWidget } from "@/components/gamification/recognition-widget";
 import { AnnouncementsWidget } from "@/components/announcements/announcements-widget";
+import { CompositeGauge } from "@/components/productivity/composite-gauge";
+import { isManagerOrAbove } from "@/lib/utils/permissions";
+import { Role } from "@prisma/client";
 
 // Dynamic import for confetti (no SSR needed)
 const ConfettiCelebration = dynamic(
@@ -94,6 +98,13 @@ export default function DashboardPage() {
   const [showMorningBanner, setShowMorningBanner] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiType, setConfettiType] = useState<"task-completion" | "streak-milestone">("task-completion");
+  const [productivityScore, setProductivityScore] = useState<{
+    composite: number;
+    output: number;
+    quality: number;
+    reliability: number;
+    consistency: number;
+  } | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -118,6 +129,25 @@ export default function DashboardPage() {
 
     if (session) {
       fetchStats();
+
+      // Fetch own productivity score
+      fetch(`/api/productivity/scores/${session.user.id}`)
+        .then((res) => {
+          if (res.ok) return res.json();
+          return null;
+        })
+        .then((data) => {
+          if (data) {
+            setProductivityScore({
+              composite: data.composite,
+              output: data.output,
+              quality: data.quality,
+              reliability: data.reliability,
+              consistency: data.consistency,
+            });
+          }
+        })
+        .catch(() => {});
     }
   }, [session]);
 
@@ -243,6 +273,50 @@ export default function DashboardPage() {
       {/* Announcements Widget */}
       {stats?.announcements && stats.announcements.length > 0 && (
         <AnnouncementsWidget announcements={stats.announcements} maxItems={3} />
+      )}
+
+      {/* Productivity Widget */}
+      {productivityScore && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-indigo-600" />
+              <h3 className="font-semibold text-gray-900">My Productivity</h3>
+            </div>
+            <div className="flex items-center gap-6">
+              <CompositeGauge score={productivityScore.composite} size={80} />
+              <div className="flex-1 space-y-2">
+                {([
+                  { label: "Output", value: productivityScore.output, color: "bg-blue-500" },
+                  { label: "Quality", value: productivityScore.quality, color: "bg-green-500" },
+                  { label: "Reliability", value: productivityScore.reliability, color: "bg-purple-500" },
+                  { label: "Consistency", value: productivityScore.consistency, color: "bg-amber-500" },
+                ] as const).map((pillar) => (
+                  <div key={pillar.label} className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 w-20">{pillar.label}</span>
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full">
+                      <div
+                        className={`h-2 rounded-full ${pillar.color}`}
+                        style={{ width: `${Math.min(pillar.value, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 w-8 text-right">
+                      {Math.round(pillar.value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {isManagerOrAbove(user.role as Role) && (
+              <Link href="/productivity">
+                <Button variant="outline" size="sm" className="w-full mt-4">
+                  View Leaderboard
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Stats grid */}
