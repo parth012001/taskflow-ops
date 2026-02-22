@@ -41,6 +41,7 @@ jest.mock("@/lib/prisma", () => ({
     department: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
     },
     scoringConfig: {
       upsert: jest.fn(),
@@ -677,7 +678,7 @@ describe("Productivity Scoring API", () => {
 
     it("should return 400 when weights do not sum to 1", async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession as any);
-      (prisma.department.findUnique as jest.Mock).mockResolvedValue({ id: "dept-1" });
+      (prisma.department.findFirst as jest.Mock).mockResolvedValue({ id: "dept-1" });
 
       const response = await patchConfig(
         createMockRequest("/api/productivity/config/dept-1", {
@@ -696,7 +697,7 @@ describe("Productivity Scoring API", () => {
 
     it("should return 400 when partial weights provided", async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession as any);
-      (prisma.department.findUnique as jest.Mock).mockResolvedValue({ id: "dept-1" });
+      (prisma.department.findFirst as jest.Mock).mockResolvedValue({ id: "dept-1" });
 
       const response = await patchConfig(
         createMockRequest("/api/productivity/config/dept-1", {
@@ -713,7 +714,7 @@ describe("Productivity Scoring API", () => {
 
     it("should create config if none exists (upsert)", async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession as any);
-      (prisma.department.findUnique as jest.Mock).mockResolvedValue({ id: "dept-1" });
+      (prisma.department.findFirst as jest.Mock).mockResolvedValue({ id: "dept-1" });
       (prisma.scoringConfig.upsert as jest.Mock).mockResolvedValue({
         id: "config-1",
         departmentId: "dept-1",
@@ -740,7 +741,7 @@ describe("Productivity Scoring API", () => {
 
     it("should update existing config with valid weights", async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession as any);
-      (prisma.department.findUnique as jest.Mock).mockResolvedValue({ id: "dept-1" });
+      (prisma.department.findFirst as jest.Mock).mockResolvedValue({ id: "dept-1" });
       (prisma.scoringConfig.upsert as jest.Mock).mockResolvedValue({
         id: "config-1",
         departmentId: "dept-1",
@@ -769,7 +770,7 @@ describe("Productivity Scoring API", () => {
 
     it("should return 404 when department not found", async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession as any);
-      (prisma.department.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.department.findFirst as jest.Mock).mockResolvedValue(null);
 
       const response = await patchConfig(
         createMockRequest("/api/productivity/config/nonexistent", {

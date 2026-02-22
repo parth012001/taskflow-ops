@@ -23,9 +23,9 @@ export async function PATCH(
 
     const { departmentId } = await params;
 
-    // Verify department exists
-    const department = await prisma.department.findUnique({
-      where: { id: departmentId },
+    // Verify department exists and is not soft-deleted
+    const department = await prisma.department.findFirst({
+      where: { id: departmentId, deletedAt: null },
       select: { id: true },
     });
 
