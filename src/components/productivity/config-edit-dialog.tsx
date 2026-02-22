@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { authFetch } from "@/lib/auth-fetch";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +63,7 @@ export function ConfigEditDialog({
 
     setIsSaving(true);
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `/api/productivity/config/${config.departmentId}`,
         {
           method: "PATCH",

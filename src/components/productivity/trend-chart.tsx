@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { authFetch } from "@/lib/auth-fetch";
 import { format, parseISO } from "date-fns";
 import {
   LineChart,
@@ -32,7 +33,7 @@ export function TrendChart({ userId }: TrendChartProps) {
   const fetchTrends = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `/api/productivity/trends?userId=${userId}&weeks=12`
       );
       if (response.ok) {

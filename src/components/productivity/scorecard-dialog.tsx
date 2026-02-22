@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { authFetch } from "@/lib/auth-fetch";
 import {
   Dialog,
   DialogContent,
@@ -50,7 +51,7 @@ export function ScorecardDialog({
   const fetchScore = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/productivity/scores/${userId}`);
+      const response = await authFetch(`/api/productivity/scores/${userId}`);
       if (response.ok) {
         const data = await response.json();
         setResult(data);
