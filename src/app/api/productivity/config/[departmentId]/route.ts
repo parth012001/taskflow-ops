@@ -40,8 +40,9 @@ export async function PATCH(
     const parsed = updateScoringConfigSchema.safeParse(body);
 
     if (!parsed.success) {
+      console.warn("Validation error:", parsed.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

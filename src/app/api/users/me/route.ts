@@ -72,8 +72,9 @@ export async function PATCH(request: NextRequest) {
     if (body.currentPassword !== undefined || body.newPassword !== undefined) {
       const validatedData = changePasswordSchema.safeParse(body);
       if (!validatedData.success) {
+        console.warn("Validation error:", validatedData.error.flatten());
         return NextResponse.json(
-          { error: "Validation failed", details: validatedData.error.flatten() },
+          { error: "Invalid input" },
           { status: 400 }
         );
       }
@@ -117,8 +118,9 @@ export async function PATCH(request: NextRequest) {
     // Profile update
     const validatedData = updateProfileSchema.safeParse(body);
     if (!validatedData.success) {
+      console.warn("Validation error:", validatedData.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: validatedData.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

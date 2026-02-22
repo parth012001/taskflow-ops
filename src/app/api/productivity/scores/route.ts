@@ -24,8 +24,9 @@ export async function GET(request: NextRequest) {
     const parsed = productivityScoresQuerySchema.safeParse(searchParams);
 
     if (!parsed.success) {
+      console.warn("Validation error:", parsed.error.flatten());
       return NextResponse.json(
-        { error: "Invalid query parameters", details: parsed.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

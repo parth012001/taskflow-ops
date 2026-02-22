@@ -39,8 +39,9 @@ export async function GET(request: NextRequest) {
     });
 
     if (!queryResult.success) {
+      console.warn("Validation error:", queryResult.error.flatten());
       return NextResponse.json(
-        { error: "Invalid query parameters", details: queryResult.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }
@@ -147,8 +148,9 @@ export async function POST(request: NextRequest) {
     const validationResult = createUserSchema.safeParse(body);
 
     if (!validationResult.success) {
+      console.warn("Validation error:", validationResult.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: validationResult.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

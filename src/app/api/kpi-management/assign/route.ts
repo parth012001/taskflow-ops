@@ -24,8 +24,9 @@ export async function POST(request: NextRequest) {
     const validationResult = assignKpiSchema.safeParse(body);
 
     if (!validationResult.success) {
+      console.warn("Validation error:", validationResult.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: validationResult.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

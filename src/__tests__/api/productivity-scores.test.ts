@@ -33,6 +33,7 @@ jest.mock("@/lib/prisma", () => ({
     productivityScore: {
       findMany: jest.fn(),
       count: jest.fn(),
+      aggregate: jest.fn(),
       upsert: jest.fn(),
     },
     productivitySnapshot: {
@@ -173,6 +174,11 @@ const mockProductivityResult = {
 describe("Productivity Scoring API", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default aggregate mock for scores route
+    (prisma.productivityScore.aggregate as jest.Mock).mockResolvedValue({
+      _avg: { composite: 75 },
+      _max: { composite: 90 },
+    });
   });
 
   // ============================================
