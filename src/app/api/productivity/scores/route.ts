@@ -44,15 +44,19 @@ export async function GET(request: NextRequest) {
       const subordinateIds = subordinates.map((s) => s.id);
       userFilter = { userId: { in: subordinateIds } };
     } else if (session.user.role === "DEPARTMENT_HEAD") {
-      // Dept head scoped to own department, optionally overridden by param
-      const deptId = departmentId ?? session.user.departmentId;
-      if (deptId) {
-        const deptUsers = await prisma.user.findMany({
-          where: { departmentId: deptId },
-          select: { id: true },
-        });
-        userFilter = { userId: { in: deptUsers.map((u) => u.id) } };
+      // Dept head always scoped to own department — ignore incoming departmentId
+      const deptId = session.user.departmentId;
+      if (!deptId) {
+        return NextResponse.json(
+          { error: "Department not assigned" },
+          { status: 403 }
+        );
       }
+      const deptUsers = await prisma.user.findMany({
+        where: { departmentId: deptId },
+        select: { id: true },
+      });
+      userFilter = { userId: { in: deptUsers.map((u) => u.id) } };
     } else {
       // ADMIN can see all, optionally filtered by department
       if (departmentId) {

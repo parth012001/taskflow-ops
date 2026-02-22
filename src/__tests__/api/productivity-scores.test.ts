@@ -373,6 +373,24 @@ describe("Productivity Scoring API", () => {
       );
     });
 
+    it("should ignore departmentId param for department heads and use own department", async () => {
+      mockGetServerSession.mockResolvedValue(mockDeptHeadSession as any);
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([{ id: "emp-1" }]);
+      (prisma.productivityScore.count as jest.Mock).mockResolvedValue(0);
+      (prisma.productivityScore.findMany as jest.Mock).mockResolvedValue([]);
+
+      await getScores(
+        createMockRequest("/api/productivity/scores?departmentId=dept-other")
+      );
+
+      // Should query with the session's dept-1, not the requested dept-other
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { departmentId: "dept-1" },
+        })
+      );
+    });
+
     it("should filter by role", async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession as any);
       (prisma.user.findMany as jest.Mock).mockResolvedValue([{ id: "emp-1" }]);
