@@ -145,6 +145,7 @@ export function ScoringConfigPanel({ onDataChange }: ScoringConfigPanelProps) {
                         <Button
                           variant="ghost"
                           size="sm"
+                          aria-label={`Edit ${config.departmentName}`}
                           onClick={() => setEditingConfig(config)}
                         >
                           <Pencil className="h-4 w-4" />

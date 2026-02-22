@@ -11,32 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { CompositeGauge } from "./composite-gauge";
 import { PillarCard } from "./pillar-card";
 import { TrendChart } from "./trend-chart";
-
-interface ProductivityResult {
-  output: number;
-  quality: number;
-  reliability: number;
-  consistency: number;
-  composite: number;
-  meta: {
-    totalPoints: number;
-    targetPoints: number;
-    completedTaskCount: number;
-    reviewedTaskCount: number;
-    firstPassCount: number;
-    reopenedCount: number;
-    totalCompletedCount: number;
-    reviewRatio: number;
-    onTimeCount: number;
-    totalWithDeadline: number;
-    carryForwardTotal: number;
-    activeTaskCount: number;
-    plannedDays: number;
-    totalWorkdays: number;
-    activeKpiBuckets: number;
-    assignedKpiBuckets: number;
-  };
-}
+import type { ProductivityResult } from "@/lib/productivity/scoring-engine";
 
 const roleLabels: Record<string, string> = {
   EMPLOYEE: "Employee",
@@ -89,6 +64,7 @@ export function ScorecardDialog({
 
   useEffect(() => {
     if (open) {
+      setResult(null);
       fetchScore();
     }
   }, [open, fetchScore]);

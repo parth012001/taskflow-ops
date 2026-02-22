@@ -129,14 +129,10 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
       setScores(data.scores);
       setPagination(data.pagination);
 
-      if (onStatsLoaded && data.scores.length > 0) {
-        const avg =
-          data.scores.reduce((sum: number, s: Score) => sum + s.composite, 0) /
-          data.scores.length;
-        const top = Math.max(...data.scores.map((s: Score) => s.composite));
+      if (onStatsLoaded) {
         onStatsLoaded({
-          average: Math.round(avg),
-          topScore: Math.round(top),
+          average: data.aggregates?.averageComposite ?? 0,
+          topScore: data.aggregates?.maxComposite ?? 0,
           totalScored: data.pagination.total,
         });
       }
@@ -170,9 +166,20 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
     fetchScores();
   }, [fetchScores]);
 
-  useEffect(() => {
+  const handleDepartmentChange = (value: string) => {
+    setDepartmentFilter(value === "all" ? "" : value);
     setPagination((prev) => ({ ...prev, page: 1 }));
-  }, [departmentFilter, roleFilter, sortBy]);
+  };
+
+  const handleRoleChange = (value: string) => {
+    setRoleFilter(value === "all" ? "" : value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleSortChange = (value: string) => {
+    setSortBy(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
 
   const handleRecalculate = async () => {
     setIsRecalculating(true);
@@ -227,7 +234,7 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
             {isAdmin && (
               <Select
                 value={departmentFilter || "all"}
-                onValueChange={(v) => setDepartmentFilter(v === "all" ? "" : v)}
+                onValueChange={handleDepartmentChange}
               >
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="All Departments" />
@@ -244,7 +251,7 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
             )}
             <Select
               value={roleFilter || "all"}
-              onValueChange={(v) => setRoleFilter(v === "all" ? "" : v)}
+              onValueChange={handleRoleChange}
             >
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="All Roles" />
@@ -256,7 +263,7 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
                 <SelectItem value="DEPARTMENT_HEAD">Dept Head</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={sortBy} onValueChange={setSortBy}>
+            <Select value={sortBy} onValueChange={handleSortChange}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue />
               </SelectTrigger>

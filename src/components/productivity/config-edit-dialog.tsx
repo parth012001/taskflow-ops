@@ -112,8 +112,9 @@ export function ConfigEditDialog({
               type="number"
               min={1}
               max={100}
+              step={1}
               value={weeklyOutputTarget}
-              onChange={(e) => setWeeklyOutputTarget(Number(e.target.value))}
+              onChange={(e) => setWeeklyOutputTarget(Math.round(Number(e.target.value)))}
             />
           </div>
 

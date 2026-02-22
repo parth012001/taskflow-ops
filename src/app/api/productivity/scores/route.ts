@@ -86,7 +86,14 @@ export async function GET(request: NextRequest) {
       userFilter = { userId: { in: roleUsers.map((u) => u.id) } };
     }
 
-    const total = await prisma.productivityScore.count({ where: userFilter });
+    const [total, aggregates] = await Promise.all([
+      prisma.productivityScore.count({ where: userFilter }),
+      prisma.productivityScore.aggregate({
+        where: userFilter,
+        _avg: { composite: true },
+        _max: { composite: true },
+      }),
+    ]);
 
     const scores = await prisma.productivityScore.findMany({
       where: userFilter,
@@ -125,6 +132,10 @@ export async function GET(request: NextRequest) {
         limit,
         total,
         totalPages: Math.ceil(total / limit),
+      },
+      aggregates: {
+        averageComposite: Math.round(aggregates._avg.composite ?? 0),
+        maxComposite: Math.round(aggregates._max.composite ?? 0),
       },
     });
   } catch (error) {
