@@ -650,7 +650,7 @@ model Announcement {
 model ProductivityScore {
   id          String   @id @default(cuid())
   userId      String   @unique
-  user        User     @relation("UserProductivityScore", fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation("UserProductivityScore", fields: [userId], references: [id], onDelete: Restrict)
 
   output      Float
   quality     Float
@@ -673,7 +673,7 @@ model ProductivityScore {
 model ProductivitySnapshot {
   id            String   @id @default(cuid())
   userId        String
-  user          User     @relation("UserProductivitySnapshots", fields: [userId], references: [id], onDelete: Cascade)
+  user          User     @relation("UserProductivitySnapshots", fields: [userId], references: [id], onDelete: Restrict)
 
   weekStartDate DateTime @db.Date
   output        Float
