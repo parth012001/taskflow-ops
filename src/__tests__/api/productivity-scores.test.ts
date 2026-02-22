@@ -119,6 +119,18 @@ const mockManagerSession = {
   },
 };
 
+const mockDeptHeadSession = {
+  user: {
+    id: "dh-1",
+    email: "depthead@test.com",
+    firstName: "Dept",
+    lastName: "Head",
+    role: "DEPARTMENT_HEAD",
+    managerId: null,
+    departmentId: "dept-1",
+  },
+};
+
 const mockEmployeeSession = {
   user: {
     id: "emp-1",
@@ -474,6 +486,35 @@ describe("Productivity Scoring API", () => {
 
       expect(response.status).toBe(404);
     });
+
+    it("should return 200 when dept head views user in same department", async () => {
+      mockGetServerSession.mockResolvedValue(mockDeptHeadSession as any);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: "emp-1" });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: "emp-1",
+        departmentId: "dept-1",
+      });
+      mockCalculateForUser.mockResolvedValue(mockProductivityResult as any);
+
+      const response = await getScoreByUser(
+        createMockRequest("/api/productivity/scores/emp-1"),
+        { params: Promise.resolve({ userId: "emp-1" }) }
+      );
+
+      expect(response.status).toBe(200);
+    });
+
+    it("should return 403 when dept head views user in different department", async () => {
+      mockGetServerSession.mockResolvedValue(mockDeptHeadSession as any);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const response = await getScoreByUser(
+        createMockRequest("/api/productivity/scores/emp-other-dept"),
+        { params: Promise.resolve({ userId: "emp-other-dept" }) }
+      );
+
+      expect(response.status).toBe(403);
+    });
   });
 
   // ============================================
@@ -537,6 +578,17 @@ describe("Productivity Scoring API", () => {
 
       const response = await getTrends(
         createMockRequest("/api/productivity/trends?userId=emp-2")
+      );
+
+      expect(response.status).toBe(403);
+    });
+
+    it("should return 403 when dept head views trends for user in different department", async () => {
+      mockGetServerSession.mockResolvedValue(mockDeptHeadSession as any);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const response = await getTrends(
+        createMockRequest("/api/productivity/trends?userId=emp-other-dept")
       );
 
       expect(response.status).toBe(403);
