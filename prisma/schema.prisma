@@ -76,6 +76,9 @@ model Department {
   // Users in this department
   users User[] @relation("DepartmentUsers")
 
+  // Scoring config
+  scoringConfig ScoringConfig?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -169,6 +172,10 @@ model User {
 
   // Announcements authored by this user
   announcements Announcement[] @relation("AnnouncementAuthor")
+
+  // Productivity scoring
+  productivityScore     ProductivityScore?      @relation("UserProductivityScore")
+  productivitySnapshots ProductivitySnapshot[]  @relation("UserProductivitySnapshots")
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -634,4 +641,72 @@ model Announcement {
   @@index([authorId])
   @@index([isActive, expiresAt])
   @@index([createdAt])
+}
+
+// ============================================
+// 18. PRODUCTIVITY SCORE (Cached Current Score)
+// ============================================
+
+model ProductivityScore {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation("UserProductivityScore", fields: [userId], references: [id], onDelete: Cascade)
+
+  output      Float
+  quality     Float
+  reliability Float
+  consistency Float
+  composite   Float
+
+  windowStart  DateTime
+  windowEnd    DateTime
+  calculatedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([composite])
+}
+
+// ============================================
+// 19. PRODUCTIVITY SNAPSHOT (Weekly History)
+// ============================================
+
+model ProductivitySnapshot {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation("UserProductivitySnapshots", fields: [userId], references: [id], onDelete: Cascade)
+
+  weekStartDate DateTime @db.Date
+  output        Float
+  quality       Float
+  reliability   Float
+  consistency   Float
+  composite     Float
+  taskCount     Int      @default(0)
+  reviewedTaskCount Int  @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, weekStartDate])
+  @@index([userId])
+  @@index([weekStartDate])
+}
+
+// ============================================
+// 20. SCORING CONFIG (Per-Department Weights)
+// ============================================
+
+model ScoringConfig {
+  id                 String @id @default(cuid())
+  departmentId       String @unique
+  department         Department @relation(fields: [departmentId], references: [id])
+
+  weeklyOutputTarget Int   @default(15)
+  outputWeight       Float @default(0.35)
+  qualityWeight      Float @default(0.25)
+  reliabilityWeight  Float @default(0.25)
+  consistencyWeight  Float @default(0.15)
+
+  updatedAt DateTime @updatedAt
+
+  @@index([departmentId])
 }

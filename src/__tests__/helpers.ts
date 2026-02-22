@@ -1,4 +1,10 @@
-import { Role, TaskStatus, TaskPriority, TaskSize, AssignedByType } from "@prisma/client";
+import {
+  Role,
+  TaskStatus,
+  TaskPriority,
+  TaskSize,
+  AssignedByType,
+} from "@prisma/client";
 
 export const mockUsers = {
   employee: {
@@ -103,4 +109,33 @@ export function createMockRequest(
     },
     ...(body && { body: JSON.stringify(body) }),
   });
+}
+
+export function createMockCompletedTask(overrides: Record<string, unknown> = {}) {
+  return {
+    id: `task-${Math.random().toString(36).slice(2, 8)}`,
+    status: TaskStatus.CLOSED_APPROVED,
+    size: TaskSize.MEDIUM,
+    priority: TaskPriority.NOT_URGENT_IMPORTANT,
+    completedAt: new Date(),
+    deadline: new Date(Date.now() + 86400000),
+    estimatedMinutes: 60,
+    actualMinutes: 0,
+    requiresReview: true,
+    kpiBucketId: "kpi-1",
+    carryForwardCount: 0,
+    ...overrides,
+  };
+}
+
+export function createMockStatusHistory(
+  taskId: string,
+  transitions: [TaskStatus | null, TaskStatus][]
+) {
+  return transitions.map(([from, to], i) => ({
+    taskId,
+    fromStatus: from,
+    toStatus: to,
+    createdAt: new Date(Date.now() + i * 1000),
+  }));
 }
