@@ -25,8 +25,8 @@ export const updateKpiBucketSchema = createKpiBucketSchema.partial().extend({
 
 // For assigning a KPI to a user
 export const assignKpiSchema = z.object({
-  userId: z.string().min(1, "User is required"),
-  kpiBucketId: z.string().min(1, "KPI bucket is required"),
+  userId: z.string().cuid("Invalid user ID"),
+  kpiBucketId: z.string().cuid("Invalid KPI bucket ID"),
   targetValue: z.number().min(0, "Target must be non-negative").optional().nullable(),
 });
 

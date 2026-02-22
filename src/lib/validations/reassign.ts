@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const reassignTaskSchema = z.object({
-  newOwnerId: z.string().min(1, "New owner is required"),
+  newOwnerId: z.string().cuid("Invalid user ID"),
   reason: z.string().min(10, "Reason must be at least 10 characters").max(500),
   newDeadline: z
     .union([

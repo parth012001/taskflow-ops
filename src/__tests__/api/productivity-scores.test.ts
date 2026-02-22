@@ -369,12 +369,12 @@ describe("Productivity Scoring API", () => {
       (prisma.productivityScore.findMany as jest.Mock).mockResolvedValue([]);
 
       await getScores(
-        createMockRequest("/api/productivity/scores?departmentId=dept-1")
+        createMockRequest("/api/productivity/scores?departmentId=cm7qk0b0a0000abcddeptid01")
       );
 
       expect(prisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { departmentId: "dept-1" },
+          where: { departmentId: "cm7qk0b0a0000abcddeptid01" },
         })
       );
     });
@@ -386,7 +386,7 @@ describe("Productivity Scoring API", () => {
       (prisma.productivityScore.findMany as jest.Mock).mockResolvedValue([]);
 
       await getScores(
-        createMockRequest("/api/productivity/scores?departmentId=dept-other")
+        createMockRequest("/api/productivity/scores?departmentId=cm7qk0b0a0000abcddeptid02")
       );
 
       // Should query with the session's dept-1, not the requested dept-other
@@ -603,7 +603,7 @@ describe("Productivity Scoring API", () => {
       mockGetServerSession.mockResolvedValue(mockEmployeeSession as any);
 
       const response = await getTrends(
-        createMockRequest("/api/productivity/trends?userId=emp-2")
+        createMockRequest("/api/productivity/trends?userId=cm7qk0b0a0000abcduserid02")
       );
 
       expect(response.status).toBe(403);
@@ -614,7 +614,7 @@ describe("Productivity Scoring API", () => {
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
       const response = await getTrends(
-        createMockRequest("/api/productivity/trends?userId=emp-other-dept")
+        createMockRequest("/api/productivity/trends?userId=cm7qk0b0a0000abcduserid03")
       );
 
       expect(response.status).toBe(403);

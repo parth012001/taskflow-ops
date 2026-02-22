@@ -18,7 +18,7 @@ describe("productivityScoresQuerySchema", () => {
 
   it("should pass with all params provided", () => {
     const result = productivityScoresQuerySchema.safeParse({
-      departmentId: "dept-1",
+      departmentId: "cm7qk0b0a0000abcddeptid01",
       role: "EMPLOYEE",
       sortBy: "output",
       sortOrder: "asc",
@@ -81,7 +81,7 @@ describe("productivityTrendsQuerySchema", () => {
   });
 
   it("should accept optional userId", () => {
-    const result = productivityTrendsQuerySchema.safeParse({ userId: "user-1" });
+    const result = productivityTrendsQuerySchema.safeParse({ userId: "cm7qk0b0a0000abcduserid01" });
     expect(result.success).toBe(true);
   });
 });

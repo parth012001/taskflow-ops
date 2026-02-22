@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Role } from "@prisma/client";
 
 export const productivityScoresQuerySchema = z.object({
-  departmentId: z.string().optional(),
+  departmentId: z.string().cuid().optional(),
   role: z.nativeEnum(Role).optional(),
   sortBy: z
     .enum(["composite", "output", "quality", "reliability", "consistency"])
@@ -13,7 +13,7 @@ export const productivityScoresQuerySchema = z.object({
 });
 
 export const productivityTrendsQuerySchema = z.object({
-  userId: z.string().optional(),
+  userId: z.string().cuid().optional(),
   weeks: z.coerce.number().int().min(1).max(52).default(12),
 });
 

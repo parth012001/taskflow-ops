@@ -52,6 +52,16 @@ const mockPrismaUserFindMany = prisma.user.findMany as jest.MockedFunction<typeo
 const mockPrismaTaskFindMany = prisma.task.findMany as jest.MockedFunction<typeof prisma.task.findMany>;
 const mockPrismaTaskCount = prisma.task.count as jest.MockedFunction<typeof prisma.task.count>;
 
+// Consistent CUID test IDs
+const EMP_1 = "cm7qk0b0a0000abcduserid01";
+const EMP_2 = "cm7qk0b0a0000abcduserid02";
+const EMP_3 = "cm7qk0b0a0000abcduserid03";
+const MGR_1 = "cm7qk0b0a0000abcdmgrid001";
+const DH_1 = "cm7qk0b0a0000abcduserid04";
+const ADMIN_1 = "cm7qk0b0a0000abcduserid05";
+const OTHER_USER = "cm7qk0b0a0000abcduserid06";
+const UNAUTH_USER = "cm7qk0b0a0000abcduserid07";
+
 /**
  * Creates a mock NextRequest-like object with a URL containing search params.
  * Supports multiple values for the same key (e.g., multiple ownerId values).
@@ -92,34 +102,34 @@ describe("GET /api/tasks", () => {
   describe("EMPLOYEE role - ownerId filtering", () => {
     it("should always filter to own tasks regardless of ownerIds param", async () => {
       mockGetServerSession.mockResolvedValue({
-        user: { id: "emp-1", role: "EMPLOYEE" },
+        user: { id: EMP_1, role: "EMPLOYEE" },
       } as any);
 
-      await GET(createMockNextRequest({ ownerId: ["other-user"] }));
+      await GET(createMockNextRequest({ ownerId: [OTHER_USER] }));
 
       // Employee should always see only their own tasks
       const countCall = mockPrismaTaskCount.mock.calls[0][0] as any;
-      expect(countCall.where.ownerId).toBe("emp-1");
+      expect(countCall.where.ownerId).toBe(EMP_1);
     });
 
     it("should not allow employees to see other users' tasks", async () => {
       mockGetServerSession.mockResolvedValue({
-        user: { id: "emp-1", role: "EMPLOYEE" },
+        user: { id: EMP_1, role: "EMPLOYEE" },
       } as any);
 
       await GET(createMockNextRequest());
 
       const countCall = mockPrismaTaskCount.mock.calls[0][0] as any;
-      expect(countCall.where.ownerId).toBe("emp-1");
+      expect(countCall.where.ownerId).toBe(EMP_1);
     });
   });
 
   describe("MANAGER role - ownerId filtering", () => {
-    const managerId = "mgr-1";
+    const managerId = MGR_1;
     const subordinates = [
-      { id: "emp-1" },
-      { id: "emp-2" },
-      { id: "emp-3" },
+      { id: EMP_1 },
+      { id: EMP_2 },
+      { id: EMP_3 },
     ];
 
     beforeEach(() => {
@@ -134,22 +144,22 @@ describe("GET /api/tasks", () => {
 
       const countCall = mockPrismaTaskCount.mock.calls[0][0] as any;
       expect(countCall.where.ownerId).toEqual({
-        in: [managerId, "emp-1", "emp-2", "emp-3"],
+        in: [managerId, EMP_1, EMP_2, EMP_3],
       });
     });
 
     it("should filter to a single subordinate when one ownerId specified", async () => {
-      await GET(createMockNextRequest({ ownerId: "emp-1" }));
+      await GET(createMockNextRequest({ ownerId: EMP_1 }));
 
       const countCall = mockPrismaTaskCount.mock.calls[0][0] as any;
-      expect(countCall.where.ownerId).toEqual({ in: ["emp-1"] });
+      expect(countCall.where.ownerId).toEqual({ in: [EMP_1] });
     });
 
     it("should filter to multiple subordinates when multiple ownerIds specified", async () => {
-      await GET(createMockNextRequest({ ownerId: ["emp-1", "emp-2"] }));
+      await GET(createMockNextRequest({ ownerId: [EMP_1, EMP_2] }));
 
       const countCall = mockPrismaTaskCount.mock.calls[0][0] as any;
-      expect(countCall.where.ownerId).toEqual({ in: ["emp-1", "emp-2"] });
+      expect(countCall.where.ownerId).toEqual({ in: [EMP_1, EMP_2] });
     });
 
     it("should allow manager to filter to self", async () => {
@@ -160,15 +170,15 @@ describe("GET /api/tasks", () => {
     });
 
     it("should allow manager to filter to self + subordinates", async () => {
-      await GET(createMockNextRequest({ ownerId: [managerId, "emp-1"] }));
+      await GET(createMockNextRequest({ ownerId: [managerId, EMP_1] }));
 
       const countCall = mockPrismaTaskCount.mock.calls[0][0] as any;
-      expect(countCall.where.ownerId).toEqual({ in: [managerId, "emp-1"] });
+      expect(countCall.where.ownerId).toEqual({ in: [managerId, EMP_1] });
     });
 
     it("should return 403 when manager requests unauthorized ownerId", async () => {
       const response = await GET(
-        createMockNextRequest({ ownerId: "not-a-subordinate" })
+        createMockNextRequest({ ownerId: UNAUTH_USER })
       );
       const data = await response.json();
 
@@ -178,7 +188,7 @@ describe("GET /api/tasks", () => {
 
     it("should return 403 when any ownerId in the list is unauthorized", async () => {
       const response = await GET(
-        createMockNextRequest({ ownerId: ["emp-1", "not-a-subordinate"] })
+        createMockNextRequest({ ownerId: [EMP_1, UNAUTH_USER] })
       );
       const data = await response.json();
 
@@ -190,7 +200,7 @@ describe("GET /api/tasks", () => {
   describe("DEPARTMENT_HEAD role - ownerId filtering", () => {
     beforeEach(() => {
       mockGetServerSession.mockResolvedValue({
-        user: { id: "dh-1", role: "DEPARTMENT_HEAD" },
+        user: { id: DH_1, role: "DEPARTMENT_HEAD" },
       } as any);
     });
 
@@ -204,24 +214,24 @@ describe("GET /api/tasks", () => {
     });
 
     it("should filter to specific ownerIds when provided", async () => {
-      await GET(createMockNextRequest({ ownerId: ["user-1", "user-2"] }));
+      await GET(createMockNextRequest({ ownerId: [EMP_1, EMP_2] }));
 
       const countCall = mockPrismaTaskCount.mock.calls[0][0] as any;
-      expect(countCall.where.ownerId).toEqual({ in: ["user-1", "user-2"] });
+      expect(countCall.where.ownerId).toEqual({ in: [EMP_1, EMP_2] });
     });
 
     it("should filter to single ownerId when one provided", async () => {
-      await GET(createMockNextRequest({ ownerId: "user-1" }));
+      await GET(createMockNextRequest({ ownerId: EMP_1 }));
 
       const countCall = mockPrismaTaskCount.mock.calls[0][0] as any;
-      expect(countCall.where.ownerId).toEqual({ in: ["user-1"] });
+      expect(countCall.where.ownerId).toEqual({ in: [EMP_1] });
     });
   });
 
   describe("ADMIN role - ownerId filtering", () => {
     beforeEach(() => {
       mockGetServerSession.mockResolvedValue({
-        user: { id: "admin-1", role: "ADMIN" },
+        user: { id: ADMIN_1, role: "ADMIN" },
       } as any);
     });
 
@@ -234,31 +244,30 @@ describe("GET /api/tasks", () => {
     });
 
     it("should filter to specific ownerIds when provided", async () => {
-      await GET(createMockNextRequest({ ownerId: ["user-1", "user-2", "user-3"] }));
+      await GET(createMockNextRequest({ ownerId: [EMP_1, EMP_2, EMP_3] }));
 
       const countCall = mockPrismaTaskCount.mock.calls[0][0] as any;
-      expect(countCall.where.ownerId).toEqual({ in: ["user-1", "user-2", "user-3"] });
+      expect(countCall.where.ownerId).toEqual({ in: [EMP_1, EMP_2, EMP_3] });
     });
   });
 
   describe("backward compatibility", () => {
     it("should handle single ownerId from my-tasks view (manager)", async () => {
-      const managerId = "mgr-1";
+      const managerId = MGR_1;
       mockGetServerSession.mockResolvedValue({
         user: { id: managerId, role: "MANAGER" },
       } as any);
-      mockPrismaUserFindMany.mockResolvedValue([{ id: "emp-1" }] as any);
+      mockPrismaUserFindMany.mockResolvedValue([{ id: EMP_1 }] as any);
 
       // Single ownerId = self (my tasks view)
       await GET(createMockNextRequest({ ownerId: managerId }));
 
       const countCall = mockPrismaTaskCount.mock.calls[0][0] as any;
-      // getAll returns ["mgr-1"], so { in: ["mgr-1"] } which is equivalent to = "mgr-1"
       expect(countCall.where.ownerId).toEqual({ in: [managerId] });
     });
 
     it("should handle single ownerId from my-tasks view (admin)", async () => {
-      const adminId = "admin-1";
+      const adminId = ADMIN_1;
       mockGetServerSession.mockResolvedValue({
         user: { id: adminId, role: "ADMIN" },
       } as any);

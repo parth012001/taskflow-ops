@@ -264,21 +264,21 @@ describe("KPI Management Validation Schemas", () => {
     describe("valid inputs", () => {
       it("should accept valid userId and kpiBucketId without targetValue", () => {
         const result = assignKpiSchema.safeParse({
-          userId: "user-123",
-          kpiBucketId: "bucket-456",
+          userId: "cm7qk0b0a0000abcduserid01",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
         });
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.data.userId).toBe("user-123");
-          expect(result.data.kpiBucketId).toBe("bucket-456");
+          expect(result.data.userId).toBe("cm7qk0b0a0000abcduserid01");
+          expect(result.data.kpiBucketId).toBe("cm7qk0b0a0000abcdkpibkt01");
           expect(result.data.targetValue).toBeUndefined();
         }
       });
 
       it("should accept valid input with targetValue", () => {
         const result = assignKpiSchema.safeParse({
-          userId: "user-123",
-          kpiBucketId: "bucket-456",
+          userId: "cm7qk0b0a0000abcduserid01",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
           targetValue: 100,
         });
         expect(result.success).toBe(true);
@@ -289,8 +289,8 @@ describe("KPI Management Validation Schemas", () => {
 
       it("should accept targetValue of 0", () => {
         const result = assignKpiSchema.safeParse({
-          userId: "user-123",
-          kpiBucketId: "bucket-456",
+          userId: "cm7qk0b0a0000abcduserid01",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
           targetValue: 0,
         });
         expect(result.success).toBe(true);
@@ -301,8 +301,8 @@ describe("KPI Management Validation Schemas", () => {
 
       it("should accept null targetValue", () => {
         const result = assignKpiSchema.safeParse({
-          userId: "user-123",
-          kpiBucketId: "bucket-456",
+          userId: "cm7qk0b0a0000abcduserid01",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
           targetValue: null,
         });
         expect(result.success).toBe(true);
@@ -311,26 +311,26 @@ describe("KPI Management Validation Schemas", () => {
         }
       });
 
-      it("should accept UUID format userId", () => {
+      it("should reject non-CUID userId", () => {
         const result = assignKpiSchema.safeParse({
           userId: "550e8400-e29b-41d4-a716-446655440000",
-          kpiBucketId: "bucket-123",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
         });
-        expect(result.success).toBe(true);
+        expect(result.success).toBe(false);
       });
 
       it("should accept CUID format kpiBucketId", () => {
         const result = assignKpiSchema.safeParse({
-          userId: "user-123",
-          kpiBucketId: "cm5abc123def456ghi",
+          userId: "cm7qk0b0a0000abcduserid01",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt02",
         });
         expect(result.success).toBe(true);
       });
 
       it("should accept decimal targetValue", () => {
         const result = assignKpiSchema.safeParse({
-          userId: "user-123",
-          kpiBucketId: "bucket-456",
+          userId: "cm7qk0b0a0000abcduserid01",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
           targetValue: 95.5,
         });
         expect(result.success).toBe(true);
@@ -344,17 +344,17 @@ describe("KPI Management Validation Schemas", () => {
       it("should reject empty userId", () => {
         const result = assignKpiSchema.safeParse({
           userId: "",
-          kpiBucketId: "bucket-456",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
         });
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues[0].message).toContain("User is required");
+          expect(result.error.issues[0].message).toContain("Invalid user ID");
         }
       });
 
       it("should reject missing userId", () => {
         const result = assignKpiSchema.safeParse({
-          kpiBucketId: "bucket-456",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
         });
         expect(result.success).toBe(false);
       });
@@ -363,18 +363,18 @@ describe("KPI Management Validation Schemas", () => {
     describe("invalid kpiBucketId", () => {
       it("should reject empty kpiBucketId", () => {
         const result = assignKpiSchema.safeParse({
-          userId: "user-123",
+          userId: "cm7qk0b0a0000abcduserid01",
           kpiBucketId: "",
         });
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues[0].message).toContain("KPI bucket is required");
+          expect(result.error.issues[0].message).toContain("Invalid KPI bucket ID");
         }
       });
 
       it("should reject missing kpiBucketId", () => {
         const result = assignKpiSchema.safeParse({
-          userId: "user-123",
+          userId: "cm7qk0b0a0000abcduserid01",
         });
         expect(result.success).toBe(false);
       });
@@ -383,8 +383,8 @@ describe("KPI Management Validation Schemas", () => {
     describe("invalid targetValue", () => {
       it("should reject negative targetValue", () => {
         const result = assignKpiSchema.safeParse({
-          userId: "user-123",
-          kpiBucketId: "bucket-456",
+          userId: "cm7qk0b0a0000abcduserid01",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
           targetValue: -1,
         });
         expect(result.success).toBe(false);
@@ -395,8 +395,8 @@ describe("KPI Management Validation Schemas", () => {
 
       it("should reject large negative targetValue", () => {
         const result = assignKpiSchema.safeParse({
-          userId: "user-123",
-          kpiBucketId: "bucket-456",
+          userId: "cm7qk0b0a0000abcduserid01",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
           targetValue: -100,
         });
         expect(result.success).toBe(false);
