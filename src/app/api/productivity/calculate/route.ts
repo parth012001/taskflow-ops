@@ -19,7 +19,14 @@ export async function POST() {
 
     const result = await calculateAndSaveForAll();
 
-    return NextResponse.json(result);
+    if (result.errors.length > 0) {
+      console.error("Scoring errors:", result.errors);
+    }
+
+    return NextResponse.json({
+      processed: result.processed,
+      failed: result.errors.length,
+    });
   } catch (error) {
     console.error("POST /api/productivity/calculate error:", error);
     return NextResponse.json(

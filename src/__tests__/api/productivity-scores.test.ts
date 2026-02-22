@@ -209,7 +209,7 @@ describe("Productivity Scoring API", () => {
 
       expect(response.status).toBe(200);
       expect(data.processed).toBe(10);
-      expect(data.errors).toEqual([]);
+      expect(data.failed).toBe(0);
     });
 
     it("should handle individual user errors gracefully", async () => {
@@ -224,7 +224,8 @@ describe("Productivity Scoring API", () => {
 
       expect(response.status).toBe(200);
       expect(data.processed).toBe(8);
-      expect(data.errors).toHaveLength(1);
+      expect(data.failed).toBe(1);
+      expect(data.errors).toBeUndefined();
     });
   });
 
