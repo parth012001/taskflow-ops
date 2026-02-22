@@ -56,10 +56,16 @@ export async function GET(request: NextRequest) {
 
     // Role filter
     if (role) {
+      // Build user where clause, narrowing by existing filter if present
+      const existingUserIds =
+        userFilter.userId && typeof userFilter.userId === "object" && "in" in userFilter.userId
+          ? (userFilter.userId.in as string[])
+          : undefined;
+
       const roleUsers = await prisma.user.findMany({
         where: {
           role,
-          ...(userFilter.userId ? { id: userFilter.userId } : {}),
+          ...(existingUserIds ? { id: { in: existingUserIds } } : {}),
         },
         select: { id: true },
       });
