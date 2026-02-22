@@ -43,8 +43,18 @@ export async function GET(request: NextRequest) {
       });
       const subordinateIds = subordinates.map((s) => s.id);
       userFilter = { userId: { in: subordinateIds } };
+    } else if (session.user.role === "DEPARTMENT_HEAD") {
+      // Dept head scoped to own department, optionally overridden by param
+      const deptId = departmentId ?? session.user.departmentId;
+      if (deptId) {
+        const deptUsers = await prisma.user.findMany({
+          where: { departmentId: deptId },
+          select: { id: true },
+        });
+        userFilter = { userId: { in: deptUsers.map((u) => u.id) } };
+      }
     } else {
-      // DEPT_HEAD / ADMIN can see all, optionally filtered
+      // ADMIN can see all, optionally filtered by department
       if (departmentId) {
         const deptUsers = await prisma.user.findMany({
           where: { departmentId },
