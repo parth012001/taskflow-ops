@@ -6,6 +6,7 @@ import {
   calculateConsistencyScore,
   calculateComposite,
   type ProductivityResult,
+  getWorkdayCount,
 } from "./scoring-engine";
 import {
   fetchScoringDataForUser,
@@ -95,10 +96,7 @@ export async function calculateForUser(
       activeTaskCount: data.activeTasks.length,
       plannedDays: data.planningSessions.filter((s) => s.morningCompleted)
         .length,
-      totalWorkdays: Math.round(
-        data.planningSessions.filter((s) => s.morningCompleted).length /
-          (consistencyResult.planningRate || 1)
-      ) || 0,
+      totalWorkdays: getWorkdayCount(windowStart, windowEnd),
       activeKpiBuckets: new Set(
         data.completedTasks.map((t) => t.kpiBucketId)
       ).size,
