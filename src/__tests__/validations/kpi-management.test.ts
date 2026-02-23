@@ -311,14 +311,6 @@ describe("KPI Management Validation Schemas", () => {
         }
       });
 
-      it("should reject non-CUID userId", () => {
-        const result = assignKpiSchema.safeParse({
-          userId: "550e8400-e29b-41d4-a716-446655440000",
-          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
-        });
-        expect(result.success).toBe(false);
-      });
-
       it("should accept CUID format kpiBucketId", () => {
         const result = assignKpiSchema.safeParse({
           userId: "cm7qk0b0a0000abcduserid01",
@@ -341,6 +333,14 @@ describe("KPI Management Validation Schemas", () => {
     });
 
     describe("invalid userId", () => {
+      it("should reject non-CUID userId", () => {
+        const result = assignKpiSchema.safeParse({
+          userId: "550e8400-e29b-41d4-a716-446655440000",
+          kpiBucketId: "cm7qk0b0a0000abcdkpibkt01",
+        });
+        expect(result.success).toBe(false);
+      });
+
       it("should reject empty userId", () => {
         const result = assignKpiSchema.safeParse({
           userId: "",

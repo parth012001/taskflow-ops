@@ -44,14 +44,6 @@ describe("Reassign Task Validation Schema", () => {
       expect(result.success).toBe(true);
     });
 
-    it("should reject non-CUID format owner id", () => {
-      const result = reassignTaskSchema.safeParse({
-        newOwnerId: "550e8400-e29b-41d4-a716-446655440000",
-        reason: "Reassigning to specialist team member",
-      });
-      expect(result.success).toBe(false);
-    });
-
     it("should accept CUID format owner id", () => {
       const result = reassignTaskSchema.safeParse({
         newOwnerId: "cm7qk0b0a0000abcduserid04",
@@ -62,6 +54,14 @@ describe("Reassign Task Validation Schema", () => {
   });
 
   describe("invalid newOwnerId", () => {
+    it("should reject non-CUID format owner id", () => {
+      const result = reassignTaskSchema.safeParse({
+        newOwnerId: "550e8400-e29b-41d4-a716-446655440000",
+        reason: "Reassigning to specialist team member",
+      });
+      expect(result.success).toBe(false);
+    });
+
     it("should reject empty newOwnerId", () => {
       const result = reassignTaskSchema.safeParse({
         newOwnerId: "",
