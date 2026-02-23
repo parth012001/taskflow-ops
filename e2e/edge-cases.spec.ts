@@ -122,10 +122,12 @@ test.describe("Edge cases", () => {
     // Use a unique email that won't conflict with other tests
     const testEmail = "ratelimit-test@taskflow.com";
 
+    // Navigate once — stay on the same page so the client-side counter accumulates
+    await page.goto("/login");
+    await page.locator("#email").waitFor({ state: "visible" });
+
     // Attempt 6 rapid login attempts with wrong password
     for (let i = 0; i < 6; i++) {
-      await page.goto("/login");
-      await page.locator("#email").waitFor({ state: "visible" });
       await page.locator("#email").clear();
       await page.locator("#email").fill(testEmail);
       await page.locator("#password").clear();
@@ -139,9 +141,7 @@ test.describe("Edge cases", () => {
     // After 6 attempts, user should still be on login page
     await expect(page).toHaveURL(/\/login/);
 
-    // Note: NextAuth normalizes all credential errors to "Invalid email or password"
-    // so the specific rate limit message may not surface in the UI.
-    // We verify the user is blocked (stays on login page with error).
-    await expect(page.getByText("Invalid email or password")).toBeVisible();
+    // After 5+ failures the UI shows the rate-limit message
+    await expect(page.getByText("Too many login attempts")).toBeVisible();
   });
 });

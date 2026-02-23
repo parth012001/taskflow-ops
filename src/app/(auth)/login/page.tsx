@@ -23,6 +23,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
   const [errorMessage, setErrorMessage] = useState(
     error === "CredentialsSignin" ? "Invalid email or password" : ""
   );
@@ -41,8 +42,15 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        setErrorMessage("Invalid email or password");
+        const attempts = failedAttempts + 1;
+        setFailedAttempts(attempts);
+        if (attempts >= 5) {
+          setErrorMessage("Too many login attempts. Please try again later.");
+        } else {
+          setErrorMessage("Invalid email or password");
+        }
       } else if (result?.ok) {
+        setFailedAttempts(0);
         router.push(callbackUrl);
         router.refresh();
       }
