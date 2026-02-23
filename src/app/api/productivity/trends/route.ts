@@ -55,6 +55,12 @@ export async function GET(request: NextRequest) {
 
       // Department heads can only see users in their department
       if (viewerRole === "DEPARTMENT_HEAD") {
+        if (!session.user.departmentId) {
+          return NextResponse.json(
+            { error: "Access denied" },
+            { status: 403 }
+          );
+        }
         const deptUser = await prisma.user.findFirst({
           where: { id: targetUserId, departmentId: session.user.departmentId },
           select: { id: true },
