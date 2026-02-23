@@ -531,3 +531,263 @@ describe("getWorkdayCount", () => {
     expect(getWorkdayCount(saturday, nextFriday)).toBe(5); // Mon-Fri
   });
 });
+
+// ============================================
+// Edge Cases: Quality Score — Multi-cycle Reopens
+// ============================================
+
+describe("calculateQualityScore — edge cases", () => {
+  it("should handle task with no status history records", () => {
+    const task = createMockCompletedTask({ id: "t1" });
+    const result = calculateQualityScore([task], []);
+    // No history → no reopened detected → perfect score fallback (< 3 reviewed → reopen-only)
+    expect(result.reopenRate).toBe(1);
+    expect(result.score).toBe(100);
+  });
+
+  it("should handle mix of reviewed and non-reviewed tasks crossing the 3-task threshold", () => {
+    // 3 reviewed tasks (threshold), 1 non-reviewed
+    const tasks = [
+      createMockCompletedTask({ id: "t1", requiresReview: true }),
+      createMockCompletedTask({ id: "t2", requiresReview: true }),
+      createMockCompletedTask({ id: "t3", requiresReview: true }),
+      createMockCompletedTask({ id: "t4", requiresReview: false }),
+    ];
+
+    // t1: first-pass approved, t2: reopened in review, t3: first-pass approved
+    const histories = [
+      ...createMockStatusHistory("t1", [
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+      ...createMockStatusHistory("t2", [
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.REOPENED],
+        [TaskStatus.REOPENED, TaskStatus.COMPLETED_PENDING_REVIEW],
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+      ...createMockStatusHistory("t3", [
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+      ...createMockStatusHistory("t4", [
+        [TaskStatus.NEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+    ];
+
+    const result = calculateQualityScore(tasks, histories);
+    // 3 reviewed, 2 first-pass → firstPassRate = 2/3
+    expect(result.firstPassRate).toBeCloseTo(2 / 3);
+    // No CLOSED_APPROVED → REOPENED transitions → reopenRate = 1
+    expect(result.reopenRate).toBe(1);
+    // ≥3 reviewed → weighted: (2/3 * 0.6 + 1 * 0.4) * 100 = 80
+    expect(result.score).toBeCloseTo(80, 0);
+  });
+
+  it("should handle task reopened from CLOSED_APPROVED multiple times", () => {
+    // Task approved → reopened → approved → reopened → approved (3 cycles)
+    const task = createMockCompletedTask({ id: "t1", requiresReview: false });
+    const histories = createMockStatusHistory("t1", [
+      [null, TaskStatus.NEW],
+      [TaskStatus.NEW, TaskStatus.CLOSED_APPROVED],
+      [TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED],
+      [TaskStatus.REOPENED, TaskStatus.CLOSED_APPROVED],
+      [TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED],
+      [TaskStatus.REOPENED, TaskStatus.CLOSED_APPROVED],
+      [TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED],
+      [TaskStatus.REOPENED, TaskStatus.CLOSED_APPROVED],
+    ]);
+
+    const result = calculateQualityScore([task], histories);
+    // Still counts as 1 reopened task (not 3)
+    expect(result.reopenRate).toBe(0);
+    expect(result.score).toBe(0);
+  });
+
+  it("should correctly score when some tasks have CLOSED_APPROVED→REOPENED and others have review reopens", () => {
+    const tasks = [
+      createMockCompletedTask({ id: "t1", requiresReview: true }),
+      createMockCompletedTask({ id: "t2", requiresReview: true }),
+      createMockCompletedTask({ id: "t3", requiresReview: true }),
+      createMockCompletedTask({ id: "t4", requiresReview: false }),
+    ];
+
+    const histories = [
+      // t1: clean first-pass
+      ...createMockStatusHistory("t1", [
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+      // t2: failed first-pass (reopened during review)
+      ...createMockStatusHistory("t2", [
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.REOPENED],
+        [TaskStatus.REOPENED, TaskStatus.COMPLETED_PENDING_REVIEW],
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+      // t3: clean first-pass
+      ...createMockStatusHistory("t3", [
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+      // t4: approved then reopened post-approval (affects reopen rate)
+      ...createMockStatusHistory("t4", [
+        [TaskStatus.NEW, TaskStatus.CLOSED_APPROVED],
+        [TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED],
+        [TaskStatus.REOPENED, TaskStatus.CLOSED_APPROVED],
+      ]),
+    ];
+
+    const result = calculateQualityScore(tasks, histories);
+    // firstPassRate: 2/3 reviewed passed (t1, t3 pass; t2 failed)
+    expect(result.firstPassRate).toBeCloseTo(2 / 3);
+    // reopenRate: 1 of 4 total tasks had CLOSED_APPROVED→REOPENED (t4)
+    expect(result.reopenRate).toBe(0.75);
+    // ≥3 reviewed → weighted: (2/3 * 0.6 + 0.75 * 0.4) * 100 = 70
+    expect(result.score).toBeCloseTo(70, 0);
+  });
+});
+
+// ============================================
+// Edge Cases: Reliability — null completedAt
+// ============================================
+
+describe("calculateReliabilityScore — edge cases", () => {
+  it("should treat task with null completedAt as late", () => {
+    const task = createMockCompletedTask({
+      completedAt: null,
+      deadline: new Date(Date.now() + 86400000),
+    });
+
+    const result = calculateReliabilityScore([task], [], [task]);
+    // null completedAt → null <= deadline is false → counted as late
+    expect(result.onTimeRate).toBe(0);
+  });
+
+  it("should handle all tasks having null completedAt", () => {
+    const tasks = [
+      createMockCompletedTask({ completedAt: null, deadline: new Date() }),
+      createMockCompletedTask({ completedAt: null, deadline: new Date() }),
+    ];
+
+    const result = calculateReliabilityScore(tasks, [], tasks);
+    expect(result.onTimeRate).toBe(0);
+    // score = (0 * 0.65 + carryForwardScore * 0.35) * 100
+    expect(result.score).toBeLessThanOrEqual(35);
+  });
+
+  it("should handle carry-forwards exceeding active task count", () => {
+    const tasks = [
+      createMockCompletedTask({ completedAt: new Date(), deadline: new Date(Date.now() + 86400000) }),
+    ];
+    const carryForwards: CarryForwardEntry[] = Array.from({ length: 100 }, () => ({
+      taskId: "t1",
+      userId: "u1",
+      createdAt: new Date(),
+    }));
+
+    const result = calculateReliabilityScore(tasks, carryForwards, tasks);
+    // min(1, 100/1) = 1, so carryForwardScore = 0
+    expect(result.carryForwardScore).toBe(0);
+    // onTimeRate = 1, score = (1 * 0.65 + 0 * 0.35) * 100 = 65
+    expect(result.score).toBe(65);
+  });
+
+  it("should handle zero active tasks with carry-forwards", () => {
+    const completed = [
+      createMockCompletedTask({ completedAt: new Date(), deadline: new Date(Date.now() + 86400000) }),
+    ];
+    const carryForwards: CarryForwardEntry[] = [
+      { taskId: "t1", userId: "u1", createdAt: new Date() },
+    ];
+
+    // 0 active tasks → carryForwardScore defaults to 1.0
+    const result = calculateReliabilityScore(completed, carryForwards, []);
+    expect(result.carryForwardScore).toBe(1);
+  });
+});
+
+// ============================================
+// Edge Cases: Composite — realistic mixed scores
+// ============================================
+
+describe("calculateComposite — edge cases", () => {
+  it("should correctly weight realistic mixed pillar scores", () => {
+    // Typical scenario: good output, decent quality, poor reliability, average consistency
+    const result = calculateComposite(
+      { output: 85, quality: 72, reliability: 40, consistency: 55 },
+      { outputWeight: 0.35, qualityWeight: 0.25, reliabilityWeight: 0.25, consistencyWeight: 0.15 }
+    );
+    // 85*0.35 + 72*0.25 + 40*0.25 + 55*0.15 = 29.75 + 18 + 10 + 8.25 = 66
+    expect(result).toBe(66);
+  });
+
+  it("should handle custom department weights that heavily favor output", () => {
+    const result = calculateComposite(
+      { output: 100, quality: 0, reliability: 0, consistency: 0 },
+      { outputWeight: 0.7, qualityWeight: 0.1, reliabilityWeight: 0.1, consistencyWeight: 0.1 }
+    );
+    expect(result).toBe(70);
+  });
+
+  it("should handle all equal weights", () => {
+    const result = calculateComposite(
+      { output: 80, quality: 60, reliability: 40, consistency: 20 },
+      { outputWeight: 0.25, qualityWeight: 0.25, reliabilityWeight: 0.25, consistencyWeight: 0.25 }
+    );
+    // (80+60+40+20) * 0.25 = 50
+    expect(result).toBe(50);
+  });
+
+  it("should handle fractional scores that require rounding", () => {
+    const result = calculateComposite(
+      { output: 33.3, quality: 66.7, reliability: 50.1, consistency: 44.4 },
+      { outputWeight: 0.35, qualityWeight: 0.25, reliabilityWeight: 0.25, consistencyWeight: 0.15 }
+    );
+    // 33.3*0.35 + 66.7*0.25 + 50.1*0.25 + 44.4*0.15
+    // = 11.655 + 16.675 + 12.525 + 6.66 = 47.515 → rounded to 47.5
+    expect(result).toBe(47.5);
+  });
+});
+
+// ============================================
+// Edge Cases: Consistency — boundary conditions
+// ============================================
+
+describe("calculateConsistencyScore — edge cases", () => {
+  it("should handle window that is entirely a weekend (zero workdays)", () => {
+    const saturday = new Date("2026-02-21T00:00:00.000Z");
+    const sunday = new Date("2026-02-22T00:00:00.000Z");
+
+    const result = calculateConsistencyScore([], [], [], saturday, sunday);
+    // zero workdays → planningRate = 0 (not NaN/Infinity)
+    expect(result.planningRate).toBe(0);
+    expect(Number.isFinite(result.score)).toBe(true);
+  });
+
+  it("should only count morningCompleted=true sessions", () => {
+    const monday = new Date("2026-02-16T00:00:00.000Z");
+    const friday = new Date("2026-02-20T00:00:00.000Z");
+    const DAY_MS = 86400000;
+
+    const sessions: PlanningDay[] = [
+      { sessionDate: monday, morningCompleted: true },
+      { sessionDate: new Date(monday.getTime() + DAY_MS), morningCompleted: false },
+      { sessionDate: new Date(monday.getTime() + 2 * DAY_MS), morningCompleted: false },
+      { sessionDate: new Date(monday.getTime() + 3 * DAY_MS), morningCompleted: true },
+      { sessionDate: new Date(monday.getTime() + 4 * DAY_MS), morningCompleted: false },
+    ];
+
+    const result = calculateConsistencyScore(sessions, [], [], monday, friday);
+    expect(result.planningRate).toBeCloseTo(2 / 5);
+  });
+
+  it("should handle kpiSpread > 1 when tasks span more buckets than assigned", () => {
+    const monday = new Date("2026-02-16T00:00:00.000Z");
+    const friday = new Date("2026-02-20T00:00:00.000Z");
+
+    const userKpis: UserKpiEntry[] = [{ kpiBucketId: "kpi-1" }];
+    const tasks = [
+      createMockCompletedTask({ kpiBucketId: "kpi-1" }),
+      createMockCompletedTask({ kpiBucketId: "kpi-2" }), // not assigned but has work
+    ];
+
+    const result = calculateConsistencyScore([], userKpis, tasks, monday, friday);
+    // 2 active buckets / 1 assigned = 2.0 (uncapped)
+    expect(result.kpiSpread).toBe(2);
+  });
+});
