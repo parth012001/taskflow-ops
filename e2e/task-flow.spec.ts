@@ -42,11 +42,10 @@ test.describe("Task lifecycle", () => {
 
     // Find a task card in the To Do column with a "Start" quick action
     const startButton = page.getByRole("button", { name: "Start" }).first();
-    if (await startButton.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await startButton.click();
-      // Task should move to In Progress column
-      await expect(page.getByText("In Progress")).toBeVisible();
-    }
+    await expect(startButton).toBeVisible({ timeout: 5_000 });
+    await startButton.click();
+    // Task should move to In Progress column
+    await expect(page.getByText("In Progress")).toBeVisible();
   });
 
   test("Employee can complete a task (IN_PROGRESS → COMPLETED_PENDING_REVIEW)", async ({ page }) => {
@@ -57,11 +56,10 @@ test.describe("Task lifecycle", () => {
 
     // Find a "Complete" quick action button
     const completeButton = page.getByRole("button", { name: "Complete" }).first();
-    if (await completeButton.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await completeButton.click();
-      // Task should move to In Review column
-      await expect(page.getByText("In Review")).toBeVisible();
-    }
+    await expect(completeButton).toBeVisible({ timeout: 5_000 });
+    await completeButton.click();
+    // Task should move to In Review column
+    await expect(page.getByText("In Review")).toBeVisible();
   });
 
   test("Manager can approve a task (COMPLETED_PENDING_REVIEW → CLOSED_APPROVED)", async ({ page }) => {
@@ -71,18 +69,16 @@ test.describe("Task lifecycle", () => {
 
     // Switch to team view to see subordinate tasks
     const teamTab = page.getByRole("button", { name: /Team/i });
-    if (await teamTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await teamTab.click();
-    }
+    await expect(teamTab).toBeVisible({ timeout: 5_000 });
+    await teamTab.click();
 
     await expect(page.getByText("In Review")).toBeVisible();
 
     // Find an "Approve" quick action
     const approveButton = page.getByRole("button", { name: "Approve" }).first();
-    if (await approveButton.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await approveButton.click();
-      await expect(page.getByText("Done")).toBeVisible();
-    }
+    await expect(approveButton).toBeVisible({ timeout: 5_000 });
+    await approveButton.click();
+    await expect(page.getByText("Done")).toBeVisible();
   });
 
   test("Task cards appear in correct kanban columns", async ({ page }) => {
