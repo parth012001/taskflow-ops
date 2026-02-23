@@ -19,8 +19,9 @@ export async function GET(request: NextRequest) {
 
     const validatedQuery = taskQuerySchema.safeParse(queryParams);
     if (!validatedQuery.success) {
+      console.warn("Validation error:", validatedQuery.error.flatten());
       return NextResponse.json(
-        { error: "Invalid query parameters", details: validatedQuery.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }
@@ -140,8 +141,9 @@ export async function POST(request: NextRequest) {
     const validatedData = createTaskSchema.safeParse(body);
 
     if (!validatedData.success) {
+      console.warn("Validation error:", validatedData.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: validatedData.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

@@ -31,6 +31,7 @@ import { TaskStatus, RecognitionType } from "@prisma/client";
 import { RecognitionWidget } from "@/components/gamification/recognition-widget";
 import { AnnouncementsWidget } from "@/components/announcements/announcements-widget";
 import { CompositeGauge } from "@/components/productivity/composite-gauge";
+import { authFetch } from "@/lib/auth-fetch";
 import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { Role } from "@prisma/client";
 
@@ -131,7 +132,7 @@ export default function DashboardPage() {
       fetchStats();
 
       // Fetch own productivity score
-      fetch(`/api/productivity/scores/${session.user.id}`)
+      authFetch(`/api/productivity/scores/${session.user.id}`)
         .then((res) => {
           if (res.ok) return res.json();
           return null;

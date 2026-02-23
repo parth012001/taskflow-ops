@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { authFetch } from "@/lib/auth-fetch";
 import { Pencil, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,7 +45,8 @@ export function ScoringConfigPanel({ onDataChange }: ScoringConfigPanelProps) {
   const fetchConfigs = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/productivity/config");
+      const response = await authFetch("/api/productivity/config");
+      if ([401, 403, 429].includes(response.status)) return;
       if (!response.ok) throw new Error("Failed to fetch configs");
       const data = await response.json();
       setConfigs(data.configs);

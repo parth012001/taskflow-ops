@@ -26,7 +26,7 @@ export const createTaskSchema = z.object({
   description: z.string().max(5000, "Description too long").optional(),
   priority: z.nativeEnum(TaskPriority),
   size: z.nativeEnum(TaskSize),
-  kpiBucketId: z.string().min(1, "KPI bucket is required"),
+  kpiBucketId: z.string().cuid("Invalid KPI bucket ID"),
   estimatedMinutes: z
     .number()
     .int()
@@ -34,9 +34,9 @@ export const createTaskSchema = z.object({
     .max(480, "Maximum 8 hours"),
   deadline: datetimeLocalSchema,
   startDate: datetimeLocalSchema.optional(),
-  assigneeId: z.string().optional(), // For managers assigning to subordinates
+  assigneeId: z.string().cuid().optional(), // For managers assigning to subordinates
   requiresReview: z.boolean().optional(),
-  reviewerId: z.string().optional(),
+  reviewerId: z.string().cuid().optional(),
 });
 
 export const updateTaskSchema = z.object({
@@ -48,7 +48,7 @@ export const updateTaskSchema = z.object({
   description: z.string().max(5000, "Description too long").optional(),
   priority: z.nativeEnum(TaskPriority).optional(),
   size: z.nativeEnum(TaskSize).optional(),
-  kpiBucketId: z.string().optional(),
+  kpiBucketId: z.string().cuid().optional(),
   estimatedMinutes: z
     .number()
     .int()
@@ -69,9 +69,9 @@ export const transitionTaskSchema = z.object({
 export const taskQuerySchema = z.object({
   status: z.nativeEnum(TaskStatus).optional(),
   priority: z.nativeEnum(TaskPriority).optional(),
-  kpiBucketId: z.string().optional(),
-  ownerId: z.string().optional(),
-  assignerId: z.string().optional(),
+  kpiBucketId: z.string().cuid().optional(),
+  ownerId: z.string().cuid().optional(),
+  assignerId: z.string().cuid().optional(),
   search: z.string().optional(),
   fromDate: z.string().datetime().optional(),
   toDate: z.string().datetime().optional(),

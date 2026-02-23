@@ -62,14 +62,14 @@ describe("User Management Validation Schemas", () => {
           firstName: "Test",
           lastName: "User",
           role: "EMPLOYEE",
-          departmentId: "dept-123",
-          managerId: "mgr-456",
+          departmentId: "cm7qk0b0a0000abcddeptid01",
+          managerId: "cm7qk0b0a0000abcdmgrid001",
           autoGeneratePassword: true,
         });
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.data.departmentId).toBe("dept-123");
-          expect(result.data.managerId).toBe("mgr-456");
+          expect(result.data.departmentId).toBe("cm7qk0b0a0000abcddeptid01");
+          expect(result.data.managerId).toBe("cm7qk0b0a0000abcdmgrid001");
         }
       });
 
@@ -337,8 +337,8 @@ describe("User Management Validation Schemas", () => {
           firstName: "John",
           lastName: "Smith",
           role: "DEPARTMENT_HEAD",
-          departmentId: "dept-1",
-          managerId: "mgr-1",
+          departmentId: "cm7qk0b0a0000abcddeptid01",
+          managerId: "cm7qk0b0a0000abcdmgrid001",
           isActive: true,
         });
         expect(result.success).toBe(true);

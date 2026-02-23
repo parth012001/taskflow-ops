@@ -102,8 +102,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const validatedData = createCommentSchema.safeParse(body);
 
     if (!validatedData.success) {
+      console.warn("Validation error:", validatedData.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: validatedData.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

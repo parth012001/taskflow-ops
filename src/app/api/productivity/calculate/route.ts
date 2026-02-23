@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { calculateAndSaveForAll } from "@/lib/productivity/calculate";
+import { mutationLimiter } from "@/lib/rate-limit";
 
 export async function POST() {
   try {
@@ -14,6 +15,14 @@ export async function POST() {
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }
+      );
+    }
+
+    const rateCheck = mutationLimiter.check(`calculate:${session.user.id}`);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": String(rateCheck.retryAfterSeconds) } }
       );
     }
 

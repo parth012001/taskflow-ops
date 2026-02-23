@@ -201,12 +201,12 @@ describe("Admin User Management API", () => {
       });
 
       it("should apply department filter", async () => {
-        await GET(createMockRequest("/api/admin/users?departmentId=dept-1"));
+        await GET(createMockRequest("/api/admin/users?departmentId=cm7qk0b0a0000abcddeptid01"));
 
         expect(mockPrismaUserCount).toHaveBeenCalledWith(
           expect.objectContaining({
             where: expect.objectContaining({
-              departmentId: "dept-1",
+              departmentId: "cm7qk0b0a0000abcddeptid01",
             }),
           })
         );
@@ -324,7 +324,7 @@ describe("Admin User Management API", () => {
       mockPrismaUserFindUnique
         .mockResolvedValueOnce(null) // First call: email check
         .mockResolvedValueOnce({
-          id: "emp-1",
+          id: "cm7qk0b0a0000abcdmgrid001",
           role: "EMPLOYEE",
           isActive: true,
         } as any); // Second call: manager check
@@ -337,7 +337,7 @@ describe("Admin User Management API", () => {
             firstName: "New",
             lastName: "User",
             role: "EMPLOYEE",
-            managerId: "emp-1",
+            managerId: "cm7qk0b0a0000abcdmgrid001",
             autoGeneratePassword: true,
           },
         })
@@ -449,9 +449,9 @@ describe("Admin User Management API", () => {
       const response = await PATCH(
         createMockRequest("/api/admin/users/user-1", {
           method: "PATCH",
-          body: { managerId: "user-1" },
+          body: { managerId: "cm7qk0b0a0000abcduserid01" },
         }),
-        { params: Promise.resolve({ id: "user-1" }) }
+        { params: Promise.resolve({ id: "cm7qk0b0a0000abcduserid01" }) }
       );
       const data = await response.json();
 

@@ -136,8 +136,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const validatedData = updateTaskSchema.safeParse(body);
 
     if (!validatedData.success) {
+      console.warn("Validation error:", validatedData.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: validatedData.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

@@ -32,8 +32,8 @@ export const createUserSchema = z.object({
     .max(50, "Last name must be less than 50 characters")
     .trim(),
   role: roleEnum,
-  departmentId: z.string().optional().nullable(),
-  managerId: z.string().optional().nullable(),
+  departmentId: z.string().cuid().optional().nullable(),
+  managerId: z.string().cuid().optional().nullable(),
   password: passwordSchema.optional(),
   autoGeneratePassword: z.boolean().default(false),
 }).refine(
@@ -59,8 +59,8 @@ export const updateUserSchema = z.object({
     .trim()
     .optional(),
   role: roleEnum.optional(),
-  departmentId: z.string().optional().nullable(),
-  managerId: z.string().optional().nullable(),
+  departmentId: z.string().cuid().optional().nullable(),
+  managerId: z.string().cuid().optional().nullable(),
   isActive: z.boolean().optional(),
 });
 
@@ -82,7 +82,7 @@ export const listUsersQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
   search: z.string().optional(),
   role: roleEnum.optional(),
-  departmentId: z.string().optional(),
+  departmentId: z.string().cuid().optional(),
   isActive: z.enum(["true", "false"]).optional(),
   sortBy: z.enum(["firstName", "lastName", "email", "role", "createdAt"]).default("firstName"),
   sortOrder: z.enum(["asc", "desc"]).default("asc"),

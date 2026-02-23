@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { productivityScoresQuerySchema } from "@/lib/validations/productivity";
 import { Role, Prisma } from "@prisma/client";
+import { generalLimiter } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,12 +21,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const rateCheck = generalLimiter.check(`scores:${session.user.id}`);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": String(rateCheck.retryAfterSeconds) } }
+      );
+    }
+
     const searchParams = Object.fromEntries(request.nextUrl.searchParams);
     const parsed = productivityScoresQuerySchema.safeParse(searchParams);
 
     if (!parsed.success) {
+      console.warn("Validation error:", parsed.error.flatten());
       return NextResponse.json(
-        { error: "Invalid query parameters", details: parsed.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { updateScoringConfigSchema } from "@/lib/validations/productivity";
+import { mutationLimiter } from "@/lib/rate-limit";
 
 export async function PATCH(
   request: NextRequest,
@@ -18,6 +19,14 @@ export async function PATCH(
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }
+      );
+    }
+
+    const rateCheck = mutationLimiter.check(`config:${session.user.id}`);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": String(rateCheck.retryAfterSeconds) } }
       );
     }
 
@@ -40,8 +49,9 @@ export async function PATCH(
     const parsed = updateScoringConfigSchema.safeParse(body);
 
     if (!parsed.success) {
+      console.warn("Validation error:", parsed.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

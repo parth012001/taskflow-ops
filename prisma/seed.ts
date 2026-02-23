@@ -21,6 +21,9 @@ async function main() {
   await prisma.task.deleteMany();
   await prisma.userKpi.deleteMany();
   await prisma.kpiBucket.deleteMany();
+  await prisma.productivitySnapshot.deleteMany();
+  await prisma.productivityScore.deleteMany();
+  await prisma.scoringConfig.deleteMany();
   await prisma.user.deleteMany();
   await prisma.department.deleteMany();
 

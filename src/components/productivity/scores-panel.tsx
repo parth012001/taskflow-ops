@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { authFetch } from "@/lib/auth-fetch";
 import {
   RefreshCw,
   ChevronLeft,
@@ -122,7 +123,8 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
       if (departmentFilter) params.append("departmentId", departmentFilter);
       if (roleFilter) params.append("role", roleFilter);
 
-      const response = await fetch(`/api/productivity/scores?${params}`);
+      const response = await authFetch(`/api/productivity/scores?${params}`);
+      if ([401, 403, 429].includes(response.status)) return;
       if (!response.ok) throw new Error("Failed to fetch scores");
 
       const data = await response.json();
@@ -146,7 +148,7 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
 
   const fetchDepartments = useCallback(async () => {
     try {
-      const response = await fetch("/api/admin/departments");
+      const response = await authFetch("/api/admin/departments");
       if (response.ok) {
         const data = await response.json();
         setDepartments(data.departments);
@@ -184,9 +186,10 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
   const handleRecalculate = async () => {
     setIsRecalculating(true);
     try {
-      const response = await fetch("/api/productivity/calculate", {
+      const response = await authFetch("/api/productivity/calculate", {
         method: "POST",
       });
+      if ([401, 403, 429].includes(response.status)) return;
       if (!response.ok) throw new Error("Recalculation failed");
       const data = await response.json();
       toast.success(`Recalculated ${data.processed} scores`);

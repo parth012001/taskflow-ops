@@ -86,8 +86,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const validationResult = updateKpiBucketSchema.safeParse(body);
 
     if (!validationResult.success) {
+      console.warn("Validation error:", validationResult.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: validationResult.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

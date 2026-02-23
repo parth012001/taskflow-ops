@@ -21,8 +21,9 @@ export async function POST(
     // Validate request body
     const validatedData = carryForwardSchema.safeParse(body);
     if (!validatedData.success) {
+      console.warn("Validation error:", validatedData.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: validatedData.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }

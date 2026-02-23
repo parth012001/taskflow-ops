@@ -41,8 +41,9 @@ export async function POST(
 
     const validatedData = reassignTaskSchema.safeParse(body);
     if (!validatedData.success) {
+      console.warn("Validation error:", validatedData.error.flatten());
       return NextResponse.json(
-        { error: "Validation failed", details: validatedData.error.flatten() },
+        { error: "Invalid input" },
         { status: 400 }
       );
     }
