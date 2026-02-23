@@ -124,6 +124,7 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
       if (roleFilter) params.append("role", roleFilter);
 
       const response = await authFetch(`/api/productivity/scores?${params}`);
+      if ([401, 403, 429].includes(response.status)) return;
       if (!response.ok) throw new Error("Failed to fetch scores");
 
       const data = await response.json();
@@ -188,6 +189,7 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
       const response = await authFetch("/api/productivity/calculate", {
         method: "POST",
       });
+      if ([401, 403, 429].includes(response.status)) return;
       if (!response.ok) throw new Error("Recalculation failed");
       const data = await response.json();
       toast.success(`Recalculated ${data.processed} scores`);

@@ -78,6 +78,7 @@ export function ConfigEditDialog({
         }
       );
 
+      if ([401, 403, 429].includes(response.status)) return;
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Failed to update config");

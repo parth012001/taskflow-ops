@@ -46,6 +46,7 @@ export function ScoringConfigPanel({ onDataChange }: ScoringConfigPanelProps) {
     setIsLoading(true);
     try {
       const response = await authFetch("/api/productivity/config");
+      if ([401, 403, 429].includes(response.status)) return;
       if (!response.ok) throw new Error("Failed to fetch configs");
       const data = await response.json();
       setConfigs(data.configs);
