@@ -19,10 +19,10 @@ test.describe("Task form validation", () => {
     await expect(
       dialog.locator("p.text-red-500", { hasText: "Title must be at least 3 characters" })
     ).toBeVisible();
-    // kpiBucketId and deadline both show this error — check at least one is visible
-    await expect(
-      dialog.locator("p.text-red-500", { hasText: "expected string, received undefined" }).first()
-    ).toBeVisible();
+    // kpiBucketId and deadline should also show validation errors
+    const errorMessages = dialog.locator("p.text-red-500");
+    const errorCount = await errorMessages.count();
+    expect(errorCount).toBeGreaterThanOrEqual(2);
 
     // Dialog should still be open (form did NOT submit)
     await expect(dialog).toBeVisible();

@@ -419,6 +419,7 @@ export function UsersPanel() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  aria-label="Edit user"
                                   onClick={() => handleEdit(user)}
                                 >
                                   <Pencil className="h-4 w-4" />
@@ -445,6 +446,7 @@ export function UsersPanel() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  aria-label={user.isActive ? "Deactivate" : "Reactivate"}
                                   onClick={() => setToggleStatusUser(user)}
                                   className={
                                     user.isActive

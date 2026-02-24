@@ -11,7 +11,6 @@ export const TEST_USERS = {
   employee4: { email: "employee4@taskflow.com", password: "password123" },
   employee5: { email: "employee5@taskflow.com", password: "password123" },
   manager2: { email: "manager2@taskflow.com", password: "password123" },
-  head: { email: "head@taskflow.com", password: "password123" },
 } as const;
 
 /**

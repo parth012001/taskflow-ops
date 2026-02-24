@@ -1,8 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAsRole } from "./helpers/auth";
 
-// Use a single serial describe so all tests share the same worker/page context
-// and we only log in once to avoid hitting the auth rate limiter (5 req/min per email).
+// Each test logs in independently for isolation. Uses the admin account.
 test.describe("User Management (Admin)", () => {
   test("Admin can see the users table", async ({ page }) => {
     await loginAsRole(page, "admin");
@@ -56,10 +55,7 @@ test.describe("User Management (Admin)", () => {
     await expect(page.locator("table tbody tr").first()).toBeVisible();
 
     // Click the edit button on the first row
-    const editButtons = page.locator("table tbody tr").locator("button[title='Edit user']");
-    const editBtn = editButtons.first().or(
-      page.locator("table tbody tr").first().getByRole("button").first()
-    );
+    const editBtn = page.locator("table tbody tr").first().getByRole("button", { name: "Edit user" });
     await editBtn.click();
 
     // Dialog should appear
@@ -85,16 +81,14 @@ test.describe("User Management (Admin)", () => {
 
     await expect(page.locator("table tbody tr").first()).toBeVisible();
 
-    // Click deactivate button (power icon) on a row
-    const deactivateBtn = page.locator("table tbody tr").last()
-      .getByRole("button").filter({ has: page.locator("svg") }).last();
+    // Click deactivate button on a row
+    const deactivateBtn = page.locator("table tbody tr").last().getByRole("button", { name: "Deactivate" });
     await deactivateBtn.click();
 
     // Confirm in alert dialog
     const alertDialog = page.locator("[role=alertdialog]");
-    if (await alertDialog.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await alertDialog.getByRole("button", { name: /Deactivate|Confirm|Continue/i }).click();
-    }
+    await expect(alertDialog).toBeVisible({ timeout: 3_000 });
+    await alertDialog.getByRole("button", { name: /Deactivate|Confirm|Continue/i }).click();
 
     await expect(page.locator("[data-sonner-toast]").first()).toBeVisible({ timeout: 10_000 });
   });
