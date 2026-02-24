@@ -643,4 +643,4 @@ https://taskflow.com/dashboard  (org determined by logged-in user)
 For questions about this architecture:
 1. Check this document first
 2. Review the referenced source files
-3. Consult the E2E testing guide: `docs/user-management-e2e-testing.md`
+3. Consult the testing guide: `docs/testing.md`
