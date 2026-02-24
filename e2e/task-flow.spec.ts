@@ -1,5 +1,61 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 import { loginAsRole } from "./helpers/auth";
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+async function getKanbanColumn(page: Page, columnName: string) {
+  const columnHeading = page.getByRole("heading", { name: columnName, level: 3 });
+  await expect(columnHeading).toBeVisible({ timeout: 5_000 });
+  return columnHeading.locator("xpath=ancestor::div[2]");
+}
+
+async function getTaskCardInColumn(page: Page, columnName: string, taskTitle: string) {
+  const column = await getKanbanColumn(page, columnName);
+  const titleRegex = new RegExp(escapeRegExp(taskTitle));
+  const taskHeading = column.getByRole("heading", { name: titleRegex, level: 4 });
+  await expect(taskHeading).toBeVisible({ timeout: 5_000 });
+  return taskHeading.locator("xpath=ancestor-or-self::*[@role='button'][1]");
+}
+
+async function createTask(page: Page, title: string) {
+  await page.getByRole("button", { name: /New Task/i }).click();
+  const dialog = page.locator("[role=dialog]");
+  await expect(dialog).toBeVisible();
+
+  await dialog.locator("#title").fill(title);
+  await dialog.locator("button").filter({ hasText: /Select KPI bucket/i }).click();
+  await page.getByRole("option").first().click();
+
+  await dialog.getByRole("button", { name: /Pick date/i }).click();
+  const calendarDay = page.locator("table.rdp-month_grid button:not([disabled])").last();
+  await calendarDay.click();
+
+  await dialog.getByRole("button", { name: /Create Task/i }).click();
+  await expect(page.locator("[data-sonner-toast]").first()).toBeVisible({ timeout: 10_000 });
+}
+
+async function expectTaskInColumn(page: Page, columnName: string, taskTitle: string) {
+  const column = await getKanbanColumn(page, columnName);
+  const titleRegex = new RegExp(escapeRegExp(taskTitle));
+  await expect(column.getByRole("heading", { name: titleRegex, level: 4 })).toBeVisible({ timeout: 5_000 });
+}
+
+async function resetSession(page: Page) {
+  await page.context().clearCookies();
+  await page.goto("/login");
+}
+
+async function waitForTransition(page: Page) {
+  await page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().includes("/api/tasks/") &&
+      response.url().endsWith("/transition") &&
+      response.status() === 200
+  );
+}
 
 test.describe("Task lifecycle", () => {
   // Use employee4 to avoid rate-limiting employee1/2/3 used in other suites
@@ -40,12 +96,21 @@ test.describe("Task lifecycle", () => {
     // Wait for kanban board to load
     await expect(page.getByText("To Do")).toBeVisible();
 
-    // Find a task card in the To Do column with a "Start" quick action
-    const startButton = page.getByRole("button", { name: "Start" }).first();
+    const title = `E2E Start ${Date.now()}`;
+    await createTask(page, title);
+    await expectTaskInColumn(page, "To Do", title);
+
+    const taskCard = await getTaskCardInColumn(page, "To Do", title);
+    await taskCard.hover();
+
+    const startButton = taskCard.getByTitle("Start");
     await expect(startButton).toBeVisible({ timeout: 5_000 });
+    const startResponse = waitForTransition(page);
     await startButton.click();
+    await startResponse;
+
     // Task should move to In Progress column
-    await expect(page.getByText("In Progress")).toBeVisible();
+    await expectTaskInColumn(page, "In Progress", title);
   });
 
   test("Employee can complete a task (IN_PROGRESS → COMPLETED_PENDING_REVIEW)", async ({ page }) => {
@@ -54,15 +119,60 @@ test.describe("Task lifecycle", () => {
 
     await expect(page.getByText("In Progress")).toBeVisible();
 
-    // Find a "Complete" quick action button
-    const completeButton = page.getByRole("button", { name: "Complete" }).first();
+    const title = `E2E Complete ${Date.now()}`;
+    await createTask(page, title);
+    await expectTaskInColumn(page, "To Do", title);
+
+    const toDoCard = await getTaskCardInColumn(page, "To Do", title);
+    await toDoCard.hover();
+    const startButton = toDoCard.getByTitle("Start");
+    await expect(startButton).toBeVisible({ timeout: 5_000 });
+    const startResponse = waitForTransition(page);
+    await startButton.click();
+    await startResponse;
+    await expectTaskInColumn(page, "In Progress", title);
+
+    const inProgressCard = await getTaskCardInColumn(page, "In Progress", title);
+    await inProgressCard.hover();
+
+    const completeButton = inProgressCard.getByTitle("Complete");
     await expect(completeButton).toBeVisible({ timeout: 5_000 });
+    const completeResponse = waitForTransition(page);
     await completeButton.click();
+    await completeResponse;
+
     // Task should move to In Review column
-    await expect(page.getByText("In Review")).toBeVisible();
+    await expectTaskInColumn(page, "In Review", title);
   });
 
   test("Manager can approve a task (COMPLETED_PENDING_REVIEW → CLOSED_APPROVED)", async ({ page }) => {
+    const title = `E2E Approve ${Date.now()}`;
+
+    await loginAsRole(page, "employee4");
+    await page.goto("/tasks");
+    await createTask(page, title);
+    await expectTaskInColumn(page, "To Do", title);
+
+    const toDoCard = await getTaskCardInColumn(page, "To Do", title);
+    await toDoCard.hover();
+    const startButton = toDoCard.getByTitle("Start");
+    await expect(startButton).toBeVisible({ timeout: 5_000 });
+    const startResponse = waitForTransition(page);
+    await startButton.click();
+    await startResponse;
+    await expectTaskInColumn(page, "In Progress", title);
+
+    const inProgressCard = await getTaskCardInColumn(page, "In Progress", title);
+    await inProgressCard.hover();
+    const completeButton = inProgressCard.getByTitle("Complete");
+    await expect(completeButton).toBeVisible({ timeout: 5_000 });
+    const completeResponse = waitForTransition(page);
+    await completeButton.click();
+    await completeResponse;
+    await expectTaskInColumn(page, "In Review", title);
+
+    await resetSession(page);
+
     // Use manager2 to avoid rate-limiting manager1
     await loginAsRole(page, "manager2");
     await page.goto("/tasks");
@@ -74,10 +184,14 @@ test.describe("Task lifecycle", () => {
 
     await expect(page.getByText("In Review")).toBeVisible();
 
-    // Find an "Approve" quick action
-    const approveButton = page.getByRole("button", { name: "Approve" }).first();
+    const inReviewCard = await getTaskCardInColumn(page, "In Review", title);
+    await inReviewCard.hover();
+
+    const approveButton = inReviewCard.getByTitle("Approve");
     await expect(approveButton).toBeVisible({ timeout: 5_000 });
+    const approveResponse = waitForTransition(page);
     await approveButton.click();
+    await approveResponse;
     await expect(page.getByText("Done")).toBeVisible();
   });
 

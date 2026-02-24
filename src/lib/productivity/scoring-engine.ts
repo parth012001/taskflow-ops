@@ -263,7 +263,7 @@ export function calculateConsistencyScore(
     const activeBucketIds = new Set(
       completedTasks.map((t) => t.kpiBucketId)
     );
-    kpiSpread = activeBucketIds.size / assignedBuckets;
+    kpiSpread = Math.min(1, activeBucketIds.size / assignedBuckets);
   }
 
   const score = (planningRate * 0.5 + kpiSpread * 0.5) * 100;

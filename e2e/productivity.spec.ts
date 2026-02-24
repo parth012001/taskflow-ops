@@ -50,8 +50,8 @@ test.describe("Productivity scoring", () => {
     await expect(configTab).toBeVisible();
     await configTab.click();
 
-    // Should see the config tab is now active (has the active style)
-    await expect(configTab).toBeVisible();
+    // Should see the config panel content
+    await expect(page.locator("text=Scoring Configuration")).toBeVisible({ timeout: 5_000 });
   });
 });
 

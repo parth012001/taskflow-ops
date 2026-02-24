@@ -654,7 +654,7 @@ describe("calculateReliabilityScore — edge cases", () => {
     });
 
     const result = calculateReliabilityScore([task], [], [task]);
-    // null completedAt → null <= deadline is false → counted as late
+    // null completedAt short-circuits (t.completedAt && t.completedAt <= t.deadline) → counted as late
     expect(result.onTimeRate).toBe(0);
   });
 
@@ -776,7 +776,7 @@ describe("calculateConsistencyScore — edge cases", () => {
     expect(result.planningRate).toBeCloseTo(2 / 5);
   });
 
-  it("should handle kpiSpread > 1 when tasks span more buckets than assigned", () => {
+  it("should cap kpiSpread at 1.0 when tasks span more buckets than assigned", () => {
     const monday = new Date("2026-02-16T00:00:00.000Z");
     const friday = new Date("2026-02-20T00:00:00.000Z");
 
@@ -787,7 +787,9 @@ describe("calculateConsistencyScore — edge cases", () => {
     ];
 
     const result = calculateConsistencyScore([], userKpis, tasks, monday, friday);
-    // 2 active buckets / 1 assigned = 2.0 (uncapped)
-    expect(result.kpiSpread).toBe(2);
+    // 2 active buckets / 1 assigned would be 2.0, but capped at 1.0
+    expect(result.kpiSpread).toBe(1);
+    // score = (0 * 0.5 + 1 * 0.5) * 100 = 50
+    expect(result.score).toBe(50);
   });
 });

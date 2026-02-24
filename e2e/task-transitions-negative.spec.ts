@@ -1,5 +1,40 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 import { loginAsRole } from "./helpers/auth";
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+async function getKanbanColumn(page: Page, columnName: string) {
+  const columnHeading = page.getByRole("heading", { name: columnName, level: 3 });
+  await expect(columnHeading).toBeVisible({ timeout: 5_000 });
+  return columnHeading.locator("xpath=ancestor::div[2]");
+}
+
+/**
+ * Hover over a specific task card by name within a kanban column to reveal quick actions.
+ */
+async function hoverTaskCard(page: Page, columnName: string, taskName: string) {
+  const column = await getKanbanColumn(page, columnName);
+  const titleRegex = new RegExp(escapeRegExp(taskName));
+  const taskHeading = column.getByRole("heading", { name: titleRegex, level: 4 });
+  await expect(taskHeading).toBeVisible({ timeout: 5_000 });
+  const taskCard = taskHeading.locator("xpath=ancestor-or-self::*[@role='button'][1]");
+  await taskCard.hover();
+  await page.waitForTimeout(500);
+}
+
+/**
+ * Hover over the first task card in a kanban column to reveal quick actions.
+ */
+async function hoverFirstCardInColumn(page: Page, columnName: string) {
+  const column = await getKanbanColumn(page, columnName);
+  const taskHeading = column.getByRole("heading", { level: 4 }).first();
+  await expect(taskHeading).toBeVisible({ timeout: 5_000 });
+  const taskCard = taskHeading.locator("xpath=ancestor-or-self::*[@role='button'][1]");
+  await taskCard.hover();
+  await page.waitForTimeout(500);
+}
 
 test.describe("Negative task transitions", () => {
   test("Employee does NOT see Approve/Reject on own COMPLETED_PENDING_REVIEW task", async ({ page }) => {
@@ -10,16 +45,11 @@ test.describe("Negative task transitions", () => {
     // Wait for kanban board to load
     await expect(page.getByText("In Review")).toBeVisible();
 
-    // Find the COMPLETED_PENDING_REVIEW task card
-    const taskCard = page.locator("[data-task-card], .task-card, [class*='card']")
-      .filter({ hasText: "Update Purchase Master" });
-
-    await expect(taskCard.first()).toBeVisible({ timeout: 5_000 });
-    await taskCard.first().hover();
-    await page.waitForTimeout(500);
+    // Hover the In Review task card to reveal quick actions
+    await hoverTaskCard(page, "In Review", "Update Purchase Master");
 
     // Withdraw should be visible (owner can withdraw)
-    await expect(page.getByRole("button", { name: "Withdraw" })).toBeVisible();
+    await expect(page.getByTitle("Withdraw")).toBeVisible();
 
     // Approve and Reject should NOT be visible (employee is not a manager)
     await expect(page.getByRole("button", { name: "Approve" })).not.toBeVisible();
@@ -53,6 +83,9 @@ test.describe("Negative task transitions", () => {
 
     // Wait for board to load
     await expect(page.getByText("In Review")).toBeVisible();
+
+    // Hover the In Review task card to reveal Approve/Reject
+    await hoverFirstCardInColumn(page, "In Review");
 
     // Manager should see Approve and Reject buttons for subordinate's pending-review task
     const approveButton = page.getByRole("button", { name: "Approve" }).first();
@@ -89,12 +122,14 @@ test.describe("Negative task transitions", () => {
     await expect(page.getByText("To Do")).toBeVisible();
 
     // Employee1 has a NEW task: "Vendor Registration - ABC Corp"
-    // Check that "Start" button is visible for it
+    // Hover to reveal "Start" button
+    await hoverTaskCard(page, "To Do", "Vendor Registration");
     const startButton = page.getByRole("button", { name: "Start" }).first();
     await expect(startButton).toBeVisible({ timeout: 5_000 });
 
     // Employee1 has an IN_PROGRESS task: "Create PO for Office Supplies"
-    // Check that "Complete", "Pause", "Undo" are visible
+    // Hover to reveal "Complete", "Pause", "Undo"
+    await hoverTaskCard(page, "In Progress", "Create PO");
     const completeButton = page.getByRole("button", { name: "Complete" }).first();
     await expect(completeButton).toBeVisible({ timeout: 5_000 });
     await expect(page.getByRole("button", { name: "Pause" }).first()).toBeVisible();

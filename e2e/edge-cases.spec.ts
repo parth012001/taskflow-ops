@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { loginAs, loginAsRole } from "./helpers/auth";
+import { loginAsRole } from "./helpers/auth";
 
 test.describe("Edge cases", () => {
   test("Deactivated user cannot log in", async ({ page }) => {
@@ -19,9 +19,8 @@ test.describe("Edge cases", () => {
 
     // Confirm in alert dialog
     const alertDialog = page.locator("[role=alertdialog]");
-    if (await alertDialog.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await alertDialog.getByRole("button", { name: /Deactivate|Confirm|Continue/i }).click();
-    }
+    await expect(alertDialog).toBeVisible({ timeout: 3_000 });
+    await alertDialog.getByRole("button", { name: /Deactivate|Confirm|Continue/i }).click();
 
     // Wait for toast confirming deactivation
     await expect(page.locator("[data-sonner-toast]").first()).toBeVisible({ timeout: 10_000 });
@@ -44,18 +43,16 @@ test.describe("Edge cases", () => {
     await expect(page.locator("table tbody tr").first()).toBeVisible();
 
     const employee5RowAgain = page.locator("table tbody tr").filter({ hasText: "employee5@taskflow.com" });
-    // If the user is deactivated, the row might show an "Activate" button or the same power icon
-    if (await employee5RowAgain.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      const activateBtn = employee5RowAgain.getByRole("button").filter({ has: page.locator("svg") }).last();
-      await activateBtn.click();
+    await expect(employee5RowAgain).toBeVisible({ timeout: 5_000 });
 
-      const alertDialog2 = page.locator("[role=alertdialog]");
-      if (await alertDialog2.isVisible({ timeout: 3_000 }).catch(() => false)) {
-        await alertDialog2.getByRole("button", { name: /Activate|Confirm|Continue/i }).click();
-      }
+    const activateBtn = employee5RowAgain.getByRole("button").filter({ has: page.locator("svg") }).last();
+    await activateBtn.click();
 
-      await expect(page.locator("[data-sonner-toast]").first()).toBeVisible({ timeout: 10_000 });
-    }
+    const alertDialog2 = page.locator("[role=alertdialog]");
+    await expect(alertDialog2).toBeVisible({ timeout: 3_000 });
+    await alertDialog2.getByRole("button", { name: /Activate|Confirm|Continue/i }).click();
+
+    await expect(page.locator("[data-sonner-toast]").first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("mustChangePassword user is redirected to /settings", async ({ page }) => {
