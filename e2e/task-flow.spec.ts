@@ -19,17 +19,6 @@ async function getTaskCardInColumn(page: Page, columnName: string, taskTitle: st
   return taskHeading.locator("xpath=ancestor-or-self::*[@role='button'][1]");
 }
 
-/**
- * Hover over a task card to reveal its quick action buttons.
- * Task cards are button elements containing the task title text.
- */
-async function hoverTaskCard(page: Page, taskTitle: string) {
-  const taskCard = page.getByRole("button", { name: new RegExp(escapeRegExp(taskTitle)) }).first();
-  await expect(taskCard).toBeVisible({ timeout: 5_000 });
-  await taskCard.hover();
-  await page.waitForTimeout(500);
-}
-
 async function createTask(page: Page, title: string) {
   await page.getByRole("button", { name: /New Task/i }).click();
   const dialog = page.locator("[role=dialog]");
