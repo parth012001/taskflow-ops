@@ -167,6 +167,10 @@ const USER_ARCHETYPES: Archetype[] = [
   "struggling", "struggling", "inactive", "inactive",
 ];
 
+// Department distribution: first 8 Procurement, next 7 Engineering, last 5 Marketing
+const DEPARTMENT_NAMES = ["Procurement", "Engineering", "Marketing"] as const;
+const DEPT_USER_COUNTS = [8, 7, 5]; // total 20
+
 const SIZES: TaskSize[] = ["EASY", "MEDIUM", "DIFFICULT"];
 const PRIORITIES: TaskPriority[] = [
   "URGENT_IMPORTANT",
@@ -330,8 +334,8 @@ async function main() {
   await prisma.task.deleteMany();
 
   // 2. Fetch existing data from base seed
-  const department = await prisma.department.findFirst();
-  if (!department) {
+  const existingDepartment = await prisma.department.findFirst();
+  if (!existingDepartment) {
     throw new Error("No department found. Run base seed first: npm run db:seed");
   }
 
@@ -347,42 +351,86 @@ async function main() {
 
   console.log(`Found ${existingUsers.length} existing users, ${kpiBuckets.length} KPI buckets`);
 
-  // 3. Create additional users to reach 20
+  // 2b. Create additional departments (Engineering, Marketing)
+  // Update existing department name to Procurement if needed
+  await prisma.department.update({
+    where: { id: existingDepartment.id },
+    data: { name: "Procurement" },
+  });
+
+  const engineeringDept = await prisma.department.upsert({
+    where: { name: "Engineering" },
+    update: {},
+    create: { name: "Engineering", description: "Software Engineering" },
+  });
+
+  const marketingDept = await prisma.department.upsert({
+    where: { name: "Marketing" },
+    update: {},
+    create: { name: "Marketing", description: "Marketing & Communications" },
+  });
+
+  const departments = [
+    existingDepartment, // Procurement
+    engineeringDept,
+    marketingDept,
+  ];
+
+  console.log(`Departments: ${departments.map((d) => d.name).join(", ")}`);
+
+  // 3. Create additional users to reach 20, distributed across departments
   const passwordHash = await bcrypt.hash("password123", 10);
   const additionalNames = [
-    // Additional managers
-    { first: "Kavita", last: "Nair", role: Role.MANAGER },
-    { first: "Suresh", last: "Iyer", role: Role.MANAGER },
-    // Additional employees
-    { first: "Deepa", last: "Joshi", role: Role.EMPLOYEE },
-    { first: "Arjun", last: "Rao", role: Role.EMPLOYEE },
-    { first: "Meera", last: "Pillai", role: Role.EMPLOYEE },
-    { first: "Rohan", last: "Desai", role: Role.EMPLOYEE },
-    { first: "Pooja", last: "Bhat", role: Role.EMPLOYEE },
-    { first: "Karan", last: "Malhotra", role: Role.EMPLOYEE },
-    { first: "Divya", last: "Saxena", role: Role.EMPLOYEE },
-    { first: "Nikhil", last: "Tiwari", role: Role.EMPLOYEE },
-    { first: "Swati", last: "Kulkarni", role: Role.EMPLOYEE },
+    // Engineering dept head + employees
+    { first: "Vikram", last: "Singh", role: Role.DEPARTMENT_HEAD, deptIdx: 1 },
+    { first: "Kavita", last: "Nair", role: Role.MANAGER, deptIdx: 1 },
+    { first: "Deepa", last: "Joshi", role: Role.EMPLOYEE, deptIdx: 1 },
+    { first: "Arjun", last: "Rao", role: Role.EMPLOYEE, deptIdx: 1 },
+    { first: "Meera", last: "Pillai", role: Role.EMPLOYEE, deptIdx: 1 },
+    { first: "Rohan", last: "Desai", role: Role.EMPLOYEE, deptIdx: 1 },
+    // Marketing dept head + employees
+    { first: "Suresh", last: "Iyer", role: Role.DEPARTMENT_HEAD, deptIdx: 2 },
+    { first: "Pooja", last: "Bhat", role: Role.MANAGER, deptIdx: 2 },
+    { first: "Karan", last: "Malhotra", role: Role.EMPLOYEE, deptIdx: 2 },
+    { first: "Divya", last: "Saxena", role: Role.EMPLOYEE, deptIdx: 2 },
+    { first: "Nikhil", last: "Tiwari", role: Role.EMPLOYEE, deptIdx: 2 },
+    { first: "Swati", last: "Kulkarni", role: Role.EMPLOYEE, deptIdx: 0 },
   ];
 
   // Find existing managers and dept head for hierarchy
   const existingManagers = existingUsers.filter((u) => u.role === "MANAGER");
-  const deptHead = existingUsers.find((u) => u.role === "DEPARTMENT_HEAD");
+  const existingDeptHead = existingUsers.find((u) => u.role === "DEPARTMENT_HEAD");
+
+  // Track dept heads for manager assignment
+  const deptHeadIds: (string | null)[] = [
+    existingDeptHead?.id ?? null,
+    null, // will be filled
+    null, // will be filled
+  ];
 
   const newUsers: typeof existingUsers = [];
   for (let i = 0; i < additionalNames.length; i++) {
-    const { first, last, role } = additionalNames[i];
+    const { first, last, role, deptIdx } = additionalNames[i];
     const email = `${first.toLowerCase()}.${last.toLowerCase()}@taskflow.com`;
+    const dept = departments[deptIdx];
 
     // Determine manager
     let managerId: string | null = null;
-    if (role === "MANAGER" && deptHead) {
-      managerId = deptHead.id;
-    } else if (role === "EMPLOYEE") {
-      // Distribute employees across all managers (existing + new)
-      const allManagersList = [...existingManagers, ...newUsers.filter((u) => u.role === "MANAGER")];
-      if (allManagersList.length > 0) {
-        managerId = allManagersList[i % allManagersList.length].id;
+    if (role === "DEPARTMENT_HEAD") {
+      // Dept heads report to no one in seed
+      managerId = null;
+    } else if (role === "MANAGER") {
+      managerId = deptHeadIds[deptIdx] ?? null;
+    } else {
+      // Employees: find a manager in the same department
+      const deptManagers = [
+        ...existingManagers.filter((u) => u.departmentId === dept.id),
+        ...newUsers.filter((u) => u.role === "MANAGER" && u.departmentId === dept.id),
+      ];
+      if (deptManagers.length > 0) {
+        managerId = deptManagers[i % deptManagers.length].id;
+      } else if (deptHeadIds[deptIdx]) {
+        managerId = deptHeadIds[deptIdx];
       }
     }
 
@@ -392,7 +440,7 @@ async function main() {
         firstName: first,
         lastName: last,
         role,
-        departmentId: department.id,
+        departmentId: dept.id,
         managerId,
       },
       create: {
@@ -401,24 +449,34 @@ async function main() {
         firstName: first,
         lastName: last,
         role,
-        departmentId: department.id,
+        departmentId: dept.id,
         managerId,
       },
     });
     newUsers.push(user);
+
+    // Track dept heads
+    if (role === "DEPARTMENT_HEAD") {
+      deptHeadIds[deptIdx] = user.id;
+      // Also set as department head
+      await prisma.department.update({
+        where: { id: dept.id },
+        data: { headId: user.id },
+      });
+    }
   }
 
   console.log(`Created ${newUsers.length} additional users`);
 
   // 4. Assign KPIs to new users
   for (const user of newUsers) {
+    if (user.role === "DEPARTMENT_HEAD") continue; // dept heads don't get scored
     const count = user.role === "MANAGER" ? kpiBuckets.length : 7;
     const buckets = user.role === "MANAGER"
       ? kpiBuckets
-      : faker.helpers.arrayElements(kpiBuckets, count);
+      : faker.helpers.arrayElements(kpiBuckets, Math.min(count, kpiBuckets.length));
 
     for (const bucket of buckets) {
-      // Check if already exists
       const existing = await prisma.userKpi.findUnique({
         where: { userId_kpiBucketId: { userId: user.id, kpiBucketId: bucket.id } },
       });
@@ -432,23 +490,27 @@ async function main() {
 
   console.log("Assigned KPIs to new users");
 
-  // 5. Create ScoringConfig for department
-  await prisma.scoringConfig.create({
-    data: {
-      departmentId: department.id,
-      weeklyOutputTarget: 15,
-      outputWeight: 0.35,
-      qualityWeight: 0.25,
-      reliabilityWeight: 0.25,
-      consistencyWeight: 0.15,
-    },
-  });
+  // 5. Create ScoringConfig for each department
+  for (const dept of departments) {
+    await prisma.scoringConfig.upsert({
+      where: { departmentId: dept.id },
+      update: {},
+      create: {
+        departmentId: dept.id,
+        weeklyOutputTarget: dept.name === "Engineering" ? 12 : dept.name === "Marketing" ? 10 : 15,
+        outputWeight: dept.name === "Engineering" ? 0.30 : dept.name === "Marketing" ? 0.25 : 0.35,
+        qualityWeight: dept.name === "Engineering" ? 0.30 : dept.name === "Marketing" ? 0.25 : 0.25,
+        reliabilityWeight: dept.name === "Engineering" ? 0.25 : dept.name === "Marketing" ? 0.25 : 0.25,
+        consistencyWeight: dept.name === "Engineering" ? 0.15 : dept.name === "Marketing" ? 0.25 : 0.15,
+      },
+    });
+  }
 
   console.log("Created scoring config");
 
   // 6. Generate productivity data for all 20 users
   const allUsers = [...existingUsers, ...newUsers].filter(
-    (u) => u.role !== "ADMIN" // Skip admin for scoring
+    (u) => u.role !== "ADMIN" && u.role !== "DEPARTMENT_HEAD" // Skip admin and dept heads for scoring
   );
 
   // If we have more than 20 non-admin users, trim. If fewer, use what we have.
