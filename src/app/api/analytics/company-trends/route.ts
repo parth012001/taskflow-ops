@@ -47,8 +47,16 @@ export async function GET(request: NextRequest) {
     });
     const userIds = activeUsers.map((u) => u.id);
 
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - weeks * 7);
+    // Align cutoff to Monday UTC 00:00 (same boundary used for snapshot weekStartDate)
+    // so the query includes the full earliest week instead of cutting mid-week.
+    const now = new Date();
+    const day = now.getUTCDay();
+    const mondayOffset = day === 0 ? -6 : 1 - day;
+    const currentMonday = new Date(now);
+    currentMonday.setUTCDate(currentMonday.getUTCDate() + mondayOffset);
+    currentMonday.setUTCHours(0, 0, 0, 0);
+    const cutoff = new Date(currentMonday);
+    cutoff.setUTCDate(cutoff.getUTCDate() - (weeks - 1) * 7);
 
     // Group snapshots by week
     const snapshots = await prisma.productivitySnapshot.groupBy({

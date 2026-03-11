@@ -508,7 +508,7 @@ async function main() {
     const config = deptScoringConfig[dept.name] || deptScoringConfig.Default;
     await prisma.scoringConfig.upsert({
       where: { departmentId: dept.id },
-      update: {},
+      update: { ...config },
       create: {
         departmentId: dept.id,
         ...config,
@@ -519,9 +519,13 @@ async function main() {
   console.log("Created scoring config");
 
   // 6. Generate productivity data for all 20 users
-  const allUsers = [...existingUsers, ...newUsers].filter(
-    (u) => u.role !== "ADMIN" && u.role !== "DEPARTMENT_HEAD" // Skip admin and dept heads for scoring
-  );
+  // Deduplicate: newUsers may overlap with existingUsers on re-runs (upserts)
+  const seenIds = new Set<string>();
+  const allUsers = [...existingUsers, ...newUsers].filter((u) => {
+    if (seenIds.has(u.id)) return false;
+    seenIds.add(u.id);
+    return u.role !== "ADMIN" && u.role !== "DEPARTMENT_HEAD";
+  });
 
   // If we have more than 20 non-admin users, trim. If fewer, use what we have.
   const scorableUsers = allUsers.slice(0, 20);
