@@ -445,9 +445,26 @@ describe("calculateConsistencyScore", () => {
     expect(result.kpiSpread).toBeCloseTo(0.2);
   });
 
-  it("should return kpiSpread 1.0 when zero assigned KPIs", () => {
+  it("should return kpiSpread 0 when zero assigned KPIs (unmeasurable)", () => {
     const result = calculateConsistencyScore([], [], [], monday, friday);
-    expect(result.kpiSpread).toBe(1);
+    expect(result.kpiSpread).toBe(0);
+  });
+
+  it("should use only planning rate when zero assigned KPIs", () => {
+    const DAY_MS = 86400000;
+    const sessions: PlanningDay[] = [
+      { sessionDate: monday, morningCompleted: true },
+      { sessionDate: new Date(monday.getTime() + DAY_MS), morningCompleted: true },
+      { sessionDate: new Date(monday.getTime() + 2 * DAY_MS), morningCompleted: false },
+      { sessionDate: new Date(monday.getTime() + 3 * DAY_MS), morningCompleted: true },
+      { sessionDate: new Date(monday.getTime() + 4 * DAY_MS), morningCompleted: false },
+    ];
+
+    // 3/5 planning rate, no KPIs → score = 0.6 * 100 = 60
+    const result = calculateConsistencyScore(sessions, [], [], monday, friday);
+    expect(result.planningRate).toBeCloseTo(3 / 5);
+    expect(result.kpiSpread).toBe(0);
+    expect(result.score).toBe(60);
   });
 
   it("should exclude weekends from workday count", () => {
@@ -704,6 +721,31 @@ describe("calculateReliabilityScore — edge cases", () => {
     const result = calculateReliabilityScore(completed, carryForwards, []);
     expect(result.carryForwardScore).toBe(1);
   });
+
+  it("should produce correct carry-forward ratio with only truly active tasks (not inflated)", () => {
+    // Simulates the Rajesh scenario from the audit:
+    // 3 truly active tasks, 1 carry-forward → CF score = 1 - 1/3 = 66.7%
+    // Previously the denominator was inflated to 17 (included 14 completed), giving 94.1%
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 86400000);
+
+    const completedTasks = Array.from({ length: 14 }, () =>
+      createMockCompletedTask({ completedAt: now, deadline: tomorrow })
+    );
+
+    const trulyActiveTasks = Array.from({ length: 3 }, () =>
+      createMockCompletedTask({ status: TaskStatus.IN_PROGRESS, completedAt: null, deadline: tomorrow })
+    );
+
+    const carryForwards: CarryForwardEntry[] = [
+      { taskId: "t1", userId: "u1", createdAt: now },
+    ];
+
+    // Only truly active tasks should be passed (not completed + active)
+    const result = calculateReliabilityScore(completedTasks, carryForwards, trulyActiveTasks);
+    // 1 CF / 3 active = 1 - 0.333 = 0.667
+    expect(result.carryForwardScore).toBeCloseTo(2 / 3);
+  });
 });
 
 // ============================================
@@ -796,6 +838,56 @@ describe("calculateConsistencyScore — edge cases", () => {
     expect(result.kpiSpread).toBe(1);
     // score = (0 * 0.5 + 1 * 0.5) * 100 = 50
     expect(result.score).toBe(50);
+  });
+
+  it("should score 0 when zero KPIs and zero planning (fully unmeasurable)", () => {
+    const monday = new Date("2026-02-16T00:00:00.000Z");
+    const friday = new Date("2026-02-20T00:00:00.000Z");
+
+    const result = calculateConsistencyScore([], [], [], monday, friday);
+    expect(result.planningRate).toBe(0);
+    expect(result.kpiSpread).toBe(0);
+    expect(result.score).toBe(0);
+  });
+
+  it("should score 100 when zero KPIs but perfect planning (full redistribution)", () => {
+    const monday = new Date("2026-02-16T00:00:00.000Z");
+    const friday = new Date("2026-02-20T00:00:00.000Z");
+    const DAY_MS = 86400000;
+
+    const sessions: PlanningDay[] = Array.from({ length: 5 }, (_, i) => ({
+      sessionDate: new Date(monday.getTime() + i * DAY_MS),
+      morningCompleted: true,
+    }));
+
+    const result = calculateConsistencyScore(sessions, [], [], monday, friday);
+    expect(result.planningRate).toBe(1);
+    expect(result.kpiSpread).toBe(0);
+    expect(result.score).toBe(100);
+  });
+
+  it("should use 50/50 weighting when KPIs ARE assigned (normal path unchanged)", () => {
+    const monday = new Date("2026-02-16T00:00:00.000Z");
+    const friday = new Date("2026-02-20T00:00:00.000Z");
+    const DAY_MS = 86400000;
+
+    const sessions: PlanningDay[] = Array.from({ length: 5 }, (_, i) => ({
+      sessionDate: new Date(monday.getTime() + i * DAY_MS),
+      morningCompleted: true,
+    }));
+
+    const userKpis: UserKpiEntry[] = [
+      { kpiBucketId: "kpi-1" },
+      { kpiBucketId: "kpi-2" },
+    ];
+    // Only work in 1 of 2 KPIs
+    const tasks = [createMockCompletedTask({ kpiBucketId: "kpi-1" })];
+
+    const result = calculateConsistencyScore(sessions, userKpis, tasks, monday, friday);
+    expect(result.planningRate).toBe(1);
+    expect(result.kpiSpread).toBe(0.5);
+    // score = (1 * 0.5 + 0.5 * 0.5) * 100 = 75
+    expect(result.score).toBe(75);
   });
 });
 

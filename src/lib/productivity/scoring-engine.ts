@@ -260,19 +260,21 @@ export function calculateConsistencyScore(
   ).length;
   const planningRate = totalWorkdays > 0 ? daysWithMorning / totalWorkdays : 0;
 
-  // KPI spread
+  // KPI spread — when no KPIs are assigned, the metric is unmeasurable.
+  // Redistribute full weight to planning rate instead of gifting 100%.
   const assignedBuckets = userKpis.length;
   let kpiSpread: number;
+  let score: number;
   if (assignedBuckets === 0) {
-    kpiSpread = 1.0;
+    kpiSpread = 0;
+    score = planningRate * 100;
   } else {
     const activeBucketIds = new Set(
       completedTasks.map((t) => t.kpiBucketId)
     );
     kpiSpread = Math.min(1, activeBucketIds.size / assignedBuckets);
+    score = (planningRate * 0.5 + kpiSpread * 0.5) * 100;
   }
-
-  const score = (planningRate * 0.5 + kpiSpread * 0.5) * 100;
 
   return {
     score: Math.round(score * 10) / 10,

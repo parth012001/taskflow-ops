@@ -26,29 +26,19 @@ Added `role: { not: "ADMIN" }` filter to `fetchAllUsersForScoring()` query. Admi
 
 ## Bugs to Fix
 
-### 3. Zero assigned KPIs = perfect KPI spread (Consistency)
+### ~~3. Zero assigned KPIs = perfect KPI spread (Consistency)~~ FIXED
 
 **Severity:** P1
-**Location:** `src/lib/productivity/scoring-engine.ts` — `calculateConsistencyScore()` (line 260)
 
-When `assignedBuckets === 0`, `kpiSpread` defaults to `1.0` (100%). Users with no KPI assignments get a free consistency boost.
-
-**Example:** Rajesh Kumar (Dept Head) — 0 KPIs assigned, Consistency = 100.
-
-**Fix:** Default to `0` instead of `1.0` when no KPIs are assigned.
+When `assignedBuckets === 0`, `kpiSpread` defaulted to `1.0` (100%), giving users with no KPI assignments a free consistency boost. Fixed by redistributing weight: when no KPIs are assigned, `kpiSpread` is set to `0` and the consistency score uses `planningRate * 100` (full weight on the measurable dimension) instead of the normal 50/50 split. Users are scored fairly on what's actually measurable — not penalized for an admin oversight, and not gifted a perfect score on something that was never measured.
 
 ---
 
-### 4. Carry-forward denominator inflated by completed tasks
+### ~~4. Carry-forward denominator inflated by completed tasks~~ FIXED
 
 **Severity:** P1
-**Location:** `src/lib/productivity/scoring-engine.ts` — `calculateReliabilityScore()` (line 206), and `src/lib/productivity/fetch-scoring-data.ts` — active tasks query (line 64)
 
-The "active tasks" query's OR clause pulls in completed tasks (`completedAt` in window). This inflates the denominator in the carry-forward ratio, making the penalty ~3x weaker than intended.
-
-**Example:** Rajesh has 17 "active" tasks but 14 are completed — only 3 are truly active. Carry-forward score: 1 CF / 17 tasks = 94.1%. Against truly active only: 1 CF / 3 tasks = 66.7%.
-
-**Fix:** Exclude CLOSED_APPROVED from the active task count used as carry-forward denominator.
+The active tasks query's OR clause pulled in `CLOSED_APPROVED` tasks (via `completedAt` in window), inflating the carry-forward denominator ~3x and making the penalty far weaker than intended. Fixed by removing the OR clause and using a simple `status: { notIn: [NEW, CLOSED_APPROVED] }` filter. The query now returns only truly active tasks (ACCEPTED, IN_PROGRESS, ON_HOLD, COMPLETED_PENDING_REVIEW, REOPENED). Both the carry-forward calculation and `meta.activeTaskCount` now reflect accurate counts.
 
 ---
 

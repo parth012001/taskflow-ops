@@ -60,19 +60,17 @@ export async function fetchScoringDataForUser(
       select: taskSelect,
     }),
 
-    // Active tasks in window
+    // Truly active tasks — excludes NEW (not started) and CLOSED_APPROVED
+    // (already counted in completedTasks). The previous OR clause pulled
+    // completed tasks into this list, inflating the carry-forward denominator.
     prisma.task.findMany({
       where: {
         ownerId: userId,
         deletedAt: null,
-        status: { notIn: [TaskStatus.NEW] },
-        OR: [
-          {
-            createdAt: { lte: windowEnd },
-            status: { not: TaskStatus.CLOSED_APPROVED },
-          },
-          { completedAt: { gte: windowStart, lte: windowEnd } },
-        ],
+        createdAt: { lte: windowEnd },
+        status: {
+          notIn: [TaskStatus.NEW, TaskStatus.CLOSED_APPROVED],
+        },
       },
       select: taskSelect,
     }),
