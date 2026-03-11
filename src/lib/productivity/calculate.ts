@@ -218,6 +218,16 @@ export async function calculateAndSaveForUser(
       windowEnd,
     },
   });
+
+  // After the upsert, save weekly snapshot for trend history
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const weekStart = new Date(now);
+  weekStart.setUTCDate(weekStart.getUTCDate() + mondayOffset);
+  weekStart.setUTCHours(0, 0, 0, 0);
+
+  await saveWeeklySnapshot(userId, weekStart, result);
 }
 
 export async function calculateAndSaveForAll(): Promise<{
