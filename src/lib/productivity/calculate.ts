@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import {
   calculateOutputScore,
   calculateQualityScore,
@@ -13,6 +14,8 @@ import {
   fetchScoringDataForUser,
   fetchAllUsersForScoring,
 } from "./fetch-scoring-data";
+
+type TxClient = Prisma.TransactionClient;
 
 export async function calculateForUser(
   userId: string,
@@ -187,36 +190,53 @@ export async function calculateAndSaveForUser(
 
   const result = await calculateForUser(userId, departmentId, windowStart, windowEnd);
 
+  // Derive the week bucket from windowEnd (not a fresh clock read) so the
+  // week boundary aligns with the scoring window.
+  const dayOfWeek = windowEnd.getUTCDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const currentWeekStart = new Date(windowEnd);
+  currentWeekStart.setUTCDate(currentWeekStart.getUTCDate() + mondayOffset);
+  currentWeekStart.setUTCHours(0, 0, 0, 0);
+
   if (!result.scorable) {
-    // Remove stale score if user dropped below threshold
-    await prisma.productivityScore.deleteMany({
-      where: { userId },
-    });
+    // Remove stale score and current week's snapshot if user dropped below threshold
+    await prisma.$transaction([
+      prisma.productivityScore.deleteMany({
+        where: { userId },
+      }),
+      prisma.productivitySnapshot.deleteMany({
+        where: { userId, weekStartDate: currentWeekStart },
+      }),
+    ]);
     return;
   }
 
-  await prisma.productivityScore.upsert({
-    where: { userId },
-    update: {
-      output: result.output,
-      quality: result.quality,
-      reliability: result.reliability,
-      consistency: result.consistency,
-      composite: result.composite,
-      windowStart,
-      windowEnd,
-      calculatedAt: new Date(),
-    },
-    create: {
-      userId,
-      output: result.output,
-      quality: result.quality,
-      reliability: result.reliability,
-      consistency: result.consistency,
-      composite: result.composite,
-      windowStart,
-      windowEnd,
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.productivityScore.upsert({
+      where: { userId },
+      update: {
+        output: result.output,
+        quality: result.quality,
+        reliability: result.reliability,
+        consistency: result.consistency,
+        composite: result.composite,
+        windowStart,
+        windowEnd,
+        calculatedAt: new Date(),
+      },
+      create: {
+        userId,
+        output: result.output,
+        quality: result.quality,
+        reliability: result.reliability,
+        consistency: result.consistency,
+        composite: result.composite,
+        windowStart,
+        windowEnd,
+      },
+    });
+
+    await saveWeeklySnapshot(userId, currentWeekStart, result, tx);
   });
 }
 
@@ -245,9 +265,13 @@ export async function calculateAndSaveForAll(): Promise<{
 export async function saveWeeklySnapshot(
   userId: string,
   weekStartDate: Date,
-  result: ProductivityResult
+  result: ProductivityResult,
+  tx: TxClient = prisma
 ): Promise<void> {
-  await prisma.productivitySnapshot.upsert({
+  // Only persist scorable results so non-scorable data doesn't skew aggregates
+  if (!result.scorable) return;
+
+  await tx.productivitySnapshot.upsert({
     where: {
       userId_weekStartDate: { userId, weekStartDate },
     },

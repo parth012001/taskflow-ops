@@ -13,6 +13,7 @@ import {
   PieChart,
   UserCog,
   BarChart3,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,12 @@ const navigation = [
     href: "/productivity",
     icon: BarChart3,
     roles: ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"],
+  },
+  {
+    name: "Analytics",
+    href: "/analytics",
+    icon: Activity,
+    roles: ["DEPARTMENT_HEAD", "ADMIN"],
   },
   {
     name: "Announcements",

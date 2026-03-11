@@ -17,7 +17,8 @@ export type Permission =
   | "kpi:manage"
   | "announcement:create"
   | "productivity:view"
-  | "productivity:manage";
+  | "productivity:manage"
+  | "analytics:view";
 
 const rolePermissions: Record<Role, Permission[]> = {
   EMPLOYEE: ["task:create", "task:view_own", "task:edit_own"],
@@ -47,6 +48,7 @@ const rolePermissions: Record<Role, Permission[]> = {
     "radar:view",
     "kpi:manage",
     "productivity:view",
+    "analytics:view",
   ],
   ADMIN: [
     "task:create",
@@ -66,6 +68,7 @@ const rolePermissions: Record<Role, Permission[]> = {
     "announcement:create",
     "productivity:view",
     "productivity:manage",
+    "analytics:view",
   ],
 };
 
@@ -180,4 +183,11 @@ export function isManagerOrAbove(role: Role): boolean {
  */
 export function canViewProductivity(role: Role): boolean {
   return isManagerOrAbove(role);
+}
+
+/**
+ * Check if user can view company analytics
+ */
+export function canViewAnalytics(role: Role): boolean {
+  return hasPermission(role, "analytics:view");
 }
