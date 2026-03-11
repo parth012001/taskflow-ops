@@ -443,6 +443,8 @@ async function main() {
         role,
         departmentId: dept.id,
         managerId,
+        isActive: true,
+        deletedAt: null,
       },
       create: {
         email,
@@ -745,6 +747,14 @@ async function main() {
 
   const mondays = getMondaysGoingBack(11);
 
+  // Build a lookup from departmentId → weights for composite calculation
+  const deptWeightsByDeptId = new Map(
+    departments.map((d) => {
+      const cfg = deptScoringConfig[d.name] || deptScoringConfig.Default;
+      return [d.id, cfg] as const;
+    })
+  );
+
   for (const user of scorableUsers) {
     const idx = scorableUsers.indexOf(user);
     const archetype = USER_ARCHETYPES[idx] || "solid";
@@ -768,10 +778,9 @@ async function main() {
       const quality = Math.max(0, Math.min(100, baseQuality + trend + jitter()));
       const reliability = Math.max(0, Math.min(100, baseReliability + trend + jitter()));
       const consistency = Math.max(0, Math.min(100, baseConsistency + trend + jitter()));
-      // Historical snapshots use fixed Procurement/Default weights (0.35/0.25/0.25/0.15)
-      // rather than per-department ScoringConfig, since these represent synthetic past
-      // data seeded before department-specific configs existed.
-      const composite = output * 0.35 + quality * 0.25 + reliability * 0.25 + consistency * 0.15;
+      const weights = deptWeightsByDeptId.get(user.departmentId ?? "") || deptScoringConfig.Default;
+      const composite = output * weights.outputWeight + quality * weights.qualityWeight
+        + reliability * weights.reliabilityWeight + consistency * weights.consistencyWeight;
 
       await prisma.productivitySnapshot.create({
         data: {

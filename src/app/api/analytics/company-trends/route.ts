@@ -40,13 +40,6 @@ export async function GET(request: NextRequest) {
 
     const { weeks } = parsed.data;
 
-    // Fetch non-admin active user IDs
-    const activeUsers = await prisma.user.findMany({
-      where: { isActive: true, deletedAt: null, role: { not: "ADMIN" } },
-      select: { id: true },
-    });
-    const userIds = activeUsers.map((u) => u.id);
-
     // Align cutoff to Monday UTC 00:00 (same boundary used for snapshot weekStartDate)
     // so the query includes the full earliest week instead of cutting mid-week.
     const now = new Date();
@@ -58,11 +51,12 @@ export async function GET(request: NextRequest) {
     const cutoff = new Date(currentMonday);
     cutoff.setUTCDate(cutoff.getUTCDate() - (weeks - 1) * 7);
 
-    // Group snapshots by week
+    // Group snapshots by week. Snapshots are only written for active, non-admin,
+    // scorable users (via saveWeeklySnapshot), so no live user filter is needed —
+    // historical buckets reflect who was scored that week, not current user state.
     const snapshots = await prisma.productivitySnapshot.groupBy({
       by: ["weekStartDate"],
       where: {
-        userId: { in: userIds },
         weekStartDate: { gte: cutoff },
       },
       _avg: {
