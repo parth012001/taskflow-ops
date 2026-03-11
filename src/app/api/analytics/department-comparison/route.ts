@@ -24,6 +24,9 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // DEPARTMENT_HEAD users intentionally see all departments here (not just
+    // their own) so they can benchmark cross-department performance. Scoping is
+    // handled at the productivity-scorecard level, not the analytics overview.
     if (!canViewAnalytics(session.user.role as Role)) {
       return NextResponse.json(
         { error: "Analytics access required" },

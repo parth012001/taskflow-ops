@@ -350,18 +350,13 @@ async function main() {
 
   // 2b. Create additional departments (Engineering, Marketing)
   // Ensure existing department is named Procurement (idempotent)
-  const procurementExists = await prisma.department.findUnique({ where: { name: "Procurement" } });
-  if (!procurementExists && existingDepartment.name !== "Procurement") {
-    await prisma.department.update({
+  let procurementDept = await prisma.department.findUnique({ where: { name: "Procurement" } });
+  if (!procurementDept) {
+    procurementDept = await prisma.department.update({
       where: { id: existingDepartment.id },
       data: { name: "Procurement" },
     });
   }
-  const procurementDept = procurementExists ?? (
-    existingDepartment.name === "Procurement"
-      ? existingDepartment
-      : await prisma.department.findUniqueOrThrow({ where: { name: "Procurement" } })
-  );
 
   const engineeringDept = await prisma.department.upsert({
     where: { name: "Engineering" },
@@ -399,6 +394,7 @@ async function main() {
     { first: "Karan", last: "Malhotra", role: Role.EMPLOYEE, deptIdx: 2 },
     { first: "Divya", last: "Saxena", role: Role.EMPLOYEE, deptIdx: 2 },
     { first: "Nikhil", last: "Tiwari", role: Role.EMPLOYEE, deptIdx: 2 },
+    // Additional Procurement employee (deptIdx: 0)
     { first: "Swati", last: "Kulkarni", role: Role.EMPLOYEE, deptIdx: 0 },
   ];
 
@@ -496,17 +492,26 @@ async function main() {
   console.log("Assigned KPIs to new users");
 
   // 5. Create ScoringConfig for each department
+  const deptScoringConfig: Record<string, {
+    weeklyOutputTarget: number;
+    outputWeight: number;
+    qualityWeight: number;
+    reliabilityWeight: number;
+    consistencyWeight: number;
+  }> = {
+    Engineering: { weeklyOutputTarget: 12, outputWeight: 0.30, qualityWeight: 0.30, reliabilityWeight: 0.25, consistencyWeight: 0.15 },
+    Marketing: { weeklyOutputTarget: 10, outputWeight: 0.25, qualityWeight: 0.25, reliabilityWeight: 0.25, consistencyWeight: 0.25 },
+    Default: { weeklyOutputTarget: 15, outputWeight: 0.35, qualityWeight: 0.25, reliabilityWeight: 0.25, consistencyWeight: 0.15 },
+  };
+
   for (const dept of departments) {
+    const config = deptScoringConfig[dept.name] || deptScoringConfig.Default;
     await prisma.scoringConfig.upsert({
       where: { departmentId: dept.id },
       update: {},
       create: {
         departmentId: dept.id,
-        weeklyOutputTarget: dept.name === "Engineering" ? 12 : dept.name === "Marketing" ? 10 : 15,
-        outputWeight: dept.name === "Engineering" ? 0.30 : dept.name === "Marketing" ? 0.25 : 0.35,
-        qualityWeight: dept.name === "Engineering" ? 0.30 : dept.name === "Marketing" ? 0.25 : 0.25,
-        reliabilityWeight: dept.name === "Engineering" ? 0.25 : dept.name === "Marketing" ? 0.25 : 0.25,
-        consistencyWeight: dept.name === "Engineering" ? 0.15 : dept.name === "Marketing" ? 0.25 : 0.15,
+        ...config,
       },
     });
   }
@@ -759,6 +764,9 @@ async function main() {
       const quality = Math.max(0, Math.min(100, baseQuality + trend + jitter()));
       const reliability = Math.max(0, Math.min(100, baseReliability + trend + jitter()));
       const consistency = Math.max(0, Math.min(100, baseConsistency + trend + jitter()));
+      // Historical snapshots use fixed Procurement/Default weights (0.35/0.25/0.25/0.15)
+      // rather than per-department ScoringConfig, since these represent synthetic past
+      // data seeded before department-specific configs existed.
       const composite = output * 0.35 + quality * 0.25 + reliability * 0.25 + consistency * 0.15;
 
       await prisma.productivitySnapshot.create({

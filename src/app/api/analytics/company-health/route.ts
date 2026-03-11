@@ -6,10 +6,14 @@ import { canViewAnalytics } from "@/lib/utils/permissions";
 import { Role, Prisma } from "@prisma/client";
 import { generalLimiter } from "@/lib/rate-limit";
 
+const THRIVING_THRESHOLD = 80;
+const HEALTHY_THRESHOLD = 60;
+const AT_RISK_THRESHOLD = 40;
+
 function getBand(score: number): string {
-  if (score >= 80) return "thriving";
-  if (score >= 60) return "healthy";
-  if (score >= 40) return "atRisk";
+  if (score >= THRIVING_THRESHOLD) return "thriving";
+  if (score >= HEALTHY_THRESHOLD) return "healthy";
+  if (score >= AT_RISK_THRESHOLD) return "atRisk";
   return "critical";
 }
 
@@ -78,9 +82,9 @@ export async function GET() {
     >(Prisma.sql`
       SELECT
         CASE
-          WHEN ps.composite >= 80 THEN 'thriving'
-          WHEN ps.composite >= 60 THEN 'healthy'
-          WHEN ps.composite >= 40 THEN 'atRisk'
+          WHEN ps.composite >= ${THRIVING_THRESHOLD} THEN 'thriving'
+          WHEN ps.composite >= ${HEALTHY_THRESHOLD} THEN 'healthy'
+          WHEN ps.composite >= ${AT_RISK_THRESHOLD} THEN 'atRisk'
           ELSE 'critical'
         END AS band,
         COUNT(*)::bigint AS count

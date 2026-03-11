@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // DEPARTMENT_HEAD users intentionally see company-wide trends (not just
+    // their own department) so they can benchmark cross-department performance.
     if (!canViewAnalytics(session.user.role as Role)) {
       return NextResponse.json(
         { error: "Analytics access required" },
