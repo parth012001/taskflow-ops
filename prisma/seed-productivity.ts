@@ -167,9 +167,6 @@ const USER_ARCHETYPES: Archetype[] = [
   "struggling", "struggling", "inactive", "inactive",
 ];
 
-// Department distribution: first 8 Procurement, next 7 Engineering, last 5 Marketing
-const DEPARTMENT_NAMES = ["Procurement", "Engineering", "Marketing"] as const;
-const DEPT_USER_COUNTS = [8, 7, 5]; // total 20
 
 const SIZES: TaskSize[] = ["EASY", "MEDIUM", "DIFFICULT"];
 const PRIORITIES: TaskPriority[] = [
@@ -352,11 +349,19 @@ async function main() {
   console.log(`Found ${existingUsers.length} existing users, ${kpiBuckets.length} KPI buckets`);
 
   // 2b. Create additional departments (Engineering, Marketing)
-  // Update existing department name to Procurement if needed
-  await prisma.department.update({
-    where: { id: existingDepartment.id },
-    data: { name: "Procurement" },
-  });
+  // Ensure existing department is named Procurement (idempotent)
+  const procurementExists = await prisma.department.findUnique({ where: { name: "Procurement" } });
+  if (!procurementExists && existingDepartment.name !== "Procurement") {
+    await prisma.department.update({
+      where: { id: existingDepartment.id },
+      data: { name: "Procurement" },
+    });
+  }
+  const procurementDept = procurementExists ?? (
+    existingDepartment.name === "Procurement"
+      ? existingDepartment
+      : await prisma.department.findUniqueOrThrow({ where: { name: "Procurement" } })
+  );
 
   const engineeringDept = await prisma.department.upsert({
     where: { name: "Engineering" },
@@ -371,7 +376,7 @@ async function main() {
   });
 
   const departments = [
-    existingDepartment, // Procurement
+    procurementDept,
     engineeringDept,
     marketingDept,
   ];

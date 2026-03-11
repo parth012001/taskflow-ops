@@ -43,17 +43,22 @@ function getScoreBg(score: number): string {
 export function DepartmentComparison() {
   const [departments, setDepartments] = useState<DepartmentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const response = await authFetch("/api/analytics/department-comparison");
       if (response.ok) {
         const result = await response.json();
         setDepartments(result.departments);
+      } else {
+        setError(`Failed to load department data (${response.status})`);
       }
     } catch (error) {
       console.error("Error fetching department comparison:", error);
+      setError("Failed to connect to the server");
     } finally {
       setIsLoading(false);
     }
@@ -70,6 +75,16 @@ export function DepartmentComparison() {
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600" />
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <p className="text-center text-sm text-red-500">{error}</p>
         </CardContent>
       </Card>
     );

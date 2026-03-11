@@ -43,6 +43,7 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const [healthData, setHealthData] = useState<CompanyHealthData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const userRole = (session?.user?.role as Role) || "EMPLOYEE";
 
@@ -54,14 +55,18 @@ export default function AnalyticsPage() {
 
   const fetchHealthData = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const response = await authFetch("/api/analytics/company-health");
       if (response.ok) {
         const data = await response.json();
         setHealthData(data);
+      } else {
+        setError(`Failed to load analytics (${response.status})`);
       }
     } catch (error) {
       console.error("Error fetching company health:", error);
+      setError("Failed to connect to the server");
     } finally {
       setIsLoading(false);
     }
@@ -99,9 +104,23 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {isLoading || !healthData ? (
+      {isLoading ? (
         <div className="flex items-center justify-center min-h-[300px]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
+          <p className="text-sm text-red-600">{error}</p>
+          <button
+            onClick={fetchHealthData}
+            className="text-sm text-indigo-600 hover:text-indigo-800 underline"
+          >
+            Try again
+          </button>
+        </div>
+      ) : !healthData ? (
+        <div className="flex items-center justify-center min-h-[300px]">
+          <p className="text-sm text-gray-500">No analytics data available</p>
         </div>
       ) : (
         <>

@@ -77,16 +77,18 @@ export async function GET() {
       distribution[band as keyof typeof distribution]++;
     }
 
-    // Change: compare current avg vs snapshots from 4-8 weeks ago
+    // Change: compare current avg vs snapshots from 4–8 weeks ago
+    // Use only scored user IDs so the comparison cohort matches the current avg
+    const scoredUserIds = scores.map((s) => s.userId);
+    const eightWeeksAgo = new Date();
+    eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
     const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 56); // 8 weeks
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 28); // 4 weeks
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
 
     const previousSnapshots = await prisma.productivitySnapshot.findMany({
       where: {
-        userId: { in: userIds },
-        weekStartDate: { gte: fourWeeksAgo, lte: twoWeeksAgo },
+        userId: { in: scoredUserIds },
+        weekStartDate: { gte: eightWeeksAgo, lte: fourWeeksAgo },
       },
     });
 

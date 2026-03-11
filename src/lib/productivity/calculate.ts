@@ -188,9 +188,19 @@ export async function calculateAndSaveForUser(
   const result = await calculateForUser(userId, departmentId, windowStart, windowEnd);
 
   if (!result.scorable) {
-    // Remove stale score if user dropped below threshold
+    // Remove stale score and current week's snapshot if user dropped below threshold
+    const now = new Date();
+    const dayOfWeek = now.getUTCDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const currentWeekStart = new Date(now);
+    currentWeekStart.setUTCDate(currentWeekStart.getUTCDate() + mondayOffset);
+    currentWeekStart.setUTCHours(0, 0, 0, 0);
+
     await prisma.productivityScore.deleteMany({
       where: { userId },
+    });
+    await prisma.productivitySnapshot.deleteMany({
+      where: { userId, weekStartDate: currentWeekStart },
     });
     return;
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { authFetch } from "@/lib/auth-fetch";
 import { format, parseISO } from "date-fns";
 import {
@@ -41,28 +41,44 @@ const PERIOD_OPTIONS = [
 export function CompanyTrendChart() {
   const [data, setData] = useState<TrendDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [weeks, setWeeks] = useState("12");
-
-  const fetchTrends = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await authFetch(
-        `/api/analytics/company-trends?weeks=${weeks}`
-      );
-      if (response.ok) {
-        const result = await response.json();
-        setData(result.trends);
-      }
-    } catch (error) {
-      console.error("Error fetching company trends:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [weeks]);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    fetchTrends();
-  }, [fetchTrends]);
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setIsLoading(true);
+    setError(null);
+
+    authFetch(`/api/analytics/company-trends?weeks=${weeks}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (controller.signal.aborted) return;
+        if (response.ok) {
+          const result = await response.json();
+          setData(result.trends);
+        } else {
+          setData([]);
+          setError(`Failed to load trends (${response.status})`);
+        }
+      })
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        console.error("Error fetching company trends:", err);
+        setError("Failed to connect to the server");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [weeks]);
 
   return (
     <Card>
@@ -85,6 +101,10 @@ export function CompanyTrendChart() {
         {isLoading ? (
           <div className="h-[320px] flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600" />
+          </div>
+        ) : error ? (
+          <div className="h-[320px] flex items-center justify-center text-sm text-red-500">
+            {error}
           </div>
         ) : data.length === 0 ? (
           <div className="h-[320px] flex items-center justify-center text-sm text-gray-500">

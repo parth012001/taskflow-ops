@@ -3,7 +3,7 @@ import { loginAsRole } from "./helpers/auth";
 
 // Analytics tests require the productivity seed overlay.
 // Run with: PRODUCTIVITY_OVERLAY=true npx playwright test e2e/analytics.spec.ts
-test.skip(!process.env.PRODUCTIVITY_OVERLAY, "requires PRODUCTIVITY_OVERLAY=true");
+test.skip(process.env.PRODUCTIVITY_OVERLAY !== "true", "requires PRODUCTIVITY_OVERLAY=true");
 
 test.describe("Analytics page", () => {
   test("Admin can access /analytics and sees all sections", async ({ page }) => {
@@ -37,7 +37,7 @@ test.describe("Analytics page", () => {
   });
 
   test("Department Head can access /analytics", async ({ page }) => {
-    await loginAsRole(page, "dept_head");
+    await loginAsRole(page, "departmentHead");
     await page.goto("/analytics");
 
     await expect(page.getByRole("heading", { name: "Company Health" })).toBeVisible();
@@ -65,17 +65,30 @@ test.describe("Analytics page", () => {
     await loginAsRole(page, "admin");
     await page.goto("/analytics");
 
-    // Wait for page to load
+    // Wait for trend chart to load
     await expect(page.getByText("Company Trend")).toBeVisible({ timeout: 10_000 });
 
-    // Change period selector
+    // Wait for initial chart data to render (recharts legend items)
+    await expect(page.locator(".recharts-legend-item").first()).toBeVisible({ timeout: 10_000 });
+
+    // The selector should be visible
     const selector = page.locator("[role='combobox']").first();
-    if (await selector.isVisible()) {
-      await selector.click();
-      const option = page.getByRole("option", { name: "4 weeks" });
-      if (await option.isVisible({ timeout: 3000 })) {
-        await option.click();
-      }
-    }
+    await expect(selector).toBeVisible();
+
+    // Intercept the trends API call triggered by period change
+    const trendsResponse = page.waitForResponse(
+      (resp) => resp.url().includes("/api/analytics/company-trends") && resp.url().includes("weeks=4"),
+      { timeout: 10_000 }
+    );
+
+    // Change period to 4 weeks
+    await selector.click();
+    const option = page.getByRole("option", { name: "4 weeks" });
+    await expect(option).toBeVisible();
+    await option.click();
+
+    // Verify the API was called with the new period
+    const response = await trendsResponse;
+    expect(response.status()).toBe(200);
   });
 });

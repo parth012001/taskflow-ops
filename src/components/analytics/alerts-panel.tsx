@@ -30,10 +30,14 @@ export function AlertsPanel({ data }: AlertsPanelProps) {
       {/* Biggest Mover */}
       <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
         <div className="p-2 bg-blue-100 rounded-lg shrink-0">
-          {data.biggestMover?.direction === "up" ? (
-            <TrendingUp className="h-5 w-5 text-blue-600" />
+          {data.biggestMover ? (
+            data.biggestMover.direction === "up" ? (
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+            ) : (
+              <TrendingDown className="h-5 w-5 text-blue-600" />
+            )
           ) : (
-            <TrendingDown className="h-5 w-5 text-blue-600" />
+            <TrendingUp className="h-5 w-5 text-gray-400" />
           )}
         </div>
         <div>
