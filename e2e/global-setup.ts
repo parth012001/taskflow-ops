@@ -4,6 +4,8 @@ export default async function globalSetup() {
   console.log("[global-setup] Pushing schema and seeding database…");
   execSync("npx prisma db push --skip-generate", { stdio: "inherit" });
   execSync("npx tsx prisma/seed.ts", { stdio: "inherit" });
-  execSync("npx tsx prisma/seed-productivity.ts", { stdio: "inherit" });
+  if (process.env.PRODUCTIVITY_OVERLAY) {
+    execSync("npx tsx prisma/seed-productivity.ts", { stdio: "inherit" });
+  }
   console.log("[global-setup] Database ready.");
 }

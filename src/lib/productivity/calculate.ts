@@ -43,6 +43,30 @@ export async function calculateForUser(
       (t) => t.completedAt && t.completedAt <= t.deadline
     ).length;
 
+    // Derive firstPassCount and reopenedCount from status histories
+    const historyByTask = new Map<string, typeof data.statusHistories>();
+    for (const h of data.statusHistories) {
+      const list = historyByTask.get(h.taskId) || [];
+      list.push(h);
+      historyByTask.set(h.taskId, list);
+    }
+
+    let firstPassCount = 0;
+    for (const task of reviewedTasks) {
+      const history = historyByTask.get(task.id) || [];
+      const wasReopened = history.some((h) => h.toStatus === "REOPENED");
+      if (!wasReopened) firstPassCount++;
+    }
+
+    const reopenedTaskIds = new Set<string>();
+    for (const task of data.completedTasks) {
+      const history = historyByTask.get(task.id) || [];
+      const wasReopenedFromApproved = history.some(
+        (h) => h.fromStatus === "CLOSED_APPROVED" && h.toStatus === "REOPENED"
+      );
+      if (wasReopenedFromApproved) reopenedTaskIds.add(task.id);
+    }
+
     return {
       scorable: false,
       output: 0,
@@ -59,8 +83,8 @@ export async function calculateForUser(
         targetPoints: data.weeklyOutputTarget * 4,
         completedTaskCount: data.completedTasks.length,
         reviewedTaskCount: reviewedTasks.length,
-        firstPassCount: reviewedTasks.length,
-        reopenedCount: 0,
+        firstPassCount,
+        reopenedCount: reopenedTaskIds.size,
         totalCompletedCount: data.completedTasks.length,
         reviewRatio:
           data.completedTasks.length > 0

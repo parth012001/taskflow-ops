@@ -211,9 +211,7 @@ function randomDate(start: Date, end: Date): Date {
 }
 
 function addDays(date: Date, days: number): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
 function startOfDay(date: Date): Date {
@@ -669,7 +667,7 @@ async function main() {
   // 7. Seed historical snapshots (12 weeks) for trend charts
   console.log("\nGenerating 12 weeks of historical snapshots...");
 
-  const mondays = getMondaysGoingBack(12);
+  const mondays = getMondaysGoingBack(11);
 
   for (const user of scorableUsers) {
     const idx = scorableUsers.indexOf(user);
