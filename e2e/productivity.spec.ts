@@ -1,6 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { loginAsRole } from "./helpers/auth";
 
+// Productivity tests require the productivity seed overlay.
+// Run with: PRODUCTIVITY_OVERLAY=true npx playwright test e2e/productivity.spec.ts
+test.skip(!process.env.PRODUCTIVITY_OVERLAY, "requires PRODUCTIVITY_OVERLAY=true");
+
 test.describe("Productivity scoring", () => {
   test("Manager can see the productivity leaderboard", async ({ page }) => {
     await loginAsRole(page, "manager");

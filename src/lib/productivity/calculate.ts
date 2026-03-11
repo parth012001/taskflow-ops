@@ -7,6 +7,7 @@ import {
   calculateComposite,
   type ProductivityResult,
   getWorkdayCount,
+  MIN_COMPLETED_TASKS,
 } from "./scoring-engine";
 import {
   fetchScoringDataForUser,
@@ -33,6 +34,76 @@ export async function calculateForUser(
     windowStart,
     windowEnd
   );
+
+  // Users below the minimum task threshold are unscorable — not enough
+  // data for Quality/Reliability ratios to carry statistical meaning.
+  if (data.completedTasks.length < MIN_COMPLETED_TASKS) {
+    const reviewedTasks = data.completedTasks.filter((t) => t.requiresReview);
+    const onTimeCount = data.completedTasks.filter(
+      (t) => t.completedAt && t.completedAt <= t.deadline
+    ).length;
+
+    // Derive firstPassCount and reopenedCount from status histories
+    const historyByTask = new Map<string, typeof data.statusHistories>();
+    for (const h of data.statusHistories) {
+      const list = historyByTask.get(h.taskId) || [];
+      list.push(h);
+      historyByTask.set(h.taskId, list);
+    }
+
+    let firstPassCount = 0;
+    for (const task of reviewedTasks) {
+      const history = historyByTask.get(task.id) || [];
+      const wasReopened = history.some((h) => h.toStatus === "REOPENED");
+      if (!wasReopened) firstPassCount++;
+    }
+
+    const reopenedTaskIds = new Set<string>();
+    for (const task of data.completedTasks) {
+      const history = historyByTask.get(task.id) || [];
+      const wasReopenedFromApproved = history.some(
+        (h) => h.fromStatus === "CLOSED_APPROVED" && h.toStatus === "REOPENED"
+      );
+      if (wasReopenedFromApproved) reopenedTaskIds.add(task.id);
+    }
+
+    return {
+      scorable: false,
+      output: 0,
+      quality: 0,
+      reliability: 0,
+      consistency: 0,
+      composite: 0,
+      meta: {
+        totalPoints: data.completedTasks.reduce((sum, t) => {
+          const sizeW = t.size === "EASY" ? 1 : t.size === "MEDIUM" ? 2 : 4;
+          const prioM = t.priority === "URGENT_IMPORTANT" ? 1.5 : 1;
+          return sum + sizeW * prioM;
+        }, 0),
+        targetPoints: data.weeklyOutputTarget * 4,
+        completedTaskCount: data.completedTasks.length,
+        reviewedTaskCount: reviewedTasks.length,
+        firstPassCount,
+        reopenedCount: reopenedTaskIds.size,
+        totalCompletedCount: data.completedTasks.length,
+        reviewRatio:
+          data.completedTasks.length > 0
+            ? reviewedTasks.length / data.completedTasks.length
+            : 0,
+        onTimeCount,
+        totalWithDeadline: data.completedTasks.length,
+        carryForwardTotal: data.carryForwards.length,
+        activeTaskCount: data.activeTasks.length,
+        plannedDays: data.planningSessions.filter((s) => s.morningCompleted)
+          .length,
+        totalWorkdays: getWorkdayCount(windowStart, windowEnd),
+        activeKpiBuckets: new Set(
+          data.completedTasks.map((t) => t.kpiBucketId)
+        ).size,
+        assignedKpiBuckets: data.userKpis.length,
+      },
+    };
+  }
 
   const outputResult = calculateOutputScore(
     data.completedTasks,
@@ -70,6 +141,7 @@ export async function calculateForUser(
   const reviewedTasks = data.completedTasks.filter((t) => t.requiresReview);
 
   return {
+    scorable: true,
     ...pillars,
     composite,
     meta: {
@@ -114,6 +186,14 @@ export async function calculateAndSaveForUser(
   windowStart.setDate(windowStart.getDate() - 28);
 
   const result = await calculateForUser(userId, departmentId, windowStart, windowEnd);
+
+  if (!result.scorable) {
+    // Remove stale score if user dropped below threshold
+    await prisma.productivityScore.deleteMany({
+      where: { userId },
+    });
+    return;
+  }
 
   await prisma.productivityScore.upsert({
     where: { userId },

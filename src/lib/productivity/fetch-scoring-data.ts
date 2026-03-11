@@ -155,6 +155,7 @@ export async function fetchAllUsersForScoring(): Promise<
     where: {
       isActive: true,
       deletedAt: null,
+      role: { not: "ADMIN" },
     },
     select: {
       id: true,

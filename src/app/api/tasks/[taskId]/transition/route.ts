@@ -40,10 +40,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     let body: unknown = {};
-    const contentLength = request.headers.get("content-length");
-    if (contentLength && contentLength !== "0") {
+    const rawText = await request.text();
+    if (rawText.trim().length > 0) {
       try {
-        body = await request.json();
+        body = JSON.parse(rawText);
       } catch {
         return NextResponse.json(
           { error: "Invalid JSON body" },
