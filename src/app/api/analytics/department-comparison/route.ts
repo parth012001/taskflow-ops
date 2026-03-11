@@ -3,8 +3,19 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { canViewAnalytics } from "@/lib/utils/permissions";
-import { Role } from "@prisma/client";
+import { Role, Prisma } from "@prisma/client";
 import { generalLimiter } from "@/lib/rate-limit";
+
+interface DeptAggRow {
+  departmentId: string;
+  name: string;
+  avg_composite: number;
+  avg_output: number;
+  avg_quality: number;
+  avg_reliability: number;
+  avg_consistency: number;
+  scored_count: bigint;
+}
 
 export async function GET() {
   try {
@@ -28,22 +39,28 @@ export async function GET() {
       );
     }
 
-    // Fetch all active departments
-    const departments = await prisma.department.findMany({
-      select: { id: true, name: true },
-    });
+    // DB-level aggregation: avg per pillar grouped by department
+    const deptAggregates = await prisma.$queryRaw<DeptAggRow[]>(Prisma.sql`
+      SELECT
+        d.id AS "departmentId",
+        d.name,
+        AVG(ps.composite) AS avg_composite,
+        AVG(ps.output) AS avg_output,
+        AVG(ps.quality) AS avg_quality,
+        AVG(ps.reliability) AS avg_reliability,
+        AVG(ps.consistency) AS avg_consistency,
+        COUNT(ps.id)::bigint AS scored_count
+      FROM "Department" d
+      LEFT JOIN "User" u ON u."departmentId" = d.id
+        AND u."isActive" = true
+        AND u."deletedAt" IS NULL
+        AND u.role != 'ADMIN'
+      LEFT JOIN "ProductivityScore" ps ON ps."userId" = u.id
+      GROUP BY d.id, d.name
+      ORDER BY avg_composite DESC NULLS LAST
+    `);
 
-    // Fetch all productivity scores with user's department
-    const scores = await prisma.productivityScore.findMany({
-      where: {
-        user: { isActive: true, deletedAt: null, role: { not: "ADMIN" } },
-      },
-      include: {
-        user: { select: { departmentId: true } },
-      },
-    });
-
-    // Fetch total user counts per department (non-admin)
+    // Total user counts per department (non-admin)
     const userCounts = await prisma.user.groupBy({
       by: ["departmentId"],
       where: { isActive: true, deletedAt: null, role: { not: "ADMIN" } },
@@ -55,48 +72,22 @@ export async function GET() {
         .map((c) => [c.departmentId!, c._count.id])
     );
 
-    // Group scores by department
-    const deptScores = new Map<string, typeof scores>();
-    for (const score of scores) {
-      const deptId = score.user.departmentId;
-      if (!deptId) continue;
-      const list = deptScores.get(deptId) || [];
-      list.push(score);
-      deptScores.set(deptId, list);
-    }
+    const departments = deptAggregates.map((row) => {
+      const scored = Number(row.scored_count);
+      return {
+        id: row.departmentId,
+        name: row.name,
+        composite: scored > 0 ? Math.round((row.avg_composite ?? 0) * 10) / 10 : 0,
+        output: scored > 0 ? Math.round((row.avg_output ?? 0) * 10) / 10 : 0,
+        quality: scored > 0 ? Math.round((row.avg_quality ?? 0) * 10) / 10 : 0,
+        reliability: scored > 0 ? Math.round((row.avg_reliability ?? 0) * 10) / 10 : 0,
+        consistency: scored > 0 ? Math.round((row.avg_consistency ?? 0) * 10) / 10 : 0,
+        scoredCount: scored,
+        totalCount: countByDept.get(row.departmentId) ?? 0,
+      };
+    });
 
-    const result = departments
-      .map((dept) => {
-        const deptData = deptScores.get(dept.id) || [];
-        const count = deptData.length;
-        if (count === 0) {
-          return {
-            id: dept.id,
-            name: dept.name,
-            composite: 0,
-            output: 0,
-            quality: 0,
-            reliability: 0,
-            consistency: 0,
-            scoredCount: 0,
-            totalCount: countByDept.get(dept.id) ?? 0,
-          };
-        }
-        return {
-          id: dept.id,
-          name: dept.name,
-          composite: Math.round((deptData.reduce((s, r) => s + r.composite, 0) / count) * 10) / 10,
-          output: Math.round((deptData.reduce((s, r) => s + r.output, 0) / count) * 10) / 10,
-          quality: Math.round((deptData.reduce((s, r) => s + r.quality, 0) / count) * 10) / 10,
-          reliability: Math.round((deptData.reduce((s, r) => s + r.reliability, 0) / count) * 10) / 10,
-          consistency: Math.round((deptData.reduce((s, r) => s + r.consistency, 0) / count) * 10) / 10,
-          scoredCount: count,
-          totalCount: countByDept.get(dept.id) ?? count,
-        };
-      })
-      .sort((a, b) => b.composite - a.composite);
-
-    return NextResponse.json({ departments: result });
+    return NextResponse.json({ departments });
   } catch (error) {
     console.error("GET /api/analytics/department-comparison error:", error);
     return NextResponse.json(

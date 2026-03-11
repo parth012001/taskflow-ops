@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { canViewAnalytics } from "@/lib/utils/permissions";
-import { Role } from "@prisma/client";
+import { Role, Prisma } from "@prisma/client";
 import { generalLimiter } from "@/lib/rate-limit";
 
 function getBand(score: number): string {
@@ -35,20 +35,23 @@ export async function GET() {
       );
     }
 
-    // Fetch all non-admin active users
-    const activeUsers = await prisma.user.findMany({
+    // Count active non-admin users
+    const totalEmployees = await prisma.user.count({
       where: { isActive: true, deletedAt: null, role: { not: "ADMIN" } },
-      select: { id: true },
-    });
-    const userIds = activeUsers.map((u) => u.id);
-
-    // Fetch all productivity scores for those users
-    const scores = await prisma.productivityScore.findMany({
-      where: { userId: { in: userIds } },
     });
 
-    const totalEmployees = userIds.length;
-    const scoredCount = scores.length;
+    // DB-level aggregation for averages and count
+    const scoreFilter: Prisma.ProductivityScoreWhereInput = {
+      user: { isActive: true, deletedAt: null, role: { not: "ADMIN" } },
+    };
+
+    const [aggregates, scoredCount] = await Promise.all([
+      prisma.productivityScore.aggregate({
+        where: scoreFilter,
+        _avg: { composite: true, output: true, quality: true, reliability: true, consistency: true },
+      }),
+      prisma.productivityScore.count({ where: scoreFilter }),
+    ]);
 
     if (scoredCount === 0) {
       return NextResponse.json({
@@ -61,51 +64,64 @@ export async function GET() {
       });
     }
 
-    // Compute averages
     const avg = {
-      composite: scores.reduce((s, r) => s + r.composite, 0) / scoredCount,
-      output: scores.reduce((s, r) => s + r.output, 0) / scoredCount,
-      quality: scores.reduce((s, r) => s + r.quality, 0) / scoredCount,
-      reliability: scores.reduce((s, r) => s + r.reliability, 0) / scoredCount,
-      consistency: scores.reduce((s, r) => s + r.consistency, 0) / scoredCount,
+      composite: aggregates._avg.composite ?? 0,
+      output: aggregates._avg.output ?? 0,
+      quality: aggregates._avg.quality ?? 0,
+      reliability: aggregates._avg.reliability ?? 0,
+      consistency: aggregates._avg.consistency ?? 0,
     };
 
-    // Distribution buckets
+    // DB-level distribution bucketing via raw SQL
+    const distributionRows = await prisma.$queryRaw<
+      { band: string; count: bigint }[]
+    >(Prisma.sql`
+      SELECT
+        CASE
+          WHEN ps.composite >= 80 THEN 'thriving'
+          WHEN ps.composite >= 60 THEN 'healthy'
+          WHEN ps.composite >= 40 THEN 'atRisk'
+          ELSE 'critical'
+        END AS band,
+        COUNT(*)::bigint AS count
+      FROM "ProductivityScore" ps
+      JOIN "User" u ON u.id = ps."userId"
+      WHERE u."isActive" = true AND u."deletedAt" IS NULL AND u.role != 'ADMIN'
+      GROUP BY band
+    `);
+
     const distribution = { thriving: 0, healthy: 0, atRisk: 0, critical: 0 };
-    for (const score of scores) {
-      const band = getBand(score.composite);
-      distribution[band as keyof typeof distribution]++;
+    for (const row of distributionRows) {
+      distribution[row.band as keyof typeof distribution] = Number(row.count);
     }
 
-    // Change: compare current avg vs snapshots from 4–8 weeks ago
-    // Use only scored user IDs so the comparison cohort matches the current avg
-    const scoredUserIds = scores.map((s) => s.userId);
+    // Change: compare current avg vs snapshot averages from 4–8 weeks ago (DB-level)
     const eightWeeksAgo = new Date();
     eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
     const fourWeeksAgo = new Date();
     fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
 
-    const previousSnapshots = await prisma.productivitySnapshot.findMany({
+    const prevAggregates = await prisma.productivitySnapshot.aggregate({
       where: {
-        userId: { in: scoredUserIds },
+        user: { isActive: true, deletedAt: null, role: { not: "ADMIN" } },
         weekStartDate: { gte: eightWeeksAgo, lte: fourWeeksAgo },
       },
+      _avg: { composite: true, output: true, quality: true, reliability: true, consistency: true },
+      _count: { userId: true },
     });
 
     let change = 0;
-    if (previousSnapshots.length > 0) {
-      const prevAvg = previousSnapshots.reduce((s, r) => s + r.composite, 0) / previousSnapshots.length;
-      change = avg.composite - prevAvg;
-    }
-
-    // Biggest mover: compare current pillar avgs vs previous period
     let biggestMover: { pillar: string; direction: string; delta: number } | null = null;
-    if (previousSnapshots.length > 0) {
+
+    if (prevAggregates._count.userId > 0) {
+      const prevComposite = prevAggregates._avg.composite ?? 0;
+      change = avg.composite - prevComposite;
+
       const prevPillarAvgs = {
-        output: previousSnapshots.reduce((s, r) => s + r.output, 0) / previousSnapshots.length,
-        quality: previousSnapshots.reduce((s, r) => s + r.quality, 0) / previousSnapshots.length,
-        reliability: previousSnapshots.reduce((s, r) => s + r.reliability, 0) / previousSnapshots.length,
-        consistency: previousSnapshots.reduce((s, r) => s + r.consistency, 0) / previousSnapshots.length,
+        output: prevAggregates._avg.output ?? 0,
+        quality: prevAggregates._avg.quality ?? 0,
+        reliability: prevAggregates._avg.reliability ?? 0,
+        consistency: prevAggregates._avg.consistency ?? 0,
       };
 
       let maxDelta = 0;
