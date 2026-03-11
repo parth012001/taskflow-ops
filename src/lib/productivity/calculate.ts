@@ -38,6 +38,11 @@ export async function calculateForUser(
   // Users below the minimum task threshold are unscorable — not enough
   // data for Quality/Reliability ratios to carry statistical meaning.
   if (data.completedTasks.length < MIN_COMPLETED_TASKS) {
+    const reviewedTasks = data.completedTasks.filter((t) => t.requiresReview);
+    const onTimeCount = data.completedTasks.filter(
+      (t) => t.completedAt && t.completedAt <= t.deadline
+    ).length;
+
     return {
       scorable: false,
       output: 0,
@@ -46,22 +51,31 @@ export async function calculateForUser(
       consistency: 0,
       composite: 0,
       meta: {
-        totalPoints: 0,
+        totalPoints: data.completedTasks.reduce((sum, t) => {
+          const sizeW = t.size === "EASY" ? 1 : t.size === "MEDIUM" ? 2 : 4;
+          const prioM = t.priority === "URGENT_IMPORTANT" ? 1.5 : 1;
+          return sum + sizeW * prioM;
+        }, 0),
         targetPoints: data.weeklyOutputTarget * 4,
         completedTaskCount: data.completedTasks.length,
-        reviewedTaskCount: 0,
-        firstPassCount: 0,
+        reviewedTaskCount: reviewedTasks.length,
+        firstPassCount: reviewedTasks.length,
         reopenedCount: 0,
         totalCompletedCount: data.completedTasks.length,
-        reviewRatio: 0,
-        onTimeCount: 0,
-        totalWithDeadline: 0,
+        reviewRatio:
+          data.completedTasks.length > 0
+            ? reviewedTasks.length / data.completedTasks.length
+            : 0,
+        onTimeCount,
+        totalWithDeadline: data.completedTasks.length,
         carryForwardTotal: data.carryForwards.length,
         activeTaskCount: data.activeTasks.length,
         plannedDays: data.planningSessions.filter((s) => s.morningCompleted)
           .length,
         totalWorkdays: getWorkdayCount(windowStart, windowEnd),
-        activeKpiBuckets: 0,
+        activeKpiBuckets: new Set(
+          data.completedTasks.map((t) => t.kpiBucketId)
+        ).size,
         assignedKpiBuckets: data.userKpis.length,
       },
     };

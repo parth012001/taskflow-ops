@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { calculateForUser } from "@/lib/productivity/calculate";
+import { MIN_COMPLETED_TASKS } from "@/lib/productivity/scoring-engine";
 import { Role } from "@prisma/client";
 
 export async function GET(
@@ -80,7 +81,7 @@ export async function GET(
       return NextResponse.json(
         {
           ...result,
-          message: "Insufficient activity — fewer than 3 completed tasks in the scoring window.",
+          message: `Insufficient activity — fewer than ${MIN_COMPLETED_TASKS} completed tasks in the scoring window.`,
         },
         { status: 200 }
       );

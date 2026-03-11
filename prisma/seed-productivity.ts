@@ -23,7 +23,8 @@ type Archetype =
   | "solid"
   | "speed_demon"
   | "careful"
-  | "struggling";
+  | "struggling"
+  | "inactive";
 
 interface UserProfile {
   archetype: Archetype;
@@ -136,6 +137,25 @@ const PROFILES: Record<Archetype, UserProfile> = {
     },
     kpiSpreadFactor: 0.3,
   },
+  inactive: {
+    archetype: "inactive",
+    completedTaskCount: [0, 2],
+    activeTaskCount: [1, 3],
+    reviewRate: 0.5,
+    firstPassRate: 0.5,
+    reopenRate: 0.0,
+    onTimeRate: 0.5,
+    carryForwardCount: [0, 1],
+    planningRate: 0.1,
+    sizeDistribution: { EASY: 0.6, MEDIUM: 0.3, DIFFICULT: 0.1 },
+    priorityDistribution: {
+      URGENT_IMPORTANT: 0.1,
+      URGENT_NOT_IMPORTANT: 0.2,
+      NOT_URGENT_IMPORTANT: 0.3,
+      NOT_URGENT_NOT_IMPORTANT: 0.4,
+    },
+    kpiSpreadFactor: 0.1,
+  },
 };
 
 // 20 users: 4 per archetype
@@ -144,7 +164,7 @@ const USER_ARCHETYPES: Archetype[] = [
   "solid", "solid", "solid", "solid",
   "speed_demon", "speed_demon", "speed_demon", "speed_demon",
   "careful", "careful", "careful", "careful",
-  "struggling", "struggling", "struggling", "struggling",
+  "struggling", "struggling", "inactive", "inactive",
 ];
 
 const SIZES: TaskSize[] = ["EASY", "MEDIUM", "DIFFICULT"];
@@ -368,8 +388,16 @@ async function main() {
       }
     }
 
-    const user = await prisma.user.create({
-      data: {
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: {
+        firstName: first,
+        lastName: last,
+        role,
+        departmentId: department.id,
+        managerId,
+      },
+      create: {
         email,
         passwordHash,
         firstName: first,

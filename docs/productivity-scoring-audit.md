@@ -2,49 +2,29 @@
 
 Audit performed against seeded data (20 users, 5 archetypes) with manual calculation verification.
 
-**Result:** All 4 pillar formulas compute correctly — manual math matches stored values exactly. But there are fundamental design issues in how edge cases and defaults are handled.
-
-**Verified against codebase:** 2026-03-10. All 6 claims confirmed TRUE in code. 4 are real bugs, 2 are intentional design.
+**Result:** All 4 pillar formulas compute correctly — manual math matches stored values exactly. Edge-case and default-handling issues were found and are being resolved.
 
 ---
 
-## System Usage Status
+## Resolved in PR #10 (`fix/productivity-scoring-threshold`)
 
-- **20 ProductivityScore records** exist (matches the 20 seeded users)
-- All calculated on **March 1, 2026** in a single batch (~10 seconds)
-- **247 ProductivitySnapshot records**, latest week starting Feb 23, 2026
-- **No scores calculated since March 1** — system has not been actively used in production, only seeded
+### ~~1. Zero tasks = perfect Quality & Reliability score~~ FIXED
+
+**Severity:** P0
+
+Added `MIN_COMPLETED_TASKS = 3` threshold gate in `calculateForUser()`. Users with fewer than 3 completed tasks in the 28-day window are marked `scorable: false`, return all zeros, and get their `ProductivityScore` record deleted (removed from leaderboard). Quality and Reliability also now return `score: 0` (not 100) for empty task lists as a safety net.
+
+---
+
+### ~~2. Admin users get scored (shouldn't appear on leaderboard)~~ FIXED
+
+**Severity:** P0
+
+Added `role: { not: "ADMIN" }` filter to `fetchAllUsersForScoring()` query. Admin users are now excluded at the data-fetch level — they're never even evaluated for scoring.
 
 ---
 
 ## Bugs to Fix
-
-### 1. Zero tasks = perfect Quality & Reliability score
-
-**Severity:** P0
-**Location:** `src/lib/productivity/scoring-engine.ts` — `calculateQualityScore()` (line 139) and `calculateReliabilityScore()` (line 211)
-
-Both functions return `score: 100` when `completedTasks.length === 0`. This means a user who completes nothing gets perfect quality and reliability. It rewards inactivity.
-
-**Example:** System Admin — 0 tasks, Q=100, R=100.
-
-**Fix:** Return `score: 0` when there are no completed tasks.
-
----
-
-### 2. Admin users get scored (shouldn't appear on leaderboard)
-
-**Severity:** P0
-**Location:** `src/lib/productivity/fetch-scoring-data.ts` — `fetchAllUsersForScoring()` (line 151)
-
-The query fetches all active users regardless of role. System Admin appears on the leaderboard with inflated scores from zero-task defaults.
-
-**Fix:** Filter out ADMIN role in the query:
-```ts
-where: { isActive: true, deletedAt: null, role: { not: "ADMIN" } }
-```
-
----
 
 ### 3. Zero assigned KPIs = perfect KPI spread (Consistency)
 
@@ -91,6 +71,17 @@ Size weighting (EASY=1, MEDIUM=2, DIFFICULT=4) means high volumes of easy tasks 
 `completedAt <= deadline` compares full datetimes. A task completed at 11pm on the deadline day could be "late" if the deadline was set to 9am.
 
 **Verdict:** Not a real-world issue. Deadlines are set via the app and include a time component — comparing against that time is correct behavior. Nice-to-have fix at best, not worth prioritizing.
+
+---
+
+## Pre-fix Findings (seeded run snapshot, March 1 2026)
+
+These counts are from the initial seed run and do not reflect live system state:
+
+- 20 ProductivityScore records existed (matching the 20 seeded users)
+- All calculated in a single batch (~10 seconds)
+- 247 ProductivitySnapshot records, latest week starting Feb 23, 2026
+- System has not been actively used in production beyond seeding
 
 ---
 

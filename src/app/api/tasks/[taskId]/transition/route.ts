@@ -40,11 +40,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     let body: unknown = {};
-    try {
-      body = await request.json();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "";
-      if (!message.includes("Unexpected end of JSON input")) {
+    const rawText = await request.text();
+    if (rawText.trim().length > 0) {
+      try {
+        body = JSON.parse(rawText);
+      } catch {
         return NextResponse.json(
           { error: "Invalid JSON body" },
           { status: 400 }
