@@ -76,6 +76,16 @@ export async function GET(
 
     const result = await calculateForUser(userId, user.departmentId);
 
+    if (!result.scorable) {
+      return NextResponse.json(
+        {
+          ...result,
+          message: "Insufficient activity — fewer than 3 completed tasks in the scoring window.",
+        },
+        { status: 200 }
+      );
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("GET /api/productivity/scores/[userId] error:", error);

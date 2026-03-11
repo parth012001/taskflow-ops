@@ -6,6 +6,7 @@ import {
   calculateConsistencyScore,
   calculateComposite,
   getWorkdayCount,
+  MIN_COMPLETED_TASKS,
   ScoredTask,
   StatusTransition,
   CarryForwardEntry,
@@ -130,9 +131,11 @@ describe("calculateOutputScore", () => {
 // ============================================
 
 describe("calculateQualityScore", () => {
-  it("should return 100 when no completed tasks", () => {
+  it("should return 0 when no completed tasks", () => {
     const result = calculateQualityScore([], []);
-    expect(result.score).toBe(100);
+    expect(result.score).toBe(0);
+    expect(result.firstPassRate).toBe(0);
+    expect(result.reopenRate).toBe(0);
   });
 
   it("should return 100 when all tasks are first-pass approved", () => {
@@ -278,9 +281,11 @@ describe("calculateQualityScore", () => {
 // ============================================
 
 describe("calculateReliabilityScore", () => {
-  it("should return 100 when no completed tasks", () => {
+  it("should return 0 when no completed tasks", () => {
     const result = calculateReliabilityScore([], [], []);
-    expect(result.score).toBe(100);
+    expect(result.score).toBe(0);
+    expect(result.onTimeRate).toBe(0);
+    expect(result.carryForwardScore).toBe(0);
   });
 
   it("should return high score when all tasks on time", () => {
@@ -791,5 +796,68 @@ describe("calculateConsistencyScore — edge cases", () => {
     expect(result.kpiSpread).toBe(1);
     // score = (0 * 0.5 + 1 * 0.5) * 100 = 50
     expect(result.score).toBe(50);
+  });
+});
+
+// ============================================
+// MIN_COMPLETED_TASKS threshold
+// ============================================
+
+describe("MIN_COMPLETED_TASKS threshold", () => {
+  it("should be set to 3", () => {
+    expect(MIN_COMPLETED_TASKS).toBe(3);
+  });
+
+  it("should ensure Quality returns 0 for 0 tasks (no false 100)", () => {
+    const result = calculateQualityScore([], []);
+    expect(result.score).toBe(0);
+  });
+
+  it("should ensure Reliability returns 0 for 0 tasks (no false 100)", () => {
+    const result = calculateReliabilityScore([], [], []);
+    expect(result.score).toBe(0);
+  });
+
+  it("should produce meaningful Quality ratios at exactly 3 tasks", () => {
+    const tasks = [
+      createMockCompletedTask({ id: "t1" }),
+      createMockCompletedTask({ id: "t2" }),
+      createMockCompletedTask({ id: "t3" }),
+    ];
+
+    const histories = [
+      ...createMockStatusHistory("t1", [
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+      ...createMockStatusHistory("t2", [
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.REOPENED],
+        [TaskStatus.REOPENED, TaskStatus.COMPLETED_PENDING_REVIEW],
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+      ...createMockStatusHistory("t3", [
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+    ];
+
+    const result = calculateQualityScore(tasks, histories);
+    // 2/3 first-pass, 3/3 reopen → (0.667 * 0.6 + 1 * 0.4) * 100 = 80
+    expect(result.firstPassRate).toBeCloseTo(2 / 3);
+    expect(result.score).toBeCloseTo(80, 0);
+  });
+
+  it("should produce meaningful Reliability ratios at exactly 3 tasks", () => {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 86400000);
+    const yesterday = new Date(now.getTime() - 86400000);
+
+    const tasks = [
+      createMockCompletedTask({ completedAt: now, deadline: tomorrow }),
+      createMockCompletedTask({ completedAt: now, deadline: tomorrow }),
+      createMockCompletedTask({ completedAt: now, deadline: yesterday }),
+    ];
+
+    const result = calculateReliabilityScore(tasks, [], tasks);
+    // 2/3 on-time → onTimeRate ≈ 0.667
+    expect(result.onTimeRate).toBeCloseTo(2 / 3);
   });
 });

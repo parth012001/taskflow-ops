@@ -7,6 +7,7 @@ import {
   calculateComposite,
   type ProductivityResult,
   getWorkdayCount,
+  MIN_COMPLETED_TASKS,
 } from "./scoring-engine";
 import {
   fetchScoringDataForUser,
@@ -33,6 +34,38 @@ export async function calculateForUser(
     windowStart,
     windowEnd
   );
+
+  // Users below the minimum task threshold are unscorable — not enough
+  // data for Quality/Reliability ratios to carry statistical meaning.
+  if (data.completedTasks.length < MIN_COMPLETED_TASKS) {
+    return {
+      scorable: false,
+      output: 0,
+      quality: 0,
+      reliability: 0,
+      consistency: 0,
+      composite: 0,
+      meta: {
+        totalPoints: 0,
+        targetPoints: data.weeklyOutputTarget * 4,
+        completedTaskCount: data.completedTasks.length,
+        reviewedTaskCount: 0,
+        firstPassCount: 0,
+        reopenedCount: 0,
+        totalCompletedCount: data.completedTasks.length,
+        reviewRatio: 0,
+        onTimeCount: 0,
+        totalWithDeadline: 0,
+        carryForwardTotal: data.carryForwards.length,
+        activeTaskCount: data.activeTasks.length,
+        plannedDays: data.planningSessions.filter((s) => s.morningCompleted)
+          .length,
+        totalWorkdays: getWorkdayCount(windowStart, windowEnd),
+        activeKpiBuckets: 0,
+        assignedKpiBuckets: data.userKpis.length,
+      },
+    };
+  }
 
   const outputResult = calculateOutputScore(
     data.completedTasks,
@@ -70,6 +103,7 @@ export async function calculateForUser(
   const reviewedTasks = data.completedTasks.filter((t) => t.requiresReview);
 
   return {
+    scorable: true,
     ...pillars,
     composite,
     meta: {
@@ -114,6 +148,14 @@ export async function calculateAndSaveForUser(
   windowStart.setDate(windowStart.getDate() - 28);
 
   const result = await calculateForUser(userId, departmentId, windowStart, windowEnd);
+
+  if (!result.scorable) {
+    // Remove stale score if user dropped below threshold
+    await prisma.productivityScore.deleteMany({
+      where: { userId },
+    });
+    return;
+  }
 
   await prisma.productivityScore.upsert({
     where: { userId },

@@ -146,6 +146,7 @@ const mockEmployeeSession = {
 };
 
 const mockProductivityResult = {
+  scorable: true,
   output: 72,
   quality: 90,
   reliability: 65,
@@ -540,6 +541,51 @@ describe("Productivity Scoring API", () => {
       );
 
       expect(response.status).toBe(403);
+    });
+
+    it("should return 200 with scorable=false and message when user has insufficient tasks", async () => {
+      mockGetServerSession.mockResolvedValue(mockAdminSession as any);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: "emp-1",
+        departmentId: "dept-1",
+      });
+      mockCalculateForUser.mockResolvedValue({
+        scorable: false,
+        output: 0,
+        quality: 0,
+        reliability: 0,
+        consistency: 0,
+        composite: 0,
+        meta: {
+          totalPoints: 0,
+          targetPoints: 60,
+          completedTaskCount: 1,
+          reviewedTaskCount: 0,
+          firstPassCount: 0,
+          reopenedCount: 0,
+          totalCompletedCount: 1,
+          reviewRatio: 0,
+          onTimeCount: 0,
+          totalWithDeadline: 0,
+          carryForwardTotal: 0,
+          activeTaskCount: 2,
+          plannedDays: 5,
+          totalWorkdays: 20,
+          activeKpiBuckets: 0,
+          assignedKpiBuckets: 2,
+        },
+      });
+
+      const response = await getScoreByUser(
+        createMockRequest("/api/productivity/scores/emp-1"),
+        { params: Promise.resolve({ userId: "emp-1" }) }
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.scorable).toBe(false);
+      expect(data.message).toContain("Insufficient activity");
+      expect(data.composite).toBe(0);
     });
   });
 

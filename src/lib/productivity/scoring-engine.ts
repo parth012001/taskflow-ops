@@ -55,6 +55,7 @@ export interface PillarScores {
 }
 
 export interface ProductivityResult {
+  scorable: boolean;
   output: number;
   quality: number;
   reliability: number;
@@ -104,6 +105,11 @@ export const DEFAULT_WEIGHTS: ScoringWeights = {
   consistencyWeight: 0.15,
 };
 
+// Minimum completed tasks in the 28-day window to generate a score.
+// Below this threshold, pillar ratios (Quality, Reliability) have no
+// statistical meaning — a single task gives 100% or 0% with no signal.
+export const MIN_COMPLETED_TASKS = 3;
+
 // ============================================
 // Output Score
 // ============================================
@@ -137,7 +143,7 @@ export function calculateQualityScore(
   statusHistories: StatusTransition[]
 ): { score: number; firstPassRate: number; reopenRate: number } {
   if (completedTasks.length === 0) {
-    return { score: 100, firstPassRate: 1, reopenRate: 1 };
+    return { score: 0, firstPassRate: 0, reopenRate: 0 };
   }
 
   // Group status histories by taskId
@@ -209,7 +215,7 @@ export function calculateReliabilityScore(
   activeTasks: ScoredTask[]
 ): { score: number; onTimeRate: number; carryForwardScore: number } {
   if (completedTasks.length === 0) {
-    return { score: 100, onTimeRate: 1, carryForwardScore: 1 };
+    return { score: 0, onTimeRate: 0, carryForwardScore: 0 };
   }
 
   // On-time rate
