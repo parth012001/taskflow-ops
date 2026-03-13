@@ -14,6 +14,7 @@ import {
   UserCog,
   BarChart3,
   Activity,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +79,12 @@ const navigation = [
     name: "User Management",
     href: "/settings/users",
     icon: UserCog,
+    roles: ["ADMIN"],
+  },
+  {
+    name: "Departments",
+    href: "/admin/departments",
+    icon: Building2,
     roles: ["ADMIN"],
   },
   {

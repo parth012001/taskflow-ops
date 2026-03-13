@@ -567,7 +567,8 @@ describe("Admin User Management API", () => {
       ];
       mockPrismaDeptFindMany.mockResolvedValue(departments as any);
 
-      const response = await getDepartments();
+      const req = createMockRequest("/api/admin/departments");
+      const response = await getDepartments(req);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -577,7 +578,8 @@ describe("Admin User Management API", () => {
     it("should return 403 for non-admin", async () => {
       mockGetServerSession.mockResolvedValue(mockManagerSession as any);
 
-      const response = await getDepartments();
+      const req = createMockRequest("/api/admin/departments");
+      const response = await getDepartments(req);
       const data = await response.json();
 
       expect(response.status).toBe(403);
