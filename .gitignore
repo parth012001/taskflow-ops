@@ -51,3 +51,4 @@ next-env.d.ts
 
 # portfolio screenshots
 /screenshots/
+/scripts/take-screenshots.spec.ts
