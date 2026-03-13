@@ -134,47 +134,47 @@ Single number 0-100 per employee. Color coding:
 
 ### ProductivityScore (cached current scores, 1 row per user)
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | String | PK |
-| userId | String | Unique FK → User |
-| output | Float | |
-| quality | Float | |
-| reliability | Float | |
-| consistency | Float | |
-| composite | Float | |
-| windowStart | DateTime | |
-| windowEnd | DateTime | |
-| calculatedAt | DateTime | |
+| Column       | Type     | Notes            |
+| ------------ | -------- | ---------------- |
+| id           | String   | PK               |
+| userId       | String   | Unique FK → User |
+| output       | Float    |                  |
+| quality      | Float    |                  |
+| reliability  | Float    |                  |
+| consistency  | Float    |                  |
+| composite    | Float    |                  |
+| windowStart  | DateTime |                  |
+| windowEnd    | DateTime |                  |
+| calculatedAt | DateTime |                  |
 
 ### ProductivitySnapshot (weekly historical record)
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | String | PK |
-| userId | String | FK → User |
-| weekStartDate | DateTime | |
-| output | Float | |
-| quality | Float | |
-| reliability | Float | |
-| consistency | Float | |
-| composite | Float | |
-| taskCount | Int | Total completed that week |
-| reviewedTaskCount | Int | Tasks that went through review |
-| | | Unique: (userId, weekStartDate) |
+| Column            | Type     | Notes                           |
+| ----------------- | -------- | ------------------------------- |
+| id                | String   | PK                              |
+| userId            | String   | FK → User                       |
+| weekStartDate     | DateTime |                                 |
+| output            | Float    |                                 |
+| quality           | Float    |                                 |
+| reliability       | Float    |                                 |
+| consistency       | Float    |                                 |
+| composite         | Float    |                                 |
+| taskCount         | Int      | Total completed that week       |
+| reviewedTaskCount | Int      | Tasks that went through review  |
+|                   |          | Unique: (userId, weekStartDate) |
 
 ### ScoringConfig (per-department configurable targets/weights)
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | String | PK |
-| departmentId | String | Unique FK → Department |
-| weeklyOutputTarget | Int | Default 15 |
-| outputWeight | Float | Default 0.35 |
-| qualityWeight | Float | Default 0.25 |
-| reliabilityWeight | Float | Default 0.25 |
-| consistencyWeight | Float | Default 0.15 |
-| updatedAt | DateTime | |
+| Column             | Type     | Notes                  |
+| ------------------ | -------- | ---------------------- |
+| id                 | String   | PK                     |
+| departmentId       | String   | Unique FK → Department |
+| weeklyOutputTarget | Int      | Default 15             |
+| outputWeight       | Float    | Default 0.35           |
+| qualityWeight      | Float    | Default 0.25           |
+| reliabilityWeight  | Float    | Default 0.25           |
+| consistencyWeight  | Float    | Default 0.15           |
+| updatedAt          | DateTime |                        |
 
 ---
 
@@ -194,14 +194,14 @@ No side effects — takes raw data in, returns scores out. Testable in isolation
 
 ## API Routes
 
-| Method | Route | Who | What |
-|--------|-------|-----|------|
-| `POST` | `/api/productivity/calculate` | Admin | Trigger recalculation for all users |
-| `GET` | `/api/productivity/scores` | Manager+ | List scores with filters (dept, role) |
-| `GET` | `/api/productivity/scores/[userId]` | Manager+ / Self | Individual breakdown with raw numbers |
-| `GET` | `/api/productivity/trends` | Manager+ | Historical snapshots for trend charts |
-| `GET` | `/api/productivity/config` | Admin | Get scoring config per department |
-| `PATCH` | `/api/productivity/config/[departmentId]` | Admin | Update targets/weights |
+| Method  | Route                                     | Who             | What                                  |
+| ------- | ----------------------------------------- | --------------- | ------------------------------------- |
+| `POST`  | `/api/productivity/calculate`             | Admin           | Trigger recalculation for all users   |
+| `GET`   | `/api/productivity/scores`                | Manager+        | List scores with filters (dept, role) |
+| `GET`   | `/api/productivity/scores/[userId]`       | Manager+ / Self | Individual breakdown with raw numbers |
+| `GET`   | `/api/productivity/trends`                | Manager+        | Historical snapshots for trend charts |
+| `GET`   | `/api/productivity/config`                | Admin           | Get scoring config per department     |
+| `PATCH` | `/api/productivity/config/[departmentId]` | Admin           | Update targets/weights                |
 
 ---
 

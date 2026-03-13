@@ -14,10 +14,7 @@ export async function GET() {
 
     // Only ADMIN can access KPI management
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Only Admin can manage KPIs" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Only Admin can manage KPIs" }, { status: 403 });
     }
 
     const kpiBuckets = await prisma.kpiBucket.findMany({
@@ -35,10 +32,7 @@ export async function GET() {
     return NextResponse.json({ kpiBuckets });
   } catch (error) {
     console.error("GET /api/kpi-management/buckets error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -63,10 +57,7 @@ export async function POST(request: NextRequest) {
 
     if (!validationResult.success) {
       console.warn("Validation error:", validationResult.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { name, description, applicableRoles } = validationResult.data;
@@ -103,9 +94,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(kpiBucket, { status: 201 });
   } catch (error) {
     console.error("POST /api/kpi-management/buckets error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

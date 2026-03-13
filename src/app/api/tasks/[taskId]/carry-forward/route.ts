@@ -22,10 +22,7 @@ export async function POST(
     const validatedData = carryForwardSchema.safeParse(body);
     if (!validatedData.success) {
       console.warn("Validation error:", validatedData.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { newDeadline, reason } = validatedData.data;
@@ -58,10 +55,7 @@ export async function POST(
 
     // Verify task is not completed
     if (task.status === TaskStatus.CLOSED_APPROVED) {
-      return NextResponse.json(
-        { error: "Cannot carry forward a completed task" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Cannot carry forward a completed task" }, { status: 400 });
     }
 
     // Parse and validate new deadline
@@ -70,10 +64,7 @@ export async function POST(
     today.setHours(0, 0, 0, 0);
 
     if (isNaN(newDeadlineDate.getTime())) {
-      return NextResponse.json(
-        { error: "Invalid date value" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid date value" }, { status: 400 });
     }
 
     if (newDeadlineDate < today) {

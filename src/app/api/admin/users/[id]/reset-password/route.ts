@@ -3,16 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import {
-  resetPasswordSchema,
-  generateRandomPassword,
-} from "@/lib/validations/user-management";
+import { resetPasswordSchema, generateRandomPassword } from "@/lib/validations/user-management";
 
 // POST /api/admin/users/[id]/reset-password - Reset a user's password
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -20,10 +14,7 @@ export async function POST(
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     const { id } = await params;
@@ -32,10 +23,7 @@ export async function POST(
     const validationResult = resetPasswordSchema.safeParse(body);
     if (!validationResult.success) {
       console.warn("Validation error:", validationResult.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { newPassword, autoGenerate } = validationResult.data;
@@ -70,9 +58,6 @@ export async function POST(
     });
   } catch (error) {
     console.error("POST /api/admin/users/[id]/reset-password error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

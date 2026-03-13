@@ -60,7 +60,9 @@ test.describe("Productivity scoring", () => {
 });
 
 test.describe("Productivity — leaderboard data verification", () => {
-  test("Leaderboard table shows score columns with numeric values after recalculation", async ({ page }) => {
+  test("Leaderboard table shows score columns with numeric values after recalculation", async ({
+    page,
+  }) => {
     await loginAsRole(page, "admin");
     await page.goto("/productivity");
 
@@ -193,7 +195,9 @@ test.describe("Productivity — scorecard dialog details", () => {
 });
 
 test.describe("Productivity — department head access", () => {
-  test("Department head can view the leaderboard (scoped to their department)", async ({ page }) => {
+  test("Department head can view the leaderboard (scoped to their department)", async ({
+    page,
+  }) => {
     await loginAsRole(page, "departmentHead");
     await page.goto("/productivity");
 

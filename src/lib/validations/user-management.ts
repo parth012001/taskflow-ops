@@ -19,30 +19,29 @@ const emailSchema = z
   .toLowerCase();
 
 // For creating a new user
-export const createUserSchema = z.object({
-  email: emailSchema,
-  firstName: z
-    .string()
-    .min(1, "First name is required")
-    .max(50, "First name must be less than 50 characters")
-    .trim(),
-  lastName: z
-    .string()
-    .min(1, "Last name is required")
-    .max(50, "Last name must be less than 50 characters")
-    .trim(),
-  role: roleEnum,
-  departmentId: z.string().cuid().optional().nullable(),
-  managerId: z.string().cuid().optional().nullable(),
-  password: passwordSchema.optional(),
-  autoGeneratePassword: z.boolean().default(false),
-}).refine(
-  (data) => data.password || data.autoGeneratePassword,
-  {
+export const createUserSchema = z
+  .object({
+    email: emailSchema,
+    firstName: z
+      .string()
+      .min(1, "First name is required")
+      .max(50, "First name must be less than 50 characters")
+      .trim(),
+    lastName: z
+      .string()
+      .min(1, "Last name is required")
+      .max(50, "Last name must be less than 50 characters")
+      .trim(),
+    role: roleEnum,
+    departmentId: z.string().cuid().optional().nullable(),
+    managerId: z.string().cuid().optional().nullable(),
+    password: passwordSchema.optional(),
+    autoGeneratePassword: z.boolean().default(false),
+  })
+  .refine((data) => data.password || data.autoGeneratePassword, {
     message: "Either provide a password or enable auto-generate",
     path: ["password"],
-  }
-);
+  });
 
 // For updating an existing user
 export const updateUserSchema = z.object({
@@ -65,16 +64,15 @@ export const updateUserSchema = z.object({
 });
 
 // For resetting a user's password
-export const resetPasswordSchema = z.object({
-  newPassword: passwordSchema.optional(),
-  autoGenerate: z.boolean().default(false),
-}).refine(
-  (data) => data.newPassword || data.autoGenerate,
-  {
+export const resetPasswordSchema = z
+  .object({
+    newPassword: passwordSchema.optional(),
+    autoGenerate: z.boolean().default(false),
+  })
+  .refine((data) => data.newPassword || data.autoGenerate, {
     message: "Either provide a new password or enable auto-generate",
     path: ["newPassword"],
-  }
-);
+  });
 
 // Query params for listing users
 export const listUsersQuerySchema = z.object({

@@ -33,19 +33,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!announcement) {
-      return NextResponse.json(
-        { error: "Announcement not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Announcement not found" }, { status: 404 });
     }
 
     return NextResponse.json(announcement);
   } catch (error) {
     console.error("GET /api/announcements/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -65,10 +59,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!announcement) {
-      return NextResponse.json(
-        { error: "Announcement not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Announcement not found" }, { status: 404 });
     }
 
     // Permission check: Only author or ADMIN can update
@@ -87,10 +78,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     if (!validationResult.success) {
       console.warn("Validation error:", validationResult.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { title, content, type, priority, expiresAt, isActive } = validationResult.data;
@@ -120,10 +108,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(updatedAnnouncement);
   } catch (error) {
     console.error("PATCH /api/announcements/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -143,10 +128,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!announcement) {
-      return NextResponse.json(
-        { error: "Announcement not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Announcement not found" }, { status: 404 });
     }
 
     // Permission check: Only author or ADMIN can delete
@@ -169,9 +151,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ message: "Announcement deleted successfully" });
   } catch (error) {
     console.error("DELETE /api/announcements/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

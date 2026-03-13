@@ -47,8 +47,12 @@ import { canAssignTasks } from "@/lib/utils/permissions";
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 const mockCanAssignTasks = canAssignTasks as jest.MockedFunction<typeof canAssignTasks>;
-const mockPrismaUserFindMany = prisma.user.findMany as jest.MockedFunction<typeof prisma.user.findMany>;
-const mockPrismaUserFindUnique = prisma.user.findUnique as jest.MockedFunction<typeof prisma.user.findUnique>;
+const mockPrismaUserFindMany = prisma.user.findMany as jest.MockedFunction<
+  typeof prisma.user.findMany
+>;
+const mockPrismaUserFindUnique = prisma.user.findUnique as jest.MockedFunction<
+  typeof prisma.user.findUnique
+>;
 
 describe("GET /api/tasks/assignees", () => {
   beforeEach(() => {
@@ -97,8 +101,20 @@ describe("GET /api/tasks/assignees", () => {
     it("should return only direct subordinates for MANAGER", async () => {
       const managerId = "manager-1";
       const subordinates = [
-        { id: "emp-1", firstName: "John", lastName: "Doe", email: "john@test.com", role: "EMPLOYEE" },
-        { id: "emp-2", firstName: "Jane", lastName: "Smith", email: "jane@test.com", role: "EMPLOYEE" },
+        {
+          id: "emp-1",
+          firstName: "John",
+          lastName: "Doe",
+          email: "john@test.com",
+          role: "EMPLOYEE",
+        },
+        {
+          id: "emp-2",
+          firstName: "Jane",
+          lastName: "Smith",
+          email: "jane@test.com",
+          role: "EMPLOYEE",
+        },
       ];
 
       mockGetServerSession.mockResolvedValue({
@@ -153,7 +169,13 @@ describe("GET /api/tasks/assignees", () => {
       const deptHeadId = "dept-head-1";
       const departmentId = "dept-engineering";
       const departmentMembers = [
-        { id: "emp-1", firstName: "Alice", lastName: "Wong", email: "alice@test.com", role: "EMPLOYEE" },
+        {
+          id: "emp-1",
+          firstName: "Alice",
+          lastName: "Wong",
+          email: "alice@test.com",
+          role: "EMPLOYEE",
+        },
         { id: "mgr-1", firstName: "Bob", lastName: "Chen", email: "bob@test.com", role: "MANAGER" },
       ];
 
@@ -215,9 +237,27 @@ describe("GET /api/tasks/assignees", () => {
     it("should return all active users (excluding self) for ADMIN", async () => {
       const adminId = "admin-1";
       const allUsers = [
-        { id: "emp-1", firstName: "Carol", lastName: "Davis", email: "carol@test.com", role: "EMPLOYEE" },
-        { id: "mgr-1", firstName: "Dave", lastName: "Evans", email: "dave@test.com", role: "MANAGER" },
-        { id: "dept-1", firstName: "Eve", lastName: "Foster", email: "eve@test.com", role: "DEPARTMENT_HEAD" },
+        {
+          id: "emp-1",
+          firstName: "Carol",
+          lastName: "Davis",
+          email: "carol@test.com",
+          role: "EMPLOYEE",
+        },
+        {
+          id: "mgr-1",
+          firstName: "Dave",
+          lastName: "Evans",
+          email: "dave@test.com",
+          role: "MANAGER",
+        },
+        {
+          id: "dept-1",
+          firstName: "Eve",
+          lastName: "Foster",
+          email: "eve@test.com",
+          role: "DEPARTMENT_HEAD",
+        },
       ];
 
       mockGetServerSession.mockResolvedValue({
@@ -258,7 +298,13 @@ describe("GET /api/tasks/assignees", () => {
       } as any);
       mockCanAssignTasks.mockReturnValue(true);
       mockPrismaUserFindMany.mockResolvedValue([
-        { id: "other-user", firstName: "Other", lastName: "User", email: "other@test.com", role: "EMPLOYEE" },
+        {
+          id: "other-user",
+          firstName: "Other",
+          lastName: "User",
+          email: "other@test.com",
+          role: "EMPLOYEE",
+        },
       ] as any);
 
       const response = await GET();

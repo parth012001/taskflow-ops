@@ -29,8 +29,7 @@ function getQuickActions(
   isManager: boolean,
   requiresReview: boolean = true
 ): QuickAction[] {
-  const canApprove =
-    isManager && ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"].includes(userRole);
+  const canApprove = isManager && ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"].includes(userRole);
 
   switch (status) {
     case TaskStatus.NEW:
@@ -64,7 +63,9 @@ function getQuickActions(
         {
           icon: CheckCircle,
           label: "Complete",
-          toStatus: requiresReview ? TaskStatus.COMPLETED_PENDING_REVIEW : TaskStatus.CLOSED_APPROVED,
+          toStatus: requiresReview
+            ? TaskStatus.COMPLETED_PENDING_REVIEW
+            : TaskStatus.CLOSED_APPROVED,
           requiresReason: false,
           variant: "success",
         },
@@ -129,7 +130,8 @@ function getQuickActions(
     }
 
     case TaskStatus.CLOSED_APPROVED: {
-      const canReopen = isOwner || (isManager && ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"].includes(userRole));
+      const canReopen =
+        isOwner || (isManager && ["MANAGER", "DEPARTMENT_HEAD", "ADMIN"].includes(userRole));
       if (!canReopen) return [];
       return [
         {

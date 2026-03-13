@@ -45,7 +45,8 @@ export function AlertsPanel({ data }: AlertsPanelProps) {
           {data.biggestMover ? (
             <>
               <p className="text-2xl font-bold text-blue-700">
-                {data.biggestMover.direction === "up" ? "+" : "-"}{data.biggestMover.delta}
+                {data.biggestMover.direction === "up" ? "+" : "-"}
+                {data.biggestMover.delta}
               </p>
               <p className="text-xs text-blue-500 capitalize">{data.biggestMover.pillar}</p>
             </>

@@ -39,7 +39,9 @@ export default function KpiManagementPage() {
         const bucketsData = await bucketsRes.json();
         const usersData = await usersRes.json();
 
-        const activeBuckets = bucketsData.kpiBuckets.filter((b: { isActive: boolean }) => b.isActive);
+        const activeBuckets = bucketsData.kpiBuckets.filter(
+          (b: { isActive: boolean }) => b.isActive
+        );
         const totalAssignments = activeBuckets.reduce(
           (sum: number, b: { _count: { userKpis: number } }) => sum + b._count.userKpis,
           0
@@ -94,9 +96,7 @@ export default function KpiManagementPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">KPI Management</h1>
-          <p className="text-gray-500">
-            Create KPI buckets and assign them to users
-          </p>
+          <p className="text-gray-500">Create KPI buckets and assign them to users</p>
         </div>
       </div>
 
@@ -133,12 +133,14 @@ export default function KpiManagementPage() {
         >
           <Boxes className="w-4 h-4" />
           KPI Buckets
-          <span className={cn(
-            "ml-1 px-2 py-0.5 rounded-full text-xs",
-            activeTab === "buckets"
-              ? "bg-purple-100 text-purple-600"
-              : "bg-gray-200 text-gray-600"
-          )}>
+          <span
+            className={cn(
+              "ml-1 px-2 py-0.5 rounded-full text-xs",
+              activeTab === "buckets"
+                ? "bg-purple-100 text-purple-600"
+                : "bg-gray-200 text-gray-600"
+            )}
+          >
             {stats.totalBuckets}
           </span>
         </button>
@@ -153,12 +155,14 @@ export default function KpiManagementPage() {
         >
           <Users className="w-4 h-4" />
           User Assignments
-          <span className={cn(
-            "ml-1 px-2 py-0.5 rounded-full text-xs",
-            activeTab === "assignments"
-              ? "bg-purple-100 text-purple-600"
-              : "bg-gray-200 text-gray-600"
-          )}>
+          <span
+            className={cn(
+              "ml-1 px-2 py-0.5 rounded-full text-xs",
+              activeTab === "assignments"
+                ? "bg-purple-100 text-purple-600"
+                : "bg-gray-200 text-gray-600"
+            )}
+          >
             {stats.usersWithKpis + stats.unassignedUsers}
           </span>
         </button>

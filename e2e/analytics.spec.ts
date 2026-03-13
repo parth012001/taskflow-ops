@@ -77,7 +77,8 @@ test.describe("Analytics page", () => {
 
     // Intercept the trends API call triggered by period change
     const trendsResponse = page.waitForResponse(
-      (resp) => resp.url().includes("/api/analytics/company-trends") && resp.url().includes("weeks=4"),
+      (resp) =>
+        resp.url().includes("/api/analytics/company-trends") && resp.url().includes("weeks=4"),
       { timeout: 10_000 }
     );
 

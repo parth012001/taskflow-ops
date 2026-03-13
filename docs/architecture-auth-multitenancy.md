@@ -21,14 +21,14 @@
 
 ### What's Implemented
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| NextAuth with Credentials | ✅ Active | JWT-based sessions, 8-hour expiry |
-| Password Authentication | ✅ Active | bcrypt with cost factor 12 |
-| Force Password Change | ✅ Active | `mustChangePassword` flag |
-| Auth Abstraction Hook | ✅ Active | `useAuth()` wraps NextAuth |
-| Multi-tenant DB Fields | ✅ Ready | `organizationId` field exists but unused |
-| Clerk Integration | ⏳ Not Started | Architecture supports migration |
+| Feature                   | Status         | Notes                                    |
+| ------------------------- | -------------- | ---------------------------------------- |
+| NextAuth with Credentials | ✅ Active      | JWT-based sessions, 8-hour expiry        |
+| Password Authentication   | ✅ Active      | bcrypt with cost factor 12               |
+| Force Password Change     | ✅ Active      | `mustChangePassword` flag                |
+| Auth Abstraction Hook     | ✅ Active      | `useAuth()` wraps NextAuth               |
+| Multi-tenant DB Fields    | ✅ Ready       | `organizationId` field exists but unused |
+| Clerk Integration         | ⏳ Not Started | Architecture supports migration          |
 
 ### Authentication Flow (Current)
 
@@ -87,11 +87,11 @@ model User {
 
 ### Key Fields Explained
 
-| Field | Type | Purpose | Current Usage |
-|-------|------|---------|---------------|
-| `organizationId` | `String?` | Links user to an organization/tenant | Always `NULL` (single-tenant) |
-| `mustChangePassword` | `Boolean` | Forces password change on next login | Set `true` when admin resets password |
-| `passwordChangedAt` | `DateTime?` | Tracks when user last changed password | Set when user changes own password |
+| Field                | Type        | Purpose                                | Current Usage                         |
+| -------------------- | ----------- | -------------------------------------- | ------------------------------------- |
+| `organizationId`     | `String?`   | Links user to an organization/tenant   | Always `NULL` (single-tenant)         |
+| `mustChangePassword` | `Boolean`   | Forces password change on next login   | Set `true` when admin resets password |
+| `passwordChangedAt`  | `DateTime?` | Tracks when user last changed password | Set when user changes own password    |
 
 ---
 
@@ -132,12 +132,13 @@ export function useAuth(): {
   isDepartmentHeadOrAbove: boolean;
   mustChangePassword: boolean;
   update: () => Promise<void>;
-}
+};
 ```
 
 ### Usage Rules
 
 **DO:**
+
 ```typescript
 // ✅ Correct - Use the abstraction
 import { useAuth } from "@/hooks/use-auth";
@@ -149,6 +150,7 @@ function MyComponent() {
 ```
 
 **DON'T:**
+
 ```typescript
 // ❌ Incorrect - Direct NextAuth usage in components
 import { useSession } from "next-auth/react";
@@ -230,16 +232,18 @@ export function useAuth() {
 
   // Map Clerk user to our AuthUser interface
   // Role and other custom fields come from Clerk publicMetadata or your DB
-  const user: AuthUser | null = clerkUser ? {
-    id: clerkUser.id,
-    email: clerkUser.primaryEmailAddress?.emailAddress || "",
-    firstName: clerkUser.firstName || "",
-    lastName: clerkUser.lastName || "",
-    role: (clerkUser.publicMetadata?.role as Role) || "EMPLOYEE",
-    managerId: (clerkUser.publicMetadata?.managerId as string) || null,
-    departmentId: (clerkUser.publicMetadata?.departmentId as string) || null,
-    mustChangePassword: false, // Clerk handles password management
-  } : null;
+  const user: AuthUser | null = clerkUser
+    ? {
+        id: clerkUser.id,
+        email: clerkUser.primaryEmailAddress?.emailAddress || "",
+        firstName: clerkUser.firstName || "",
+        lastName: clerkUser.lastName || "",
+        role: (clerkUser.publicMetadata?.role as Role) || "EMPLOYEE",
+        managerId: (clerkUser.publicMetadata?.managerId as string) || null,
+        departmentId: (clerkUser.publicMetadata?.departmentId as string) || null,
+        mustChangePassword: false, // Clerk handles password management
+      }
+    : null;
 
   return {
     session: user ? { user, expires: "" } : null,
@@ -318,6 +322,7 @@ npm uninstall next-auth
 #### Step 6: User Data Sync
 
 Clerk manages user authentication, but your database still needs user records for:
+
 - Role assignments
 - Manager relationships
 - Department assignments
@@ -406,6 +411,7 @@ model User {
 #### 3. Add organizationId to All Tenant-Scoped Models
 
 Models that need `organizationId`:
+
 - `Department`
 - `Task`
 - `KpiBucket`
@@ -530,18 +536,21 @@ export function withOrgFilter<T extends Record<string, unknown>>(
 ### URL Structure Options
 
 **Option A: Subdomain-based (Recommended for SaaS)**
+
 ```
 https://acme.taskflow.com/dashboard
 https://widgets.taskflow.com/dashboard
 ```
 
 **Option B: Path-based**
+
 ```
 https://taskflow.com/org/acme/dashboard
 https://taskflow.com/org/widgets/dashboard
 ```
 
 **Option C: Single domain with org context in session**
+
 ```
 https://taskflow.com/dashboard  (org determined by logged-in user)
 ```
@@ -552,37 +561,37 @@ https://taskflow.com/dashboard  (org determined by logged-in user)
 
 ### Authentication Files
 
-| File | Purpose | Modify for Clerk? |
-|------|---------|-------------------|
-| `src/lib/auth-options.ts` | NextAuth configuration | DELETE after Clerk migration |
-| `src/hooks/use-auth.ts` | Auth abstraction hook | UPDATE implementation |
-| `src/middleware.ts` | Route protection | UPDATE to use Clerk middleware |
-| `src/types/next-auth.d.ts` | TypeScript types for NextAuth | DELETE after Clerk migration |
-| `src/app/api/auth/[...nextauth]/route.ts` | NextAuth API route | DELETE after Clerk migration |
+| File                                      | Purpose                       | Modify for Clerk?              |
+| ----------------------------------------- | ----------------------------- | ------------------------------ |
+| `src/lib/auth-options.ts`                 | NextAuth configuration        | DELETE after Clerk migration   |
+| `src/hooks/use-auth.ts`                   | Auth abstraction hook         | UPDATE implementation          |
+| `src/middleware.ts`                       | Route protection              | UPDATE to use Clerk middleware |
+| `src/types/next-auth.d.ts`                | TypeScript types for NextAuth | DELETE after Clerk migration   |
+| `src/app/api/auth/[...nextauth]/route.ts` | NextAuth API route            | DELETE after Clerk migration   |
 
 ### User Management Files
 
-| File | Purpose |
-|------|---------|
-| `src/app/api/admin/users/route.ts` | List/Create users |
-| `src/app/api/admin/users/[id]/route.ts` | Get/Update user |
-| `src/app/api/admin/users/[id]/reset-password/route.ts` | Reset user password |
-| `src/app/api/admin/users/potential-managers/route.ts` | Get users eligible to be managers |
-| `src/app/api/admin/departments/route.ts` | Get departments |
-| `src/app/api/users/me/route.ts` | Current user profile & password change |
-| `src/components/user-management/users-panel.tsx` | User management UI |
-| `src/components/user-management/user-form-modal.tsx` | Create/Edit user modal |
-| `src/components/user-management/reset-password-modal.tsx` | Reset password modal |
-| `src/app/(dashboard)/settings/users/page.tsx` | User management page |
-| `src/lib/validations/user-management.ts` | Zod validation schemas |
+| File                                                      | Purpose                                |
+| --------------------------------------------------------- | -------------------------------------- |
+| `src/app/api/admin/users/route.ts`                        | List/Create users                      |
+| `src/app/api/admin/users/[id]/route.ts`                   | Get/Update user                        |
+| `src/app/api/admin/users/[id]/reset-password/route.ts`    | Reset user password                    |
+| `src/app/api/admin/users/potential-managers/route.ts`     | Get users eligible to be managers      |
+| `src/app/api/admin/departments/route.ts`                  | Get departments                        |
+| `src/app/api/users/me/route.ts`                           | Current user profile & password change |
+| `src/components/user-management/users-panel.tsx`          | User management UI                     |
+| `src/components/user-management/user-form-modal.tsx`      | Create/Edit user modal                 |
+| `src/components/user-management/reset-password-modal.tsx` | Reset password modal                   |
+| `src/app/(dashboard)/settings/users/page.tsx`             | User management page                   |
+| `src/lib/validations/user-management.ts`                  | Zod validation schemas                 |
 
 ### Database Schema
 
-| Field | Location | Purpose |
-|-------|----------|---------|
-| `User.organizationId` | `prisma/schema.prisma` | Multi-tenant org link |
+| Field                     | Location               | Purpose                    |
+| ------------------------- | ---------------------- | -------------------------- |
+| `User.organizationId`     | `prisma/schema.prisma` | Multi-tenant org link      |
 | `User.mustChangePassword` | `prisma/schema.prisma` | Force password change flag |
-| `User.passwordChangedAt` | `prisma/schema.prisma` | Password change timestamp |
+| `User.passwordChangedAt`  | `prisma/schema.prisma` | Password change timestamp  |
 
 ---
 
@@ -641,6 +650,7 @@ https://taskflow.com/dashboard  (org determined by logged-in user)
 ## Questions & Support
 
 For questions about this architecture:
+
 1. Check this document first
 2. Review the referenced source files
 3. Consult the testing guide: `docs/testing.md`

@@ -10,11 +10,16 @@ test.describe("Edge cases", () => {
     await expect(page.locator("table tbody tr").first()).toBeVisible();
 
     // Find employee5's row (Sneha Reddy / employee5@taskflow.com)
-    const employee5Row = page.locator("table tbody tr").filter({ hasText: "employee5@taskflow.com" });
+    const employee5Row = page
+      .locator("table tbody tr")
+      .filter({ hasText: "employee5@taskflow.com" });
     await expect(employee5Row).toBeVisible();
 
     // Check if already active — click the deactivate (power) button
-    const deactivateBtn = employee5Row.getByRole("button").filter({ has: page.locator("svg") }).last();
+    const deactivateBtn = employee5Row
+      .getByRole("button")
+      .filter({ has: page.locator("svg") })
+      .last();
     await deactivateBtn.click();
 
     // Confirm in alert dialog
@@ -42,10 +47,15 @@ test.describe("Edge cases", () => {
     await page.goto("/settings/users");
     await expect(page.locator("table tbody tr").first()).toBeVisible();
 
-    const employee5RowAgain = page.locator("table tbody tr").filter({ hasText: "employee5@taskflow.com" });
+    const employee5RowAgain = page
+      .locator("table tbody tr")
+      .filter({ hasText: "employee5@taskflow.com" });
     await expect(employee5RowAgain).toBeVisible({ timeout: 5_000 });
 
-    const activateBtn = employee5RowAgain.getByRole("button").filter({ has: page.locator("svg") }).last();
+    const activateBtn = employee5RowAgain
+      .getByRole("button")
+      .filter({ has: page.locator("svg") })
+      .last();
     await activateBtn.click();
 
     const alertDialog2 = page.locator("[role=alertdialog]");
@@ -73,19 +83,27 @@ test.describe("Edge cases", () => {
     await dialog.getByLabel(/Last Name/i).fill("User");
 
     // Select role
-    const roleSelect = dialog.locator("button").filter({ hasText: /Employee|Select role/i }).first();
+    const roleSelect = dialog
+      .locator("button")
+      .filter({ hasText: /Employee|Select role/i })
+      .first();
     await roleSelect.click();
     await page.getByRole("option", { name: "Employee" }).click();
 
     // Select department
-    await dialog.locator("button").filter({ hasText: /No department/i }).click();
+    await dialog
+      .locator("button")
+      .filter({ hasText: /No department/i })
+      .click();
     await page.getByRole("option").first().click();
 
     // Submit
     await dialog.getByRole("button", { name: /Create User/i }).click();
 
     // Wait for success — dialog should show "User Created Successfully" with temp password
-    await expect(page.getByRole("heading", { name: "User Created Successfully" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("heading", { name: "User Created Successfully" })).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Get the temporary password
     const tempPassword = await page.locator("code").first().textContent();
@@ -107,7 +125,9 @@ test.describe("Edge cases", () => {
     // Should see the amber alert
     await expect(page.getByText("Password Change Required")).toBeVisible();
     await expect(
-      page.getByText("You must change your password before you can access other parts of the application.")
+      page.getByText(
+        "You must change your password before you can access other parts of the application."
+      )
     ).toBeVisible();
 
     // Step 3: Try navigating to /dashboard — should be redirected back

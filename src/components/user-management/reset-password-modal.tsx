@@ -118,7 +118,8 @@ export function ResetPasswordModal({
           <DialogHeader>
             <DialogTitle>Password Reset Successfully</DialogTitle>
             <DialogDescription>
-              The password has been reset for {user.firstName} {user.lastName}. Share these credentials securely.
+              The password has been reset for {user.firstName} {user.lastName}. Share these
+              credentials securely.
             </DialogDescription>
           </DialogHeader>
 
@@ -134,12 +135,7 @@ export function ResetPasswordModal({
                 <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm font-mono">
                   {temporaryPassword}
                 </code>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyPassword}
-                >
+                <Button type="button" variant="outline" size="sm" onClick={handleCopyPassword}>
                   {copied ? (
                     <Check className="h-4 w-4 text-green-600" />
                   ) : (
@@ -178,9 +174,7 @@ export function ResetPasswordModal({
           <div className="flex items-center justify-between py-2">
             <div className="space-y-0.5">
               <Label>Auto-generate Password</Label>
-              <p className="text-xs text-gray-500">
-                Generate a secure random password
-              </p>
+              <p className="text-xs text-gray-500">Generate a secure random password</p>
             </div>
             <Switch checked={autoGenerate} onCheckedChange={setAutoGenerate} />
           </div>

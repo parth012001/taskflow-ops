@@ -69,11 +69,8 @@ export function useAuth(): UseAuthReturn {
     isAuthenticated,
     isAdmin: user?.role === "ADMIN",
     isManagerOrAbove:
-      user?.role === "MANAGER" ||
-      user?.role === "DEPARTMENT_HEAD" ||
-      user?.role === "ADMIN",
-    isDepartmentHeadOrAbove:
-      user?.role === "DEPARTMENT_HEAD" || user?.role === "ADMIN",
+      user?.role === "MANAGER" || user?.role === "DEPARTMENT_HEAD" || user?.role === "ADMIN",
+    isDepartmentHeadOrAbove: user?.role === "DEPARTMENT_HEAD" || user?.role === "ADMIN",
     mustChangePassword: user?.mustChangePassword ?? false,
     update: async () => {
       await update();

@@ -20,15 +20,20 @@ export async function GET(request: NextRequest) {
     const validatedQuery = taskQuerySchema.safeParse(queryParams);
     if (!validatedQuery.success) {
       console.warn("Validation error:", validatedQuery.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const {
-      status, priority, kpiBucketId, search,
-      fromDate, toDate, page, limit, sortBy, sortOrder
+      status,
+      priority,
+      kpiBucketId,
+      search,
+      fromDate,
+      toDate,
+      page,
+      limit,
+      sortBy,
+      sortOrder,
     } = validatedQuery.data;
 
     // Build where clause based on user role and permissions
@@ -123,10 +128,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/tasks error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -142,16 +144,21 @@ export async function POST(request: NextRequest) {
 
     if (!validatedData.success) {
       console.warn("Validation error:", validatedData.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const {
-      title, description, priority, size, kpiBucketId,
-      estimatedMinutes, deadline, startDate, assigneeId,
-      requiresReview: reqReview, reviewerId: reqReviewerId,
+      title,
+      description,
+      priority,
+      size,
+      kpiBucketId,
+      estimatedMinutes,
+      deadline,
+      startDate,
+      assigneeId,
+      requiresReview: reqReview,
+      reviewerId: reqReviewerId,
     } = validatedData.data;
 
     // Verify KPI bucket exists and is active
@@ -159,10 +166,7 @@ export async function POST(request: NextRequest) {
       where: { id: kpiBucketId, isActive: true },
     });
     if (!kpiBucket) {
-      return NextResponse.json(
-        { error: "KPI bucket not found or inactive" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "KPI bucket not found or inactive" }, { status: 404 });
     }
 
     // For non-admin: Verify the task owner has this KPI assigned
@@ -216,9 +220,8 @@ export async function POST(request: NextRequest) {
 
       ownerId = assigneeId;
       assignerId = session.user.id;
-      assignedByType = session.user.role === "MANAGER"
-        ? AssignedByType.MANAGER
-        : AssignedByType.LEADERSHIP;
+      assignedByType =
+        session.user.role === "MANAGER" ? AssignedByType.MANAGER : AssignedByType.LEADERSHIP;
     }
 
     // Determine review settings based on role
@@ -309,9 +312,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(task, { status: 201 });
   } catch (error) {
     console.error("POST /api/tasks error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

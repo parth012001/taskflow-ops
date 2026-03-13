@@ -3,10 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { mutationLimiter } from "@/lib/rate-limit";
-import {
-  createDepartmentSchema,
-  listDepartmentsQuerySchema,
-} from "@/lib/validations/department";
+import { createDepartmentSchema, listDepartmentsQuerySchema } from "@/lib/validations/department";
 
 // GET /api/admin/departments - Get all departments (with optional pagination)
 export async function GET(request: NextRequest) {
@@ -17,10 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -97,10 +91,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/admin/departments error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -113,10 +104,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     const rateLimit = mutationLimiter.check(`dept:${session.user.id}`);
@@ -205,9 +193,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ department }, { status: 201 });
   } catch (error) {
     console.error("POST /api/admin/departments error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

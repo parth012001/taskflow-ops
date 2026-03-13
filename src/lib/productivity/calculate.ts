@@ -10,10 +10,7 @@ import {
   getWorkdayCount,
   MIN_COMPLETED_TASKS,
 } from "./scoring-engine";
-import {
-  fetchScoringDataForUser,
-  fetchAllUsersForScoring,
-} from "./fetch-scoring-data";
+import { fetchScoringDataForUser, fetchAllUsersForScoring } from "./fetch-scoring-data";
 
 type TxClient = Prisma.TransactionClient;
 
@@ -31,12 +28,7 @@ export async function calculateForUser(
     windowStart.setDate(windowStart.getDate() - 28);
   }
 
-  const data = await fetchScoringDataForUser(
-    userId,
-    departmentId,
-    windowStart,
-    windowEnd
-  );
+  const data = await fetchScoringDataForUser(userId, departmentId, windowStart, windowEnd);
 
   // Users below the minimum task threshold are unscorable — not enough
   // data for Quality/Reliability ratios to carry statistical meaning.
@@ -90,33 +82,22 @@ export async function calculateForUser(
         reopenedCount: reopenedTaskIds.size,
         totalCompletedCount: data.completedTasks.length,
         reviewRatio:
-          data.completedTasks.length > 0
-            ? reviewedTasks.length / data.completedTasks.length
-            : 0,
+          data.completedTasks.length > 0 ? reviewedTasks.length / data.completedTasks.length : 0,
         onTimeCount,
         totalWithDeadline: data.completedTasks.length,
         carryForwardTotal: data.carryForwards.length,
         activeTaskCount: data.activeTasks.length,
-        plannedDays: data.planningSessions.filter((s) => s.morningCompleted)
-          .length,
+        plannedDays: data.planningSessions.filter((s) => s.morningCompleted).length,
         totalWorkdays: getWorkdayCount(windowStart, windowEnd),
-        activeKpiBuckets: new Set(
-          data.completedTasks.map((t) => t.kpiBucketId)
-        ).size,
+        activeKpiBuckets: new Set(data.completedTasks.map((t) => t.kpiBucketId)).size,
         assignedKpiBuckets: data.userKpis.length,
       },
     };
   }
 
-  const outputResult = calculateOutputScore(
-    data.completedTasks,
-    data.weeklyOutputTarget
-  );
+  const outputResult = calculateOutputScore(data.completedTasks, data.weeklyOutputTarget);
 
-  const qualityResult = calculateQualityScore(
-    data.completedTasks,
-    data.statusHistories
-  );
+  const qualityResult = calculateQualityScore(data.completedTasks, data.statusHistories);
 
   const reliabilityResult = calculateReliabilityScore(
     data.completedTasks,
@@ -152,29 +133,18 @@ export async function calculateForUser(
       targetPoints: outputResult.target,
       completedTaskCount: data.completedTasks.length,
       reviewedTaskCount: reviewedTasks.length,
-      firstPassCount: Math.round(
-        qualityResult.firstPassRate * reviewedTasks.length
-      ),
-      reopenedCount: Math.round(
-        (1 - qualityResult.reopenRate) * data.completedTasks.length
-      ),
+      firstPassCount: Math.round(qualityResult.firstPassRate * reviewedTasks.length),
+      reopenedCount: Math.round((1 - qualityResult.reopenRate) * data.completedTasks.length),
       totalCompletedCount: data.completedTasks.length,
       reviewRatio:
-        data.completedTasks.length > 0
-          ? reviewedTasks.length / data.completedTasks.length
-          : 0,
-      onTimeCount: Math.round(
-        reliabilityResult.onTimeRate * data.completedTasks.length
-      ),
+        data.completedTasks.length > 0 ? reviewedTasks.length / data.completedTasks.length : 0,
+      onTimeCount: Math.round(reliabilityResult.onTimeRate * data.completedTasks.length),
       totalWithDeadline: data.completedTasks.length,
       carryForwardTotal: data.carryForwards.length,
       activeTaskCount: data.activeTasks.length,
-      plannedDays: data.planningSessions.filter((s) => s.morningCompleted)
-        .length,
+      plannedDays: data.planningSessions.filter((s) => s.morningCompleted).length,
       totalWorkdays: getWorkdayCount(windowStart, windowEnd),
-      activeKpiBuckets: new Set(
-        data.completedTasks.map((t) => t.kpiBucketId)
-      ).size,
+      activeKpiBuckets: new Set(data.completedTasks.map((t) => t.kpiBucketId)).size,
       assignedKpiBuckets: data.userKpis.length,
     },
   };
@@ -253,8 +223,7 @@ export async function calculateAndSaveForAll(): Promise<{
       await calculateAndSaveForUser(user.id, user.departmentId);
       processed++;
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown error";
+      const message = error instanceof Error ? error.message : "Unknown error";
       errors.push(`User ${user.id}: ${message}`);
     }
   }

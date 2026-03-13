@@ -90,9 +90,7 @@ export function AnnouncementFormModal({
         setType(announcement.type);
         setPriority(announcement.priority);
         setExpiresAt(
-          announcement.expiresAt
-            ? toLocalDateString(new Date(announcement.expiresAt))
-            : ""
+          announcement.expiresAt ? toLocalDateString(new Date(announcement.expiresAt)) : ""
         );
       } else {
         setTitle("");
@@ -123,9 +121,7 @@ export function AnnouncementFormModal({
     setIsSubmitting(true);
 
     try {
-      const url = isEditing
-        ? `/api/announcements/${announcement.id}`
-        : "/api/announcements";
+      const url = isEditing ? `/api/announcements/${announcement.id}` : "/api/announcements";
       const method = isEditing ? "PATCH" : "POST";
 
       const response = await fetch(url, {
@@ -145,16 +141,12 @@ export function AnnouncementFormModal({
         throw new Error(error.error || "Failed to save announcement");
       }
 
-      toast.success(
-        isEditing ? "Announcement updated" : "Announcement created"
-      );
+      toast.success(isEditing ? "Announcement updated" : "Announcement created");
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving announcement:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save announcement"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to save announcement");
     } finally {
       setIsSubmitting(false);
     }
@@ -164,9 +156,7 @@ export function AnnouncementFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit Announcement" : "Create Announcement"}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Announcement" : "Create Announcement"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -191,9 +181,7 @@ export function AnnouncementFormModal({
               rows={4}
               maxLength={5000}
             />
-            <p className="text-xs text-gray-400 text-right">
-              {content.length}/5000
-            </p>
+            <p className="text-xs text-gray-400 text-right">{content.length}/5000</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -239,23 +227,15 @@ export function AnnouncementFormModal({
               onChange={(e) => setExpiresAt(e.target.value)}
               min={toLocalDateString(new Date())}
             />
-            <p className="text-xs text-gray-400">
-              Leave empty for no expiration
-            </p>
+            <p className="text-xs text-gray-400">Leave empty for no expiration</p>
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditing ? "Update" : "Create"}
             </Button>
           </DialogFooter>

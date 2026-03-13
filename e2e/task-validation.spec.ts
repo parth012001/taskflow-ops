@@ -66,7 +66,10 @@ test.describe("Task form validation", () => {
     await dialog.locator("#title").fill(`Validation Test ${Date.now()}`);
 
     // Select KPI bucket
-    await dialog.locator("button").filter({ hasText: /Select KPI bucket/i }).click();
+    await dialog
+      .locator("button")
+      .filter({ hasText: /Select KPI bucket/i })
+      .click();
     await page.getByRole("option").first().click();
 
     // Pick a deadline date

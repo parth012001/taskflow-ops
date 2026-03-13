@@ -3,15 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { authFetch } from "@/lib/auth-fetch";
 import { format, parseISO } from "date-fns";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -115,17 +107,11 @@ export function CompanyTrendChart() {
             <LineChart data={data}>
               <XAxis
                 dataKey="weekStartDate"
-                tickFormatter={(value: string) =>
-                  format(parseISO(value), "MMM d")
-                }
+                tickFormatter={(value: string) => format(parseISO(value), "MMM d")}
                 tick={{ fontSize: 12 }}
               />
               <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-              <Tooltip
-                labelFormatter={(value) =>
-                  format(parseISO(String(value)), "MMM d, yyyy")
-                }
-              />
+              <Tooltip labelFormatter={(value) => format(parseISO(String(value)), "MMM d, yyyy")} />
               <Legend />
               <Line
                 type="monotone"

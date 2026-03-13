@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
-import {
-  createAnnouncementSchema,
-  announcementQuerySchema,
-} from "@/lib/validations/announcement";
+import { createAnnouncementSchema, announcementQuerySchema } from "@/lib/validations/announcement";
 
 // GET /api/announcements - Fetch announcements
 export async function GET(request: NextRequest) {
@@ -23,10 +20,7 @@ export async function GET(request: NextRequest) {
 
     if (!queryResult.success) {
       console.warn("Validation error:", queryResult.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { limit, activeOnly } = queryResult.data;
@@ -75,10 +69,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/announcements error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -103,10 +94,7 @@ export async function POST(request: NextRequest) {
 
     if (!validationResult.success) {
       console.warn("Validation error:", validationResult.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { title, content, type, priority, expiresAt } = validationResult.data;
@@ -135,9 +123,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(announcement, { status: 201 });
   } catch (error) {
     console.error("POST /api/announcements error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

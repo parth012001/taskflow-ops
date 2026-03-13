@@ -68,9 +68,18 @@ export function KanbanColumn({
         )}
         onClick={canCollapse ? toggleCollapsed : undefined}
       >
-        <div className={cn("w-2 h-2 rounded-full flex-shrink-0", color.text.replace("text-", "bg-"))} />
+        <div
+          className={cn("w-2 h-2 rounded-full flex-shrink-0", color.text.replace("text-", "bg-"))}
+        />
         <h3 className={cn("font-medium text-sm", color.text, isCollapsed && "sr-only")}>{label}</h3>
-        <span className={cn("text-xs px-2 py-0.5 rounded-full", color.bg, color.text, !isCollapsed && "ml-auto")}>
+        <span
+          className={cn(
+            "text-xs px-2 py-0.5 rounded-full",
+            color.bg,
+            color.text,
+            !isCollapsed && "ml-auto"
+          )}
+        >
           {tasks.length}
         </span>
         {canCollapse && (

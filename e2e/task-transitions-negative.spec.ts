@@ -37,7 +37,9 @@ async function hoverFirstCardInColumn(page: Page, columnName: string) {
 }
 
 test.describe("Negative task transitions", () => {
-  test("Employee does NOT see Approve/Reject on own COMPLETED_PENDING_REVIEW task", async ({ page }) => {
+  test("Employee does NOT see Approve/Reject on own COMPLETED_PENDING_REVIEW task", async ({
+    page,
+  }) => {
     await loginAsRole(page, "employee");
     await page.goto("/tasks");
     await expect(page.getByRole("heading", { name: "Tasks" })).toBeVisible();
@@ -67,9 +69,7 @@ test.describe("Negative task transitions", () => {
     // Employee1's tasks include: "Create PO for Office Supplies", "Vendor Registration - ABC Corp",
     // "Update Purchase Master for IT Equipment"
     // Employee should NOT see other employees' tasks like "Delivery Coordination - Site A" (employee3)
-    await expect(
-      page.getByText("Delivery Coordination - Site A")
-    ).not.toBeVisible();
+    await expect(page.getByText("Delivery Coordination - Site A")).not.toBeVisible();
   });
 
   test("Manager CAN see Approve/Reject on subordinate pending-review task", async ({ page }) => {
@@ -107,12 +107,8 @@ test.describe("Negative task transitions", () => {
     await page.waitForTimeout(1_000);
 
     // employee1's tasks should NOT be visible to manager2
-    await expect(
-      page.getByText("Update Purchase Master for IT Equipment")
-    ).not.toBeVisible();
-    await expect(
-      page.getByText("Vendor Registration - ABC Corp")
-    ).not.toBeVisible();
+    await expect(page.getByText("Update Purchase Master for IT Equipment")).not.toBeVisible();
+    await expect(page.getByText("Vendor Registration - ABC Corp")).not.toBeVisible();
   });
 
   test("Employee sees correct quick actions per task status", async ({ page }) => {

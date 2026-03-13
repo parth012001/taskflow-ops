@@ -20,12 +20,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -334,9 +329,7 @@ export function TaskDetailModal({
       onTaskUpdate?.();
     } catch (error) {
       console.error("Error deleting task:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete task"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to delete task");
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -347,488 +340,497 @@ export function TaskDetailModal({
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0">
-        {isLoading || !task ? (
-          <div className="flex items-center justify-center h-64">
-            <DialogHeader className="sr-only">
-              <DialogTitle>Loading task details</DialogTitle>
-            </DialogHeader>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
-          </div>
-        ) : (
-          <>
-            <DialogHeader className="p-6 pb-0">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge className={cn(priorityLabels[task.priority].color, "text-white")}>
-                      {priorityLabels[task.priority].label.split(" - ")[0]}
-                    </Badge>
-                    <Badge variant="outline">{sizeLabels[task.size]}</Badge>
-                    <Badge variant="outline">{task.kpiBucket.name}</Badge>
-                  </div>
-                  <DialogTitle className="text-xl">{task.title}</DialogTitle>
-                </div>
-                <div className={cn("px-3 py-1 rounded-full text-sm font-medium", getStatusColor(task.status).bg, getStatusColor(task.status).text)}>
-                  {getStatusLabel(task.status)}
-                </div>
-              </div>
-            </DialogHeader>
-
-            {/* Tabs */}
-            <div className="flex border-b px-6">
-              {(["details", "comments", "history"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={cn(
-                    "px-4 py-2 text-sm font-medium border-b-2 -mb-px",
-                    activeTab === tab
-                      ? "border-indigo-600 text-indigo-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
-                  )}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  {tab === "comments" && task._count.comments > 0 && (
-                    <span className="ml-1 text-xs">({task._count.comments})</span>
-                  )}
-                </button>
-              ))}
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0">
+          {isLoading || !task ? (
+            <div className="flex items-center justify-center h-64">
+              <DialogHeader className="sr-only">
+                <DialogTitle>Loading task details</DialogTitle>
+              </DialogHeader>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
             </div>
-
-            <ScrollArea className="flex-1 max-h-[400px]">
-              <div className="p-6">
-                {activeTab === "details" && (
-                  <div className="space-y-6">
-                    {/* Description */}
-                    {task.description && (
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
-                        <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.description}</p>
-                      </div>
+          ) : (
+            <>
+              <DialogHeader className="p-6 pb-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className={cn(priorityLabels[task.priority].color, "text-white")}>
+                        {priorityLabels[task.priority].label.split(" - ")[0]}
+                      </Badge>
+                      <Badge variant="outline">{sizeLabels[task.size]}</Badge>
+                      <Badge variant="outline">{task.kpiBucket.name}</Badge>
+                    </div>
+                    <DialogTitle className="text-xl">{task.title}</DialogTitle>
+                  </div>
+                  <div
+                    className={cn(
+                      "px-3 py-1 rounded-full text-sm font-medium",
+                      getStatusColor(task.status).bg,
+                      getStatusColor(task.status).text
                     )}
+                  >
+                    {getStatusLabel(task.status)}
+                  </div>
+                </div>
+              </DialogHeader>
 
-                    {/* Meta info grid */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-500">Owner:</span>
-                        <span className="font-medium">
-                          {task.owner.firstName} {task.owner.lastName}
-                        </span>
-                      </div>
+              {/* Tabs */}
+              <div className="flex border-b px-6">
+                {(["details", "comments", "history"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={cn(
+                      "px-4 py-2 text-sm font-medium border-b-2 -mb-px",
+                      activeTab === tab
+                        ? "border-indigo-600 text-indigo-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700"
+                    )}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    {tab === "comments" && task._count.comments > 0 && (
+                      <span className="ml-1 text-xs">({task._count.comments})</span>
+                    )}
+                  </button>
+                ))}
+              </div>
 
-                      {task.assigner && (
+              <ScrollArea className="flex-1 max-h-[400px]">
+                <div className="p-6">
+                  {activeTab === "details" && (
+                    <div className="space-y-6">
+                      {/* Description */}
+                      {task.description && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
+                          <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                            {task.description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Meta info grid */}
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="flex items-center gap-2 text-sm">
                           <User className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-500">Assigned by:</span>
+                          <span className="text-gray-500">Owner:</span>
                           <span className="font-medium">
-                            {task.assigner.firstName} {task.assigner.lastName}
+                            {task.owner.firstName} {task.owner.lastName}
                           </span>
                         </div>
-                      )}
 
-                      <div className="flex items-center gap-2 text-sm">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-500">Review:</span>
-                        <span className="font-medium">
-                          {task.requiresReview
-                            ? task.reviewer
-                              ? `${task.reviewer.firstName} ${task.reviewer.lastName}`
-                              : "Manager"
-                            : "Not required"}
-                        </span>
-                      </div>
+                        {task.assigner && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <User className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-500">Assigned by:</span>
+                            <span className="font-medium">
+                              {task.assigner.firstName} {task.assigner.lastName}
+                            </span>
+                          </div>
+                        )}
 
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-500">Deadline:</span>
-                        <span className="font-medium">
-                          {new Date(task.deadline).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm">
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-500">Estimated:</span>
-                        <span className="font-medium">
-                          {task.estimatedMinutes >= 60
-                            ? `${Math.floor(task.estimatedMinutes / 60)}h ${task.estimatedMinutes % 60}m`
-                            : `${task.estimatedMinutes}m`}
-                        </span>
-                      </div>
-
-                      {task.actualMinutes > 0 && (
                         <div className="flex items-center gap-2 text-sm">
-                          <Clock className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-500">Actual:</span>
+                          <User className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-500">Review:</span>
                           <span className="font-medium">
-                            {task.actualMinutes >= 60
-                              ? `${Math.floor(task.actualMinutes / 60)}h ${task.actualMinutes % 60}m`
-                              : `${task.actualMinutes}m`}
+                            {task.requiresReview
+                              ? task.reviewer
+                                ? `${task.reviewer.firstName} ${task.reviewer.lastName}`
+                                : "Manager"
+                              : "Not required"}
                           </span>
                         </div>
-                      )}
-                    </div>
 
-                    {/* On Hold / Rejection Reason */}
-                    {task.onHoldReason && task.status === TaskStatus.ON_HOLD && (
-                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                        <div className="flex items-center gap-2 text-yellow-800 text-sm font-medium mb-1">
-                          <AlertCircle className="w-4 h-4" />
-                          On Hold Reason
-                        </div>
-                        <p className="text-sm text-yellow-700">{task.onHoldReason}</p>
-                      </div>
-                    )}
-
-                    {task.rejectionReason && task.status === TaskStatus.REOPENED && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                        <div className="flex items-center gap-2 text-red-800 text-sm font-medium mb-1">
-                          <AlertCircle className="w-4 h-4" />
-                          Reopened Reason
-                        </div>
-                        <p className="text-sm text-red-700">{task.rejectionReason}</p>
-                      </div>
-                    )}
-
-                    {/* Status Actions */}
-                    <Separator />
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-3">Actions</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {getAvailableTransitions().map((status) => (
-                          <Button
-                            key={status}
-                            size="sm"
-                            variant={status === TaskStatus.CLOSED_APPROVED ? "default" : "outline"}
-                            onClick={() => handleTransition(status)}
-                            disabled={isTransitioning}
-                          >
-                            <ChevronRight className="w-4 h-4 mr-1" />
-                            {getStatusLabel(status)}
-                          </Button>
-                        ))}
-                        {canDelete() && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                            onClick={() => setShowDeleteConfirm(true)}
-                          >
-                            <Trash2 className="w-4 h-4 mr-1" />
-                            Delete
-                          </Button>
-                        )}
-                        {getAvailableTransitions().length === 0 && !canDelete() && (
-                          <p className="text-sm text-gray-500">No available actions</p>
-                        )}
-                      </div>
-
-                      {/* Reason input for transitions */}
-                      {showReasonInput && (
-                        <div className="mt-4 space-y-2">
-                          <Textarea
-                            placeholder={
-                              showReasonInput === TaskStatus.ON_HOLD
-                                ? "Why is this task on hold? (min 10 characters)"
-                                : "Reason for reopening (min 10 characters)"
-                            }
-                            value={transitionReason}
-                            onChange={(e) => setTransitionReason(e.target.value)}
-                          />
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleTransition(showReasonInput)}
-                              disabled={transitionReason.length < 10 || isTransitioning}
-                            >
-                              Confirm
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setShowReasonInput(null);
-                                setTransitionReason("");
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "comments" && (
-                  <div className="space-y-4">
-                    {/* Comment input */}
-                    <div className="flex gap-2">
-                      <Textarea
-                        placeholder="Add a comment..."
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        className="flex-1"
-                        rows={2}
-                      />
-                      <Button
-                        size="sm"
-                        onClick={handleSubmitComment}
-                        disabled={!newComment.trim() || isSubmittingComment}
-                      >
-                        <Send className="w-4 h-4" />
-                      </Button>
-                    </div>
-
-                    {/* Comments list */}
-                    {task.comments.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-8">
-                        No comments yet
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {task.comments.map((comment) => (
-                          <div key={comment.id} className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-medium text-indigo-600">
-                                {comment.author.firstName[0]}
-                                {comment.author.lastName[0]}
-                              </span>
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">
-                                  {comment.author.firstName} {comment.author.lastName}
-                                </span>
-                                <span className="text-xs text-gray-400">
-                                  {new Date(comment.createdAt).toLocaleString()}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-600 mt-1">{comment.content}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === "history" && (
-                  <div className="space-y-4">
-                    {(() => {
-                      // Combine all history items into a single timeline
-                      type TimelineItem =
-                        | { type: "status"; data: StatusHistoryItem; createdAt: Date }
-                        | { type: "carryForward"; data: CarryForwardLogItem; createdAt: Date }
-                        | { type: "edit"; data: EditHistoryItem; createdAt: Date };
-
-                      const timelineItems: TimelineItem[] = [
-                        ...task.statusHistory.map((item) => ({
-                          type: "status" as const,
-                          data: item,
-                          createdAt: new Date(item.createdAt),
-                        })),
-                        ...(task.carryForwardLogs || []).map((item) => ({
-                          type: "carryForward" as const,
-                          data: item,
-                          createdAt: new Date(item.createdAt),
-                        })),
-                        ...(task.editHistory || []).map((item) => ({
-                          type: "edit" as const,
-                          data: item,
-                          createdAt: new Date(item.createdAt),
-                        })),
-                      ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
-                      if (timelineItems.length === 0) {
-                        return (
-                          <p className="text-sm text-gray-500 text-center py-8">
-                            No history yet
-                          </p>
-                        );
-                      }
-
-                      const formatFieldName = (name: string) => {
-                        const labels: Record<string, string> = {
-                          title: "Title",
-                          description: "Description",
-                          priority: "Priority",
-                          size: "Size",
-                          estimatedMinutes: "Time Estimate",
-                          actualMinutes: "Actual Time",
-                          deadline: "Deadline",
-                          startDate: "Start Date",
-                          kpiBucketId: "KPI Bucket",
-                        };
-                        return labels[name] || name;
-                      };
-
-                      const formatValue = (field: string, value: string | null) => {
-                        if (!value || value === "null" || value === "undefined") return "empty";
-                        if (field === "deadline" || field === "startDate") {
-                          try {
-                            return new Date(value).toLocaleDateString("en-US", {
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-500">Deadline:</span>
+                          <span className="font-medium">
+                            {new Date(task.deadline).toLocaleDateString("en-US", {
                               month: "short",
                               day: "numeric",
                               year: "numeric",
-                            });
-                          } catch {
-                            return value;
-                          }
-                        }
-                        if (field === "estimatedMinutes" || field === "actualMinutes") {
-                          const mins = parseInt(value);
-                          if (mins >= 60) return `${Math.floor(mins / 60)}h ${mins % 60}m`;
-                          return `${mins}m`;
-                        }
-                        return value;
-                      };
-
-                      return (
-                        <div className="space-y-3">
-                          {timelineItems.map((item) => {
-                            if (item.type === "status") {
-                              const status = item.data;
-                              return (
-                                <div key={`status-${status.id}`} className="flex gap-3 text-sm">
-                                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                                    <History className="w-4 h-4 text-gray-500" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="font-medium">
-                                        {status.changedBy.firstName} {status.changedBy.lastName}
-                                      </span>
-                                      <span className="text-gray-400">
-                                        {status.fromStatus
-                                          ? `changed status from ${getStatusLabel(status.fromStatus)} to ${getStatusLabel(status.toStatus)}`
-                                          : `created task as ${getStatusLabel(status.toStatus)}`}
-                                      </span>
-                                    </div>
-                                    {status.reason && (
-                                      <p className="text-gray-600 mt-1">Reason: {status.reason}</p>
-                                    )}
-                                    <p className="text-xs text-gray-400 mt-1">
-                                      {item.createdAt.toLocaleString()}
-                                    </p>
-                                  </div>
-                                </div>
-                              );
-                            }
-
-                            if (item.type === "carryForward") {
-                              const cf = item.data;
-                              return (
-                                <div key={`cf-${cf.id}`} className="flex gap-3 text-sm">
-                                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                                    <CalendarClock className="w-4 h-4 text-orange-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="font-medium">
-                                        {cf.user.firstName} {cf.user.lastName}
-                                      </span>
-                                      <span className="text-gray-400">
-                                        extended deadline from{" "}
-                                        <span className="font-medium text-gray-600">
-                                          {new Date(cf.fromDate).toLocaleDateString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                          })}
-                                        </span>
-                                        {" to "}
-                                        <span className="font-medium text-gray-600">
-                                          {new Date(cf.toDate).toLocaleDateString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                          })}
-                                        </span>
-                                      </span>
-                                    </div>
-                                    <p className="text-gray-600 mt-1">Reason: {cf.reason}</p>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                      {item.createdAt.toLocaleString()}
-                                    </p>
-                                  </div>
-                                </div>
-                              );
-                            }
-
-                            if (item.type === "edit") {
-                              const edit = item.data;
-                              return (
-                                <div key={`edit-${edit.id}`} className="flex gap-3 text-sm">
-                                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                                    <Pencil className="w-4 h-4 text-blue-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="font-medium">
-                                        {edit.editedBy.firstName} {edit.editedBy.lastName}
-                                      </span>
-                                      <span className="text-gray-400">
-                                        changed {formatFieldName(edit.fieldName)} from{" "}
-                                        <span className="font-medium text-gray-600">
-                                          {formatValue(edit.fieldName, edit.oldValue)}
-                                        </span>
-                                        {" to "}
-                                        <span className="font-medium text-gray-600">
-                                          {formatValue(edit.fieldName, edit.newValue)}
-                                        </span>
-                                      </span>
-                                    </div>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                      {item.createdAt.toLocaleString()}
-                                    </p>
-                                  </div>
-                                </div>
-                              );
-                            }
-
-                            return null;
-                          })}
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
                         </div>
-                      );
-                    })()}
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
 
-    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Task</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete &quot;{task?.title}&quot;? This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-500">Estimated:</span>
+                          <span className="font-medium">
+                            {task.estimatedMinutes >= 60
+                              ? `${Math.floor(task.estimatedMinutes / 60)}h ${task.estimatedMinutes % 60}m`
+                              : `${task.estimatedMinutes}m`}
+                          </span>
+                        </div>
+
+                        {task.actualMinutes > 0 && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Clock className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-500">Actual:</span>
+                            <span className="font-medium">
+                              {task.actualMinutes >= 60
+                                ? `${Math.floor(task.actualMinutes / 60)}h ${task.actualMinutes % 60}m`
+                                : `${task.actualMinutes}m`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* On Hold / Rejection Reason */}
+                      {task.onHoldReason && task.status === TaskStatus.ON_HOLD && (
+                        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                          <div className="flex items-center gap-2 text-yellow-800 text-sm font-medium mb-1">
+                            <AlertCircle className="w-4 h-4" />
+                            On Hold Reason
+                          </div>
+                          <p className="text-sm text-yellow-700">{task.onHoldReason}</p>
+                        </div>
+                      )}
+
+                      {task.rejectionReason && task.status === TaskStatus.REOPENED && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                          <div className="flex items-center gap-2 text-red-800 text-sm font-medium mb-1">
+                            <AlertCircle className="w-4 h-4" />
+                            Reopened Reason
+                          </div>
+                          <p className="text-sm text-red-700">{task.rejectionReason}</p>
+                        </div>
+                      )}
+
+                      {/* Status Actions */}
+                      <Separator />
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">Actions</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {getAvailableTransitions().map((status) => (
+                            <Button
+                              key={status}
+                              size="sm"
+                              variant={
+                                status === TaskStatus.CLOSED_APPROVED ? "default" : "outline"
+                              }
+                              onClick={() => handleTransition(status)}
+                              disabled={isTransitioning}
+                            >
+                              <ChevronRight className="w-4 h-4 mr-1" />
+                              {getStatusLabel(status)}
+                            </Button>
+                          ))}
+                          {canDelete() && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                              onClick={() => setShowDeleteConfirm(true)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Delete
+                            </Button>
+                          )}
+                          {getAvailableTransitions().length === 0 && !canDelete() && (
+                            <p className="text-sm text-gray-500">No available actions</p>
+                          )}
+                        </div>
+
+                        {/* Reason input for transitions */}
+                        {showReasonInput && (
+                          <div className="mt-4 space-y-2">
+                            <Textarea
+                              placeholder={
+                                showReasonInput === TaskStatus.ON_HOLD
+                                  ? "Why is this task on hold? (min 10 characters)"
+                                  : "Reason for reopening (min 10 characters)"
+                              }
+                              value={transitionReason}
+                              onChange={(e) => setTransitionReason(e.target.value)}
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleTransition(showReasonInput)}
+                                disabled={transitionReason.length < 10 || isTransitioning}
+                              >
+                                Confirm
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setShowReasonInput(null);
+                                  setTransitionReason("");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "comments" && (
+                    <div className="space-y-4">
+                      {/* Comment input */}
+                      <div className="flex gap-2">
+                        <Textarea
+                          placeholder="Add a comment..."
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          className="flex-1"
+                          rows={2}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleSubmitComment}
+                          disabled={!newComment.trim() || isSubmittingComment}
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      </div>
+
+                      {/* Comments list */}
+                      {task.comments.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-8">No comments yet</p>
+                      ) : (
+                        <div className="space-y-4">
+                          {task.comments.map((comment) => (
+                            <div key={comment.id} className="flex gap-3">
+                              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                                <span className="text-xs font-medium text-indigo-600">
+                                  {comment.author.firstName[0]}
+                                  {comment.author.lastName[0]}
+                                </span>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">
+                                    {comment.author.firstName} {comment.author.lastName}
+                                  </span>
+                                  <span className="text-xs text-gray-400">
+                                    {new Date(comment.createdAt).toLocaleString()}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">{comment.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === "history" && (
+                    <div className="space-y-4">
+                      {(() => {
+                        // Combine all history items into a single timeline
+                        type TimelineItem =
+                          | { type: "status"; data: StatusHistoryItem; createdAt: Date }
+                          | { type: "carryForward"; data: CarryForwardLogItem; createdAt: Date }
+                          | { type: "edit"; data: EditHistoryItem; createdAt: Date };
+
+                        const timelineItems: TimelineItem[] = [
+                          ...task.statusHistory.map((item) => ({
+                            type: "status" as const,
+                            data: item,
+                            createdAt: new Date(item.createdAt),
+                          })),
+                          ...(task.carryForwardLogs || []).map((item) => ({
+                            type: "carryForward" as const,
+                            data: item,
+                            createdAt: new Date(item.createdAt),
+                          })),
+                          ...(task.editHistory || []).map((item) => ({
+                            type: "edit" as const,
+                            data: item,
+                            createdAt: new Date(item.createdAt),
+                          })),
+                        ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+                        if (timelineItems.length === 0) {
+                          return (
+                            <p className="text-sm text-gray-500 text-center py-8">No history yet</p>
+                          );
+                        }
+
+                        const formatFieldName = (name: string) => {
+                          const labels: Record<string, string> = {
+                            title: "Title",
+                            description: "Description",
+                            priority: "Priority",
+                            size: "Size",
+                            estimatedMinutes: "Time Estimate",
+                            actualMinutes: "Actual Time",
+                            deadline: "Deadline",
+                            startDate: "Start Date",
+                            kpiBucketId: "KPI Bucket",
+                          };
+                          return labels[name] || name;
+                        };
+
+                        const formatValue = (field: string, value: string | null) => {
+                          if (!value || value === "null" || value === "undefined") return "empty";
+                          if (field === "deadline" || field === "startDate") {
+                            try {
+                              return new Date(value).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              });
+                            } catch {
+                              return value;
+                            }
+                          }
+                          if (field === "estimatedMinutes" || field === "actualMinutes") {
+                            const mins = parseInt(value);
+                            if (mins >= 60) return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+                            return `${mins}m`;
+                          }
+                          return value;
+                        };
+
+                        return (
+                          <div className="space-y-3">
+                            {timelineItems.map((item) => {
+                              if (item.type === "status") {
+                                const status = item.data;
+                                return (
+                                  <div key={`status-${status.id}`} className="flex gap-3 text-sm">
+                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                      <History className="w-4 h-4 text-gray-500" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-medium">
+                                          {status.changedBy.firstName} {status.changedBy.lastName}
+                                        </span>
+                                        <span className="text-gray-400">
+                                          {status.fromStatus
+                                            ? `changed status from ${getStatusLabel(status.fromStatus)} to ${getStatusLabel(status.toStatus)}`
+                                            : `created task as ${getStatusLabel(status.toStatus)}`}
+                                        </span>
+                                      </div>
+                                      {status.reason && (
+                                        <p className="text-gray-600 mt-1">
+                                          Reason: {status.reason}
+                                        </p>
+                                      )}
+                                      <p className="text-xs text-gray-400 mt-1">
+                                        {item.createdAt.toLocaleString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              if (item.type === "carryForward") {
+                                const cf = item.data;
+                                return (
+                                  <div key={`cf-${cf.id}`} className="flex gap-3 text-sm">
+                                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                                      <CalendarClock className="w-4 h-4 text-orange-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-medium">
+                                          {cf.user.firstName} {cf.user.lastName}
+                                        </span>
+                                        <span className="text-gray-400">
+                                          extended deadline from{" "}
+                                          <span className="font-medium text-gray-600">
+                                            {new Date(cf.fromDate).toLocaleDateString("en-US", {
+                                              month: "short",
+                                              day: "numeric",
+                                            })}
+                                          </span>
+                                          {" to "}
+                                          <span className="font-medium text-gray-600">
+                                            {new Date(cf.toDate).toLocaleDateString("en-US", {
+                                              month: "short",
+                                              day: "numeric",
+                                            })}
+                                          </span>
+                                        </span>
+                                      </div>
+                                      <p className="text-gray-600 mt-1">Reason: {cf.reason}</p>
+                                      <p className="text-xs text-gray-400 mt-1">
+                                        {item.createdAt.toLocaleString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              if (item.type === "edit") {
+                                const edit = item.data;
+                                return (
+                                  <div key={`edit-${edit.id}`} className="flex gap-3 text-sm">
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                                      <Pencil className="w-4 h-4 text-blue-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-medium">
+                                          {edit.editedBy.firstName} {edit.editedBy.lastName}
+                                        </span>
+                                        <span className="text-gray-400">
+                                          changed {formatFieldName(edit.fieldName)} from{" "}
+                                          <span className="font-medium text-gray-600">
+                                            {formatValue(edit.fieldName, edit.oldValue)}
+                                          </span>
+                                          {" to "}
+                                          <span className="font-medium text-gray-600">
+                                            {formatValue(edit.fieldName, edit.newValue)}
+                                          </span>
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-gray-400 mt-1">
+                                        {item.createdAt.toLocaleString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              return null;
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{task?.title}&quot;? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

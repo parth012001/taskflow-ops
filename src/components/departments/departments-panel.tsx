@@ -15,13 +15,7 @@ import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -40,12 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DepartmentFormModal } from "./department-form-modal";
 
 interface Department {
@@ -78,10 +67,8 @@ export function DepartmentsPanel() {
 
   // Modal states
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingDepartment, setEditingDepartment] =
-    useState<Department | null>(null);
-  const [deletingDepartment, setDeletingDepartment] =
-    useState<Department | null>(null);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [deletingDepartment, setDeletingDepartment] = useState<Department | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchDepartments = useCallback(async () => {
@@ -130,10 +117,9 @@ export function DepartmentsPanel() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(
-        `/api/admin/departments/${deletingDepartment.id}`,
-        { method: "DELETE" }
-      );
+      const response = await fetch(`/api/admin/departments/${deletingDepartment.id}`, {
+        method: "DELETE",
+      });
 
       if (!response.ok) {
         const error = await response.json();
@@ -144,9 +130,7 @@ export function DepartmentsPanel() {
       fetchDepartments();
     } catch (error) {
       console.error("Error deleting department:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete department"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to delete department");
     } finally {
       setIsDeleting(false);
       setDeletingDepartment(null);
@@ -172,9 +156,7 @@ export function DepartmentsPanel() {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
             <CardTitle>Departments</CardTitle>
-            <CardDescription>
-              Create and manage departments for your organization
-            </CardDescription>
+            <CardDescription>Create and manage departments for your organization</CardDescription>
           </div>
           <Button onClick={() => setIsFormOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -236,27 +218,18 @@ export function DepartmentsPanel() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="min-w-[150px]">Name</TableHead>
-                      <TableHead className="min-w-[200px]">
-                        Description
-                      </TableHead>
+                      <TableHead className="min-w-[200px]">Description</TableHead>
                       <TableHead className="w-[150px]">Head</TableHead>
                       <TableHead className="w-[80px]">Members</TableHead>
                       <TableHead className="w-[110px]">Created</TableHead>
-                      <TableHead className="w-[80px] text-right">
-                        Actions
-                      </TableHead>
+                      <TableHead className="w-[80px] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {departments.map((dept) => (
-                      <TableRow
-                        key={dept.id}
-                        className="hover:bg-muted/50 transition-colors"
-                      >
+                      <TableRow key={dept.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell>
-                          <span className="font-medium text-gray-900">
-                            {dept.name}
-                          </span>
+                          <span className="font-medium text-gray-900">{dept.name}</span>
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-gray-600 line-clamp-1">
@@ -265,15 +238,11 @@ export function DepartmentsPanel() {
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-gray-600">
-                            {dept.head
-                              ? `${dept.head.firstName} ${dept.head.lastName}`
-                              : "—"}
+                            {dept.head ? `${dept.head.firstName} ${dept.head.lastName}` : "—"}
                           </span>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-gray-600">
-                            {dept._count.users}
-                          </span>
+                          <span className="text-sm text-gray-600">{dept._count.users}</span>
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-gray-600">
@@ -322,13 +291,9 @@ export function DepartmentsPanel() {
               {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4 pt-4 border-t">
                   <p className="text-sm text-gray-500">
-                    Showing{" "}
-                    {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                    {Math.min(
-                      pagination.page * pagination.limit,
-                      pagination.total
-                    )}{" "}
-                    of {pagination.total} departments
+                    Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                    {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
+                    {pagination.total} departments
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -373,9 +338,8 @@ export function DepartmentsPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Department</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete{" "}
-              <strong>{deletingDepartment?.name}</strong>? This action cannot be
-              undone. Departments with active users cannot be deleted.
+              Are you sure you want to delete <strong>{deletingDepartment?.name}</strong>? This
+              action cannot be undone. Departments with active users cannot be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

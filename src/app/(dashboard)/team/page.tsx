@@ -65,7 +65,11 @@ export default function TeamPage() {
   const router = useRouter();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [pendingTasks, setPendingTasks] = useState<PendingTask[]>([]);
-  const [summary, setSummary] = useState({ totalMembers: 0, totalPendingReview: 0, totalOverdue: 0 });
+  const [summary, setSummary] = useState({
+    totalMembers: 0,
+    totalPendingReview: 0,
+    totalOverdue: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   // Review dialog state
@@ -240,9 +244,7 @@ export default function TeamPage() {
                         {member.firstName} {member.lastName}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500">
-                          {member.totalActive} active
-                        </span>
+                        <span className="text-xs text-gray-500">{member.totalActive} active</span>
                         {member.taskStats.IN_PROGRESS > 0 && (
                           <Badge variant="outline" className="text-xs">
                             {member.taskStats.IN_PROGRESS} in progress
@@ -272,9 +274,7 @@ export default function TeamPage() {
           <CardContent>
             <div className="space-y-3">
               {pendingTasks.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  No tasks pending review
-                </p>
+                <p className="text-sm text-gray-500 text-center py-4">No tasks pending review</p>
               ) : (
                 pendingTasks.map((task) => (
                   <div
@@ -283,15 +283,8 @@ export default function TeamPage() {
                     onClick={() => setReviewingTask(task)}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <div
-                        className={cn(
-                          "w-2 h-2 rounded-full",
-                          priorityColors[task.priority]
-                        )}
-                      />
-                      <span className="font-medium text-sm flex-1 truncate">
-                        {task.title}
-                      </span>
+                      <div className={cn("w-2 h-2 rounded-full", priorityColors[task.priority])} />
+                      <span className="font-medium text-sm flex-1 truncate">{task.title}</span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-gray-500">
                       <span>

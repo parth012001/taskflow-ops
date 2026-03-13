@@ -30,10 +30,7 @@ export async function POST(
     }
 
     if (!isManagerOrAbove(session.user.role as Role)) {
-      return NextResponse.json(
-        { error: "Only managers can reassign tasks" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Only managers can reassign tasks" }, { status: 403 });
     }
 
     const { taskId } = await params;
@@ -42,10 +39,7 @@ export async function POST(
     const validatedData = reassignTaskSchema.safeParse(body);
     if (!validatedData.success) {
       console.warn("Validation error:", validatedData.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { newOwnerId, reason, newDeadline } = validatedData.data;
@@ -55,19 +49,13 @@ export async function POST(
     if (newDeadline) {
       parsedDeadline = new Date(newDeadline);
       if (isNaN(parsedDeadline.getTime())) {
-        return NextResponse.json(
-          { error: "Invalid deadline date format" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid deadline date format" }, { status: 400 });
       }
       // Deadline must be in the future (at least tomorrow)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       if (parsedDeadline <= today) {
-        return NextResponse.json(
-          { error: "Deadline must be in the future" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Deadline must be in the future" }, { status: 400 });
       }
     }
 
@@ -91,17 +79,11 @@ export async function POST(
     }
 
     if (task.status === TaskStatus.CLOSED_APPROVED) {
-      return NextResponse.json(
-        { error: "Cannot reassign a completed task" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Cannot reassign a completed task" }, { status: 400 });
     }
 
     if (task.ownerId === newOwnerId) {
-      return NextResponse.json(
-        { error: "Task is already assigned to this user" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Task is already assigned to this user" }, { status: 400 });
     }
 
     // Verify authority over task owner
@@ -149,10 +131,7 @@ export async function POST(
     }
 
     if (!newOwnerInScope) {
-      return NextResponse.json(
-        { error: "New owner is not within your scope" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "New owner is not within your scope" }, { status: 403 });
     }
 
     // Perform reassignment in transaction

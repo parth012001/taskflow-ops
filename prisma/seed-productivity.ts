@@ -18,13 +18,7 @@ const prisma = new PrismaClient();
 // Types & Constants
 // ============================================
 
-type Archetype =
-  | "star"
-  | "solid"
-  | "speed_demon"
-  | "careful"
-  | "struggling"
-  | "inactive";
+type Archetype = "star" | "solid" | "speed_demon" | "careful" | "struggling" | "inactive";
 
 interface UserProfile {
   archetype: Archetype;
@@ -160,13 +154,27 @@ const PROFILES: Record<Archetype, UserProfile> = {
 
 // 20 users: 4 per archetype
 const USER_ARCHETYPES: Archetype[] = [
-  "star", "star", "star", "star",
-  "solid", "solid", "solid", "solid",
-  "speed_demon", "speed_demon", "speed_demon", "speed_demon",
-  "careful", "careful", "careful", "careful",
-  "struggling", "struggling", "inactive", "inactive",
+  "star",
+  "star",
+  "star",
+  "star",
+  "solid",
+  "solid",
+  "solid",
+  "solid",
+  "speed_demon",
+  "speed_demon",
+  "speed_demon",
+  "speed_demon",
+  "careful",
+  "careful",
+  "careful",
+  "careful",
+  "struggling",
+  "struggling",
+  "inactive",
+  "inactive",
 ];
-
 
 const SIZES: TaskSize[] = ["EASY", "MEDIUM", "DIFFICULT"];
 const PRIORITIES: TaskPriority[] = [
@@ -283,18 +291,42 @@ const TASK_TEMPLATES = [
 ];
 
 const ITEMS = [
-  "office supplies", "IT equipment", "raw materials", "steel beams",
-  "electrical components", "safety gear", "furniture", "plumbing fixtures",
-  "HVAC parts", "concrete mix", "paint supplies", "roofing materials",
+  "office supplies",
+  "IT equipment",
+  "raw materials",
+  "steel beams",
+  "electrical components",
+  "safety gear",
+  "furniture",
+  "plumbing fixtures",
+  "HVAC parts",
+  "concrete mix",
+  "paint supplies",
+  "roofing materials",
 ];
 const VENDORS = [
-  "ABC Corp", "XYZ Ltd", "DEF Supplies", "Global Trade Co", "Metro Materials",
-  "Prime Vendors", "Quality Parts Inc", "Steel Masters", "TechSource",
-  "BuildRight Supplies", "FastTrack Logistics", "ValuePro Trading",
+  "ABC Corp",
+  "XYZ Ltd",
+  "DEF Supplies",
+  "Global Trade Co",
+  "Metro Materials",
+  "Prime Vendors",
+  "Quality Parts Inc",
+  "Steel Masters",
+  "TechSource",
+  "BuildRight Supplies",
+  "FastTrack Logistics",
+  "ValuePro Trading",
 ];
 const LOCATIONS = [
-  "Site A", "Site B", "Warehouse North", "Warehouse South",
-  "Factory Floor", "HQ Office", "Regional Office", "Distribution Center",
+  "Site A",
+  "Site B",
+  "Warehouse North",
+  "Warehouse South",
+  "Factory Floor",
+  "HQ Office",
+  "Regional Office",
+  "Distribution Center",
 ];
 const PERIODS = ["January", "February", "Q1", "Q2", "March", "H1"];
 
@@ -370,11 +402,7 @@ async function main() {
     create: { name: "Marketing", description: "Marketing & Communications" },
   });
 
-  const departments = [
-    procurementDept,
-    engineeringDept,
-    marketingDept,
-  ];
+  const departments = [procurementDept, engineeringDept, marketingDept];
 
   console.log(`Departments: ${departments.map((d) => d.name).join(", ")}`);
 
@@ -475,9 +503,10 @@ async function main() {
   for (const user of newUsers) {
     if (user.role === "DEPARTMENT_HEAD") continue; // dept heads don't get scored
     const count = user.role === "MANAGER" ? kpiBuckets.length : 7;
-    const buckets = user.role === "MANAGER"
-      ? kpiBuckets
-      : faker.helpers.arrayElements(kpiBuckets, Math.min(count, kpiBuckets.length));
+    const buckets =
+      user.role === "MANAGER"
+        ? kpiBuckets
+        : faker.helpers.arrayElements(kpiBuckets, Math.min(count, kpiBuckets.length));
 
     for (const bucket of buckets) {
       const existing = await prisma.userKpi.findUnique({
@@ -494,16 +523,37 @@ async function main() {
   console.log("Assigned KPIs to new users");
 
   // 5. Create ScoringConfig for each department
-  const deptScoringConfig: Record<string, {
-    weeklyOutputTarget: number;
-    outputWeight: number;
-    qualityWeight: number;
-    reliabilityWeight: number;
-    consistencyWeight: number;
-  }> = {
-    Engineering: { weeklyOutputTarget: 12, outputWeight: 0.30, qualityWeight: 0.30, reliabilityWeight: 0.25, consistencyWeight: 0.15 },
-    Marketing: { weeklyOutputTarget: 10, outputWeight: 0.25, qualityWeight: 0.25, reliabilityWeight: 0.25, consistencyWeight: 0.25 },
-    Default: { weeklyOutputTarget: 15, outputWeight: 0.35, qualityWeight: 0.25, reliabilityWeight: 0.25, consistencyWeight: 0.15 },
+  const deptScoringConfig: Record<
+    string,
+    {
+      weeklyOutputTarget: number;
+      outputWeight: number;
+      qualityWeight: number;
+      reliabilityWeight: number;
+      consistencyWeight: number;
+    }
+  > = {
+    Engineering: {
+      weeklyOutputTarget: 12,
+      outputWeight: 0.3,
+      qualityWeight: 0.3,
+      reliabilityWeight: 0.25,
+      consistencyWeight: 0.15,
+    },
+    Marketing: {
+      weeklyOutputTarget: 10,
+      outputWeight: 0.25,
+      qualityWeight: 0.25,
+      reliabilityWeight: 0.25,
+      consistencyWeight: 0.25,
+    },
+    Default: {
+      weeklyOutputTarget: 15,
+      outputWeight: 0.35,
+      qualityWeight: 0.25,
+      reliabilityWeight: 0.25,
+      consistencyWeight: 0.15,
+    },
   };
 
   for (const dept of departments) {
@@ -536,7 +586,9 @@ async function main() {
   const windowStart = addDays(windowEnd, -28);
 
   console.log(`\nGenerating data for ${scorableUsers.length} users...`);
-  console.log(`Window: ${windowStart.toISOString().split("T")[0]} to ${windowEnd.toISOString().split("T")[0]}\n`);
+  console.log(
+    `Window: ${windowStart.toISOString().split("T")[0]} to ${windowEnd.toISOString().split("T")[0]}\n`
+  );
 
   const workdays = getWorkdays(windowStart, windowEnd);
 
@@ -551,9 +603,8 @@ async function main() {
       select: { kpiBucketId: true },
     });
     const assignedBucketIds = userKpis.map((k) => k.kpiBucketId);
-    const kpiBucketsToUse = assignedBucketIds.length > 0
-      ? assignedBucketIds
-      : kpiBuckets.map((k) => k.id);
+    const kpiBucketsToUse =
+      assignedBucketIds.length > 0 ? assignedBucketIds : kpiBuckets.map((k) => k.id);
 
     // How many distinct KPIs to spread tasks across
     const kpiSpreadCount = Math.max(
@@ -578,7 +629,12 @@ async function main() {
       const priority = pickWeighted(profile.priorityDistribution);
       const requiresReview = faker.number.float({ min: 0, max: 1 }) < profile.reviewRate;
       const kpiBucketId = pickRandom(activeKpiBuckets);
-      const estimatedMinutes = size === "EASY" ? randInt(15, 60) : size === "MEDIUM" ? randInt(60, 180) : randInt(120, 360);
+      const estimatedMinutes =
+        size === "EASY"
+          ? randInt(15, 60)
+          : size === "MEDIUM"
+            ? randInt(60, 180)
+            : randInt(120, 360);
 
       const task = await prisma.task.create({
         data: {
@@ -605,8 +661,7 @@ async function main() {
       // --- STATUS HISTORY for completed tasks ---
       const baseDate = addDays(completedAt, -randInt(3, 10));
       const shouldReopen =
-        requiresReview &&
-        faker.number.float({ min: 0, max: 1 }) > profile.firstPassRate;
+        requiresReview && faker.number.float({ min: 0, max: 1 }) > profile.firstPassRate;
 
       // Standard lifecycle
       const historyEntries: {
@@ -616,36 +671,105 @@ async function main() {
         changedById: string;
         createdAt: Date;
       }[] = [
-        { taskId: task.id, fromStatus: null, toStatus: TaskStatus.NEW, changedById: user.id, createdAt: baseDate },
-        { taskId: task.id, fromStatus: TaskStatus.NEW, toStatus: TaskStatus.ACCEPTED, changedById: user.id, createdAt: addDays(baseDate, 0.5) },
-        { taskId: task.id, fromStatus: TaskStatus.ACCEPTED, toStatus: TaskStatus.IN_PROGRESS, changedById: user.id, createdAt: addDays(baseDate, 1) },
-        { taskId: task.id, fromStatus: TaskStatus.IN_PROGRESS, toStatus: TaskStatus.COMPLETED_PENDING_REVIEW, changedById: user.id, createdAt: addDays(completedAt, -1) },
+        {
+          taskId: task.id,
+          fromStatus: null,
+          toStatus: TaskStatus.NEW,
+          changedById: user.id,
+          createdAt: baseDate,
+        },
+        {
+          taskId: task.id,
+          fromStatus: TaskStatus.NEW,
+          toStatus: TaskStatus.ACCEPTED,
+          changedById: user.id,
+          createdAt: addDays(baseDate, 0.5),
+        },
+        {
+          taskId: task.id,
+          fromStatus: TaskStatus.ACCEPTED,
+          toStatus: TaskStatus.IN_PROGRESS,
+          changedById: user.id,
+          createdAt: addDays(baseDate, 1),
+        },
+        {
+          taskId: task.id,
+          fromStatus: TaskStatus.IN_PROGRESS,
+          toStatus: TaskStatus.COMPLETED_PENDING_REVIEW,
+          changedById: user.id,
+          createdAt: addDays(completedAt, -1),
+        },
       ];
 
       if (shouldReopen) {
         // Reviewer reopens it
         historyEntries.push(
-          { taskId: task.id, fromStatus: TaskStatus.COMPLETED_PENDING_REVIEW, toStatus: TaskStatus.REOPENED, changedById: user.id, createdAt: addDays(completedAt, -0.5) },
-          { taskId: task.id, fromStatus: TaskStatus.REOPENED, toStatus: TaskStatus.IN_PROGRESS, changedById: user.id, createdAt: addDays(completedAt, -0.3) },
-          { taskId: task.id, fromStatus: TaskStatus.IN_PROGRESS, toStatus: TaskStatus.COMPLETED_PENDING_REVIEW, changedById: user.id, createdAt: addDays(completedAt, -0.1) },
+          {
+            taskId: task.id,
+            fromStatus: TaskStatus.COMPLETED_PENDING_REVIEW,
+            toStatus: TaskStatus.REOPENED,
+            changedById: user.id,
+            createdAt: addDays(completedAt, -0.5),
+          },
+          {
+            taskId: task.id,
+            fromStatus: TaskStatus.REOPENED,
+            toStatus: TaskStatus.IN_PROGRESS,
+            changedById: user.id,
+            createdAt: addDays(completedAt, -0.3),
+          },
+          {
+            taskId: task.id,
+            fromStatus: TaskStatus.IN_PROGRESS,
+            toStatus: TaskStatus.COMPLETED_PENDING_REVIEW,
+            changedById: user.id,
+            createdAt: addDays(completedAt, -0.1),
+          }
         );
       }
 
       // Final approval
-      historyEntries.push(
-        { taskId: task.id, fromStatus: TaskStatus.COMPLETED_PENDING_REVIEW, toStatus: TaskStatus.CLOSED_APPROVED, changedById: user.id, createdAt: completedAt },
-      );
+      historyEntries.push({
+        taskId: task.id,
+        fromStatus: TaskStatus.COMPLETED_PENDING_REVIEW,
+        toStatus: TaskStatus.CLOSED_APPROVED,
+        changedById: user.id,
+        createdAt: completedAt,
+      });
 
       // Also add CLOSED_APPROVED → REOPENED entries for the reopenRate (separate from firstPassRate)
-      const shouldReopenFromClosed =
-        faker.number.float({ min: 0, max: 1 }) < profile.reopenRate;
+      const shouldReopenFromClosed = faker.number.float({ min: 0, max: 1 }) < profile.reopenRate;
       if (shouldReopenFromClosed && !shouldReopen) {
         // This was approved but then reopened later
         historyEntries.push(
-          { taskId: task.id, fromStatus: TaskStatus.CLOSED_APPROVED, toStatus: TaskStatus.REOPENED, changedById: user.id, createdAt: addDays(completedAt, 0.5) },
-          { taskId: task.id, fromStatus: TaskStatus.REOPENED, toStatus: TaskStatus.IN_PROGRESS, changedById: user.id, createdAt: addDays(completedAt, 0.7) },
-          { taskId: task.id, fromStatus: TaskStatus.IN_PROGRESS, toStatus: TaskStatus.COMPLETED_PENDING_REVIEW, changedById: user.id, createdAt: addDays(completedAt, 1) },
-          { taskId: task.id, fromStatus: TaskStatus.COMPLETED_PENDING_REVIEW, toStatus: TaskStatus.CLOSED_APPROVED, changedById: user.id, createdAt: addDays(completedAt, 1.2) },
+          {
+            taskId: task.id,
+            fromStatus: TaskStatus.CLOSED_APPROVED,
+            toStatus: TaskStatus.REOPENED,
+            changedById: user.id,
+            createdAt: addDays(completedAt, 0.5),
+          },
+          {
+            taskId: task.id,
+            fromStatus: TaskStatus.REOPENED,
+            toStatus: TaskStatus.IN_PROGRESS,
+            changedById: user.id,
+            createdAt: addDays(completedAt, 0.7),
+          },
+          {
+            taskId: task.id,
+            fromStatus: TaskStatus.IN_PROGRESS,
+            toStatus: TaskStatus.COMPLETED_PENDING_REVIEW,
+            changedById: user.id,
+            createdAt: addDays(completedAt, 1),
+          },
+          {
+            taskId: task.id,
+            fromStatus: TaskStatus.COMPLETED_PENDING_REVIEW,
+            toStatus: TaskStatus.CLOSED_APPROVED,
+            changedById: user.id,
+            createdAt: addDays(completedAt, 1.2),
+          }
         );
       }
 
@@ -684,8 +808,20 @@ async function main() {
       // Minimal status history for active tasks
       await prisma.taskStatusHistory.createMany({
         data: [
-          { taskId: task.id, fromStatus: null, toStatus: TaskStatus.NEW, changedById: user.id, createdAt: addDays(deadline, -randInt(7, 14)) },
-          { taskId: task.id, fromStatus: TaskStatus.NEW, toStatus: TaskStatus.ACCEPTED, changedById: user.id, createdAt: addDays(deadline, -randInt(5, 10)) },
+          {
+            taskId: task.id,
+            fromStatus: null,
+            toStatus: TaskStatus.NEW,
+            changedById: user.id,
+            createdAt: addDays(deadline, -randInt(7, 14)),
+          },
+          {
+            taskId: task.id,
+            fromStatus: TaskStatus.NEW,
+            toStatus: TaskStatus.ACCEPTED,
+            changedById: user.id,
+            createdAt: addDays(deadline, -randInt(5, 10)),
+          },
         ],
       });
     }
@@ -738,7 +874,7 @@ async function main() {
 
     console.log(
       `  [${idx + 1}/20] ${user.firstName} ${user.lastName} (${archetype}): ` +
-      `${completedCount} completed, ${activeCount} active, ${cfCount} carry-forwards`
+        `${completedCount} completed, ${activeCount} active, ${cfCount} carry-forwards`
     );
   }
 
@@ -761,10 +897,46 @@ async function main() {
     const profile = PROFILES[archetype];
 
     // Base scores for the archetype with some random jitter
-    const baseOutput = archetype === "star" ? 85 : archetype === "solid" ? 65 : archetype === "speed_demon" ? 85 : archetype === "careful" ? 40 : 25;
-    const baseQuality = archetype === "star" ? 92 : archetype === "solid" ? 75 : archetype === "speed_demon" ? 55 : archetype === "careful" ? 95 : 48;
-    const baseReliability = archetype === "star" ? 88 : archetype === "solid" ? 72 : archetype === "speed_demon" ? 60 : archetype === "careful" ? 85 : 38;
-    const baseConsistency = archetype === "star" ? 85 : archetype === "solid" ? 65 : archetype === "speed_demon" ? 42 : archetype === "careful" ? 75 : 28;
+    const baseOutput =
+      archetype === "star"
+        ? 85
+        : archetype === "solid"
+          ? 65
+          : archetype === "speed_demon"
+            ? 85
+            : archetype === "careful"
+              ? 40
+              : 25;
+    const baseQuality =
+      archetype === "star"
+        ? 92
+        : archetype === "solid"
+          ? 75
+          : archetype === "speed_demon"
+            ? 55
+            : archetype === "careful"
+              ? 95
+              : 48;
+    const baseReliability =
+      archetype === "star"
+        ? 88
+        : archetype === "solid"
+          ? 72
+          : archetype === "speed_demon"
+            ? 60
+            : archetype === "careful"
+              ? 85
+              : 38;
+    const baseConsistency =
+      archetype === "star"
+        ? 85
+        : archetype === "solid"
+          ? 65
+          : archetype === "speed_demon"
+            ? 42
+            : archetype === "careful"
+              ? 75
+              : 28;
 
     // Trend direction: stars improve, struggling declines, others stable with noise
     const trendFactor = archetype === "star" ? 0.5 : archetype === "struggling" ? -0.5 : 0;
@@ -779,8 +951,11 @@ async function main() {
       const reliability = Math.max(0, Math.min(100, baseReliability + trend + jitter()));
       const consistency = Math.max(0, Math.min(100, baseConsistency + trend + jitter()));
       const weights = deptWeightsByDeptId.get(user.departmentId ?? "") || deptScoringConfig.Default;
-      const composite = output * weights.outputWeight + quality * weights.qualityWeight
-        + reliability * weights.reliabilityWeight + consistency * weights.consistencyWeight;
+      const composite =
+        output * weights.outputWeight +
+        quality * weights.qualityWeight +
+        reliability * weights.reliabilityWeight +
+        consistency * weights.consistencyWeight;
 
       await prisma.productivitySnapshot.create({
         data: {
@@ -808,7 +983,16 @@ async function main() {
   for (let i = 0; i < scorableUsers.length; i++) {
     const u = scorableUsers[i];
     const a = USER_ARCHETYPES[i] || "solid";
-    const emoji = a === "star" ? "★" : a === "solid" ? "●" : a === "speed_demon" ? "⚡" : a === "careful" ? "◆" : "▼";
+    const emoji =
+      a === "star"
+        ? "★"
+        : a === "solid"
+          ? "●"
+          : a === "speed_demon"
+            ? "⚡"
+            : a === "careful"
+              ? "◆"
+              : "▼";
     console.log(`  ${emoji} ${u.firstName} ${u.lastName} — ${a}`);
   }
   console.log("\nNext steps:");

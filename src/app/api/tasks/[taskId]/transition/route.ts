@@ -45,20 +45,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       try {
         body = JSON.parse(rawText);
       } catch {
-        return NextResponse.json(
-          { error: "Invalid JSON body" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
       }
     }
     const validatedData = transitionTaskSchema.safeParse(body);
 
     if (!validatedData.success) {
       console.warn("Validation error:", validatedData.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { toStatus, reason, onHoldReason } = validatedData.data;
@@ -91,10 +85,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Check if reason is required but not provided
     if (transitionRequiresReason(task.status, toStatus)) {
       if (toStatus === TaskStatus.ON_HOLD && !onHoldReason) {
-        return NextResponse.json(
-          { error: "On-hold reason is required" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "On-hold reason is required" }, { status: 400 });
       }
       if (toStatus === TaskStatus.REOPENED && !reason) {
         return NextResponse.json(
@@ -185,7 +176,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
 
       // Only notify on approval when it came from review (not self-close)
-      if (toStatus === TaskStatus.CLOSED_APPROVED && task.status === TaskStatus.COMPLETED_PENDING_REVIEW) {
+      if (
+        toStatus === TaskStatus.CLOSED_APPROVED &&
+        task.status === TaskStatus.COMPLETED_PENDING_REVIEW
+      ) {
         await tx.notification.create({
           data: {
             userId: task.ownerId,
@@ -236,9 +230,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(updatedTask);
   } catch (error) {
     console.error("POST /api/tasks/[taskId]/transition error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

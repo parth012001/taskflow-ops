@@ -5,13 +5,7 @@ import { Plus, Pencil, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -49,12 +43,13 @@ interface Announcement {
   };
 }
 
-const typeConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
-  GENERAL: { label: "General", variant: "secondary" },
-  BIRTHDAY: { label: "Birthday", variant: "outline" },
-  EVENT: { label: "Event", variant: "default" },
-  POLICY: { label: "Policy", variant: "secondary" },
-};
+const typeConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> =
+  {
+    GENERAL: { label: "General", variant: "secondary" },
+    BIRTHDAY: { label: "Birthday", variant: "outline" },
+    EVENT: { label: "Event", variant: "default" },
+    POLICY: { label: "Policy", variant: "secondary" },
+  };
 
 const priorityConfig: Record<string, { label: string; className: string }> = {
   LOW: { label: "Low", className: "text-gray-500" },
@@ -90,9 +85,7 @@ export function AnnouncementsPanel() {
       setAnnouncements(data.announcements);
     } catch (error) {
       console.error("Error fetching announcements:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load announcements"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to load announcements");
       setAnnouncements([]);
     } finally {
       setIsLoading(false);
@@ -126,9 +119,7 @@ export function AnnouncementsPanel() {
       fetchAnnouncements();
     } catch (error) {
       console.error("Error deleting announcement:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete announcement"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to delete announcement");
     } finally {
       setIsDeleting(false);
       setDeleteConfirmId(null);
@@ -158,9 +149,7 @@ export function AnnouncementsPanel() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Manage Announcements</CardTitle>
-            <CardDescription>
-              Create, edit, and delete company announcements
-            </CardDescription>
+            <CardDescription>Create, edit, and delete company announcements</CardDescription>
           </div>
           <Button onClick={() => setIsFormOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -195,8 +184,10 @@ export function AnnouncementsPanel() {
               <TableBody>
                 {announcements.map((announcement) => {
                   const typeInfo = typeConfig[announcement.type] || typeConfig.GENERAL;
-                  const priorityInfo = priorityConfig[announcement.priority] || priorityConfig.NORMAL;
-                  const isExpired = announcement.expiresAt && new Date(announcement.expiresAt) < new Date();
+                  const priorityInfo =
+                    priorityConfig[announcement.priority] || priorityConfig.NORMAL;
+                  const isExpired =
+                    announcement.expiresAt && new Date(announcement.expiresAt) < new Date();
 
                   return (
                     <TableRow key={announcement.id}>
@@ -206,17 +197,13 @@ export function AnnouncementsPanel() {
                       <TableCell>
                         <Badge variant={typeInfo.variant}>{typeInfo.label}</Badge>
                       </TableCell>
-                      <TableCell className={priorityInfo.className}>
-                        {priorityInfo.label}
-                      </TableCell>
+                      <TableCell className={priorityInfo.className}>{priorityInfo.label}</TableCell>
                       <TableCell>
                         {announcement.author.firstName} {announcement.author.lastName}
                       </TableCell>
                       <TableCell>{formatDate(announcement.createdAt)}</TableCell>
                       <TableCell>
-                        {announcement.expiresAt
-                          ? formatDate(announcement.expiresAt)
-                          : "Never"}
+                        {announcement.expiresAt ? formatDate(announcement.expiresAt) : "Never"}
                       </TableCell>
                       <TableCell>
                         {!announcement.isActive ? (
@@ -276,8 +263,8 @@ export function AnnouncementsPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Announcement</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this announcement? This action will
-              hide it from all users.
+              Are you sure you want to delete this announcement? This action will hide it from all
+              users.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

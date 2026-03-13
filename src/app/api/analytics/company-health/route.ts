@@ -25,10 +25,7 @@ export async function GET() {
     }
 
     if (!canViewAnalytics(session.user.role as Role)) {
-      return NextResponse.json(
-        { error: "Analytics access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Analytics access required" }, { status: 403 });
     }
 
     const rateCheck = generalLimiter.check(`analytics-health:${session.user.id}`);
@@ -52,7 +49,13 @@ export async function GET() {
     const [aggregates, scoredCount] = await Promise.all([
       prisma.productivityScore.aggregate({
         where: scoreFilter,
-        _avg: { composite: true, output: true, quality: true, reliability: true, consistency: true },
+        _avg: {
+          composite: true,
+          output: true,
+          quality: true,
+          reliability: true,
+          consistency: true,
+        },
       }),
       prisma.productivityScore.count({ where: scoreFilter }),
     ]);
@@ -60,8 +63,15 @@ export async function GET() {
     if (scoredCount === 0) {
       return NextResponse.json({
         companyScore: {
-          composite: 0, output: 0, quality: 0, reliability: 0, consistency: 0,
-          band: "critical", change: 0, scoredCount: 0, totalEmployees,
+          composite: 0,
+          output: 0,
+          quality: 0,
+          reliability: 0,
+          consistency: 0,
+          band: "critical",
+          change: 0,
+          scoredCount: 0,
+          totalEmployees,
         },
         distribution: { thriving: 0, healthy: 0, atRisk: 0, critical: 0 },
         alerts: { atRiskCount: 0, biggestMover: null, unscorableCount: totalEmployees },
@@ -77,9 +87,7 @@ export async function GET() {
     };
 
     // DB-level distribution bucketing via raw SQL
-    const distributionRows = await prisma.$queryRaw<
-      { band: string; count: bigint }[]
-    >(Prisma.sql`
+    const distributionRows = await prisma.$queryRaw<{ band: string; count: bigint }[]>(Prisma.sql`
       SELECT
         CASE
           WHEN ps.composite >= ${THRIVING_THRESHOLD} THEN 'thriving'
@@ -165,9 +173,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET /api/analytics/company-health error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

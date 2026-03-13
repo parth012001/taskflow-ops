@@ -54,15 +54,31 @@ import { prisma } from "@/lib/prisma";
 import { mutationLimiter } from "@/lib/rate-limit";
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-const mockDeptFindMany = prisma.department.findMany as jest.MockedFunction<typeof prisma.department.findMany>;
-const mockDeptFindFirst = prisma.department.findFirst as jest.MockedFunction<typeof prisma.department.findFirst>;
-const mockDeptFindUnique = prisma.department.findUnique as jest.MockedFunction<typeof prisma.department.findUnique>;
-const mockDeptCount = prisma.department.count as jest.MockedFunction<typeof prisma.department.count>;
-const mockDeptCreate = prisma.department.create as jest.MockedFunction<typeof prisma.department.create>;
-const mockDeptUpdate = prisma.department.update as jest.MockedFunction<typeof prisma.department.update>;
-const mockUserFindUnique = prisma.user.findUnique as jest.MockedFunction<typeof prisma.user.findUnique>;
+const mockDeptFindMany = prisma.department.findMany as jest.MockedFunction<
+  typeof prisma.department.findMany
+>;
+const mockDeptFindFirst = prisma.department.findFirst as jest.MockedFunction<
+  typeof prisma.department.findFirst
+>;
+const mockDeptFindUnique = prisma.department.findUnique as jest.MockedFunction<
+  typeof prisma.department.findUnique
+>;
+const mockDeptCount = prisma.department.count as jest.MockedFunction<
+  typeof prisma.department.count
+>;
+const mockDeptCreate = prisma.department.create as jest.MockedFunction<
+  typeof prisma.department.create
+>;
+const mockDeptUpdate = prisma.department.update as jest.MockedFunction<
+  typeof prisma.department.update
+>;
+const mockUserFindUnique = prisma.user.findUnique as jest.MockedFunction<
+  typeof prisma.user.findUnique
+>;
 const mockUserCount = prisma.user.count as jest.MockedFunction<typeof prisma.user.count>;
-const mockRateLimitCheck = mutationLimiter.check as jest.MockedFunction<typeof mutationLimiter.check>;
+const mockRateLimitCheck = mutationLimiter.check as jest.MockedFunction<
+  typeof mutationLimiter.check
+>;
 
 const mockAdminSession = {
   user: {
@@ -220,9 +236,7 @@ describe("POST /api/admin/departments", () => {
   it("should create department with all fields", async () => {
     mockGetServerSession.mockResolvedValue(mockAdminSession as any);
     // First call: name uniqueness check, second call: head already heading check
-    mockDeptFindFirst
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null);
+    mockDeptFindFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
     mockUserFindUnique.mockResolvedValue({
       id: "head-1",
       isActive: true,
@@ -316,9 +330,7 @@ describe("POST /api/admin/departments", () => {
     mockGetServerSession.mockResolvedValue(mockAdminSession as any);
     // First call: name uniqueness check returns null
     // Second call: head already heading another dept
-    mockDeptFindFirst
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockDepartment as any);
+    mockDeptFindFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(mockDepartment as any);
     mockUserFindUnique.mockResolvedValue({
       id: "head-1",
       isActive: true,

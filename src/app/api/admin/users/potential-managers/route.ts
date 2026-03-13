@@ -12,10 +12,7 @@ export async function GET() {
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     // Get users with role MANAGER, DEPARTMENT_HEAD, or ADMIN
@@ -43,9 +40,6 @@ export async function GET() {
     return NextResponse.json({ managers });
   } catch (error) {
     console.error("GET /api/admin/users/potential-managers error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

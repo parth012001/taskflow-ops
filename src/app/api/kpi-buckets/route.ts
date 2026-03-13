@@ -54,9 +54,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(kpiBuckets);
   } catch (error) {
     console.error("GET /api/kpi-buckets error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -1,10 +1,4 @@
-import {
-  Role,
-  TaskStatus,
-  TaskPriority,
-  TaskSize,
-  AssignedByType,
-} from "@prisma/client";
+import { Role, TaskStatus, TaskPriority, TaskSize, AssignedByType } from "@prisma/client";
 
 export const mockUsers = {
   employee: {

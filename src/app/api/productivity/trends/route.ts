@@ -18,10 +18,7 @@ export async function GET(request: NextRequest) {
 
     if (!parsed.success) {
       console.warn("Validation error:", parsed.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { userId, weeks } = parsed.data;
@@ -34,10 +31,7 @@ export async function GET(request: NextRequest) {
     // Access control
     if (targetUserId !== viewerId) {
       if (!isManagerOrAbove(viewerRole)) {
-        return NextResponse.json(
-          { error: "Access denied" },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 
       if (viewerRole === "MANAGER") {
@@ -46,30 +40,21 @@ export async function GET(request: NextRequest) {
           select: { id: true },
         });
         if (!subordinate) {
-          return NextResponse.json(
-            { error: "Access denied" },
-            { status: 403 }
-          );
+          return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
       }
 
       // Department heads can only see users in their department
       if (viewerRole === "DEPARTMENT_HEAD") {
         if (!session.user.departmentId) {
-          return NextResponse.json(
-            { error: "Access denied" },
-            { status: 403 }
-          );
+          return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
         const deptUser = await prisma.user.findFirst({
           where: { id: targetUserId, departmentId: session.user.departmentId },
           select: { id: true },
         });
         if (!deptUser) {
-          return NextResponse.json(
-            { error: "Access denied" },
-            { status: 403 }
-          );
+          return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
       }
     }
@@ -105,9 +90,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/productivity/trends error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

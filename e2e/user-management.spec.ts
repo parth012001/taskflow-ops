@@ -31,12 +31,18 @@ test.describe("User Management (Admin)", () => {
     await dialog.getByLabel(/Last Name/i).fill("TestUser");
 
     // Select role - it might already default to Employee
-    const roleSelect = dialog.locator("button").filter({ hasText: /Employee|Select role/i }).first();
+    const roleSelect = dialog
+      .locator("button")
+      .filter({ hasText: /Employee|Select role/i })
+      .first();
     await roleSelect.click();
     await page.getByRole("option", { name: "Employee" }).click();
 
     // Select department - defaults to "No department"
-    await dialog.locator("button").filter({ hasText: /No department/i }).click();
+    await dialog
+      .locator("button")
+      .filter({ hasText: /No department/i })
+      .click();
     await page.getByRole("option").first().click();
 
     // Submit
@@ -55,7 +61,10 @@ test.describe("User Management (Admin)", () => {
     await expect(page.locator("table tbody tr").first()).toBeVisible();
 
     // Click the edit button on the first row
-    const editBtn = page.locator("table tbody tr").first().getByRole("button", { name: "Edit user" });
+    const editBtn = page
+      .locator("table tbody tr")
+      .first()
+      .getByRole("button", { name: "Edit user" });
     await editBtn.click();
 
     // Dialog should appear
@@ -63,7 +72,10 @@ test.describe("User Management (Admin)", () => {
     await expect(dialog).toBeVisible();
 
     // Change the role via select
-    const roleSelect = dialog.locator("button").filter({ hasText: /Employee|Manager|Dept Head/i }).first();
+    const roleSelect = dialog
+      .locator("button")
+      .filter({ hasText: /Employee|Manager|Dept Head/i })
+      .first();
     if (await roleSelect.isVisible()) {
       await roleSelect.click();
       await page.getByRole("option", { name: "Manager" }).click();
@@ -82,7 +94,10 @@ test.describe("User Management (Admin)", () => {
     await expect(page.locator("table tbody tr").first()).toBeVisible();
 
     // Click deactivate button on a row
-    const deactivateBtn = page.locator("table tbody tr").last().getByRole("button", { name: "Deactivate" });
+    const deactivateBtn = page
+      .locator("table tbody tr")
+      .last()
+      .getByRole("button", { name: "Deactivate" });
     await deactivateBtn.click();
 
     // Confirm in alert dialog

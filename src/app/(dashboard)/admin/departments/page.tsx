@@ -24,9 +24,7 @@ export default function DepartmentsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Departments</h1>
-        <p className="text-sm text-gray-500">
-          Create and manage departments for your organization
-        </p>
+        <p className="text-sm text-gray-500">Create and manage departments for your organization</p>
       </div>
 
       <DepartmentsPanel />

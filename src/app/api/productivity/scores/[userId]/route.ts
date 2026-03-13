@@ -24,10 +24,7 @@ export async function GET(
     // Self access is always allowed
     if (viewerId !== userId) {
       if (!isManagerOrAbove(viewerRole)) {
-        return NextResponse.json(
-          { error: "Access denied" },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 
       // Managers can only see subordinates
@@ -37,30 +34,21 @@ export async function GET(
           select: { id: true },
         });
         if (!subordinate) {
-          return NextResponse.json(
-            { error: "Access denied" },
-            { status: 403 }
-          );
+          return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
       }
 
       // Department heads can only see users in their department
       if (viewerRole === "DEPARTMENT_HEAD") {
         if (!session.user.departmentId) {
-          return NextResponse.json(
-            { error: "Access denied" },
-            { status: 403 }
-          );
+          return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
         const deptUser = await prisma.user.findFirst({
           where: { id: userId, departmentId: session.user.departmentId },
           select: { id: true },
         });
         if (!deptUser) {
-          return NextResponse.json(
-            { error: "Access denied" },
-            { status: 403 }
-          );
+          return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
       }
     }
@@ -90,9 +78,6 @@ export async function GET(
     return NextResponse.json(result);
   } catch (error) {
     console.error("GET /api/productivity/scores/[userId] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -98,9 +98,7 @@ export function CarryForwardModal({
             <ArrowRight className="h-5 w-5 text-indigo-600" />
             Carry Forward Task
           </DialogTitle>
-          <DialogDescription>
-            Move this task to a new deadline with a reason.
-          </DialogDescription>
+          <DialogDescription>Move this task to a new deadline with a reason.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -139,9 +137,7 @@ export function CarryForwardModal({
               minLength={10}
               maxLength={500}
             />
-            <p className="text-xs text-gray-500">
-              {reason.length}/500 characters (min 10)
-            </p>
+            <p className="text-xs text-gray-500">{reason.length}/500 characters (min 10)</p>
           </div>
 
           <DialogFooter>

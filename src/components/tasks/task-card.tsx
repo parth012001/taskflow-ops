@@ -4,7 +4,16 @@ import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TaskStatus, TaskPriority, TaskSize, Role } from "@prisma/client";
-import { Calendar, Clock, MessageSquare, Paperclip, User, Pause, RotateCcw, AlertCircle } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MessageSquare,
+  Paperclip,
+  User,
+  Pause,
+  RotateCcw,
+  AlertCircle,
+} from "lucide-react";
 import { getStatusColor } from "@/lib/utils/task-state-machine";
 import { cn } from "@/lib/utils";
 import { getStatusBadge } from "@/lib/utils/kanban-columns";
@@ -62,7 +71,11 @@ const sizeConfig: Record<TaskSize, { label: string; color: string }> = {
   DIFFICULT: { label: "L", color: "bg-purple-100 text-purple-700" },
 };
 
-function formatDeadline(deadline: string | Date): { text: string; isOverdue: boolean; isDueSoon: boolean } {
+function formatDeadline(deadline: string | Date): {
+  text: string;
+  isOverdue: boolean;
+  isDueSoon: boolean;
+} {
   const date = new Date(deadline);
   const now = new Date();
   const diff = date.getTime() - now.getTime();
@@ -85,7 +98,13 @@ function formatDeadline(deadline: string | Date): { text: string; isOverdue: boo
   }
 }
 
-export function TaskCard({ task, onClick, isDragging, quickActionContext, onQuickAction }: TaskCardProps) {
+export function TaskCard({
+  task,
+  onClick,
+  isDragging,
+  quickActionContext,
+  onQuickAction,
+}: TaskCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const {
     attributes,
@@ -107,7 +126,8 @@ export function TaskCard({ task, onClick, isDragging, quickActionContext, onQuic
   const statusColors = getStatusColor(task.status);
   const statusBadge = getStatusBadge(task.status);
 
-  const showQuickActions = isHovered && quickActionContext && onQuickAction && !isDragging && !isSortableDragging;
+  const showQuickActions =
+    isHovered && quickActionContext && onQuickAction && !isDragging && !isSortableDragging;
   const isOwner = quickActionContext?.currentUserId === task.owner.id;
 
   const handleQuickAction = (toStatus: TaskStatus, requiresReason: boolean) => {
@@ -168,15 +188,11 @@ export function TaskCard({ task, onClick, isDragging, quickActionContext, onQuic
       </div>
 
       {/* Title */}
-      <h4 className="font-medium text-sm text-gray-900 line-clamp-2 mb-2">
-        {task.title}
-      </h4>
+      <h4 className="font-medium text-sm text-gray-900 line-clamp-2 mb-2">{task.title}</h4>
 
       {/* Description preview */}
       {task.description && (
-        <p className="text-xs text-gray-500 line-clamp-2 mb-2">
-          {task.description}
-        </p>
+        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{task.description}</p>
       )}
 
       {/* Meta info */}

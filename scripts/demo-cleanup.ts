@@ -27,13 +27,23 @@ async function main() {
   const taskIds = demoTasks.map((t) => t.id);
 
   if (taskIds.length > 0) {
-    const delHistory = await prisma.taskStatusHistory.deleteMany({ where: { taskId: { in: taskIds } } });
+    const delHistory = await prisma.taskStatusHistory.deleteMany({
+      where: { taskId: { in: taskIds } },
+    });
     const delComments = await prisma.taskComment.deleteMany({ where: { taskId: { in: taskIds } } });
-    const delAttachments = await prisma.taskAttachment.deleteMany({ where: { taskId: { in: taskIds } } });
-    const delCarryForward = await prisma.carryForwardLog.deleteMany({ where: { taskId: { in: taskIds } } });
-    const delSessionTasks = await prisma.dailySessionTask.deleteMany({ where: { taskId: { in: taskIds } } });
+    const delAttachments = await prisma.taskAttachment.deleteMany({
+      where: { taskId: { in: taskIds } },
+    });
+    const delCarryForward = await prisma.carryForwardLog.deleteMany({
+      where: { taskId: { in: taskIds } },
+    });
+    const delSessionTasks = await prisma.dailySessionTask.deleteMany({
+      where: { taskId: { in: taskIds } },
+    });
     const delTasks = await prisma.task.deleteMany({ where: { id: { in: taskIds } } });
-    console.log(`Deleted ${delTasks.count} demo tasks (+ ${delHistory.count} history, ${delComments.count} comments, ${delAttachments.count} attachments, ${delCarryForward.count} carry-forwards, ${delSessionTasks.count} session tasks)`);
+    console.log(
+      `Deleted ${delTasks.count} demo tasks (+ ${delHistory.count} history, ${delComments.count} comments, ${delAttachments.count} attachments, ${delCarryForward.count} carry-forwards, ${delSessionTasks.count} session tasks)`
+    );
   } else {
     console.log("No demo tasks found.");
   }
@@ -48,5 +58,8 @@ async function main() {
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
   .finally(() => prisma.$disconnect());

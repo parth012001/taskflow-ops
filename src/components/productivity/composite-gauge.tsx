@@ -12,13 +12,16 @@ function getGaugeColor(score: number) {
 }
 
 export function CompositeGauge({ score, size = 120 }: CompositeGaugeProps) {
-  const radius = (size / 2) - 8;
+  const radius = size / 2 - 8;
   const circumference = 2 * Math.PI * radius;
   const percentage = Math.min(Math.max(score, 0), 100);
   const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <svg className="transform -rotate-90" width={size} height={size}>
         <circle
           cx={size / 2}

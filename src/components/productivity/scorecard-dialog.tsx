@@ -2,12 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { authFetch } from "@/lib/auth-fetch";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { CompositeGauge } from "./composite-gauge";
 import { PillarCard } from "./pillar-card";
@@ -80,9 +75,7 @@ export function ScorecardDialog({
               {roleLabels[userRole] || userRole}
             </Badge>
             {userDepartment && (
-              <span className="text-sm font-normal text-gray-500">
-                {userDepartment}
-              </span>
+              <span className="text-sm font-normal text-gray-500">{userDepartment}</span>
             )}
           </DialogTitle>
         </DialogHeader>
@@ -98,9 +91,7 @@ export function ScorecardDialog({
               <CompositeGauge score={result.composite} />
               <div>
                 <p className="text-sm text-gray-500">Composite Score</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {Math.round(result.composite)}
-                </p>
+                <p className="text-3xl font-bold text-gray-900">{Math.round(result.composite)}</p>
                 <p className="text-sm text-gray-500 mt-1">
                   Based on {result.meta.completedTaskCount} tasks in the last 28 days
                 </p>
@@ -114,7 +105,10 @@ export function ScorecardDialog({
                 score={result.output}
                 color="blue"
                 stats={[
-                  { label: "Points", value: `${result.meta.totalPoints}/${result.meta.targetPoints} pts` },
+                  {
+                    label: "Points",
+                    value: `${result.meta.totalPoints}/${result.meta.targetPoints} pts`,
+                  },
                   { label: "Completed", value: `${result.meta.completedTaskCount} tasks` },
                 ]}
               />
@@ -123,7 +117,10 @@ export function ScorecardDialog({
                 score={result.quality}
                 color="green"
                 stats={[
-                  { label: "First-pass", value: `${result.meta.firstPassCount}/${result.meta.reviewedTaskCount}` },
+                  {
+                    label: "First-pass",
+                    value: `${result.meta.firstPassCount}/${result.meta.reviewedTaskCount}`,
+                  },
                   { label: "Review ratio", value: `${Math.round(result.meta.reviewRatio * 100)}%` },
                 ]}
               />
@@ -132,7 +129,10 @@ export function ScorecardDialog({
                 score={result.reliability}
                 color="purple"
                 stats={[
-                  { label: "On-time", value: `${result.meta.onTimeCount}/${result.meta.totalWithDeadline}` },
+                  {
+                    label: "On-time",
+                    value: `${result.meta.onTimeCount}/${result.meta.totalWithDeadline}`,
+                  },
                   { label: "Carry-forwards", value: `${result.meta.carryForwardTotal}` },
                 ]}
               />
@@ -141,8 +141,14 @@ export function ScorecardDialog({
                 score={result.consistency}
                 color="amber"
                 stats={[
-                  { label: "Planned days", value: `${result.meta.plannedDays}/${result.meta.totalWorkdays}` },
-                  { label: "KPI spread", value: `${result.meta.activeKpiBuckets}/${result.meta.assignedKpiBuckets}` },
+                  {
+                    label: "Planned days",
+                    value: `${result.meta.plannedDays}/${result.meta.totalWorkdays}`,
+                  },
+                  {
+                    label: "KPI spread",
+                    value: `${result.meta.activeKpiBuckets}/${result.meta.assignedKpiBuckets}`,
+                  },
                 ]}
               />
             </div>
@@ -154,9 +160,7 @@ export function ScorecardDialog({
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 text-sm text-gray-500">
-            Unable to load score data
-          </div>
+          <div className="text-center py-12 text-sm text-gray-500">Unable to load score data</div>
         )}
       </DialogContent>
     </Dialog>

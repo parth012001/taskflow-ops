@@ -15,10 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!isManagerOrAbove(session.user.role as Role)) {
-      return NextResponse.json(
-        { error: "Manager access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Manager access required" }, { status: 403 });
     }
 
     const rateCheck = generalLimiter.check(`scores:${session.user.id}`);
@@ -34,10 +31,7 @@ export async function GET(request: NextRequest) {
 
     if (!parsed.success) {
       console.warn("Validation error:", parsed.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { departmentId, role, sortBy, sortOrder, page, limit } = parsed.data;
@@ -57,10 +51,7 @@ export async function GET(request: NextRequest) {
       // Dept head always scoped to own department — ignore incoming departmentId
       const deptId = session.user.departmentId;
       if (!deptId) {
-        return NextResponse.json(
-          { error: "Department not assigned" },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: "Department not assigned" }, { status: 403 });
       }
       const deptUsers = await prisma.user.findMany({
         where: { departmentId: deptId },
@@ -150,9 +141,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/productivity/scores error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

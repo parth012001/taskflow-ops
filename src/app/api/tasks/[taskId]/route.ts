@@ -22,7 +22,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       where: { id: taskId, deletedAt: null },
       include: {
         owner: {
-          select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true, managerId: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatarUrl: true,
+            managerId: true,
+          },
         },
         assigner: {
           select: { id: true, firstName: true, lastName: true },
@@ -137,10 +144,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (!validatedData.success) {
       console.warn("Validation error:", validatedData.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const updateData: Record<string, unknown> = {};
@@ -242,9 +246,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
           },
         },
       }),
-      ...editHistoryEntries.map((entry) =>
-        prisma.taskEditHistory.create({ data: entry })
-      ),
+      ...editHistoryEntries.map((entry) => prisma.taskEditHistory.create({ data: entry })),
     ]);
 
     return NextResponse.json(updatedTask);

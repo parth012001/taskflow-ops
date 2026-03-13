@@ -19,10 +19,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     // Parse query params
@@ -40,10 +37,7 @@ export async function GET(request: NextRequest) {
 
     if (!queryResult.success) {
       console.warn("Validation error:", queryResult.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { page, limit, search, role, departmentId, isActive, sortBy, sortOrder } =
@@ -108,9 +102,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       users: users.map((user) => ({
         ...user,
-        managerName: user.manager
-          ? `${user.manager.firstName} ${user.manager.lastName}`
-          : null,
+        managerName: user.manager ? `${user.manager.firstName} ${user.manager.lastName}` : null,
         subordinateCount: user._count.subordinates,
       })),
       pagination: {
@@ -122,10 +114,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/admin/users error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -138,10 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -149,14 +135,19 @@ export async function POST(request: NextRequest) {
 
     if (!validationResult.success) {
       console.warn("Validation error:", validationResult.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
-    const { email, firstName, lastName, role, departmentId, managerId, password, autoGeneratePassword } =
-      validationResult.data;
+    const {
+      email,
+      firstName,
+      lastName,
+      role,
+      departmentId,
+      managerId,
+      password,
+      autoGeneratePassword,
+    } = validationResult.data;
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
@@ -164,10 +155,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "A user with this email already exists" },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
     }
 
     // Validate managerId if provided
@@ -178,17 +166,11 @@ export async function POST(request: NextRequest) {
       });
 
       if (!manager) {
-        return NextResponse.json(
-          { error: "Manager not found" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Manager not found" }, { status: 400 });
       }
 
       if (!manager.isActive) {
-        return NextResponse.json(
-          { error: "Selected manager is inactive" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Selected manager is inactive" }, { status: 400 });
       }
 
       // Manager must be MANAGER or above
@@ -207,10 +189,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (!department) {
-        return NextResponse.json(
-          { error: "Department not found" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Department not found" }, { status: 400 });
       }
     }
 
@@ -257,9 +236,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("POST /api/admin/users error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

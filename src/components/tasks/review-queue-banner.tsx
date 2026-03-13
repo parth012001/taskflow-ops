@@ -35,9 +35,7 @@ export function ReviewQueueBanner({
           <p className="text-sm font-medium text-purple-900">
             {pendingCount} {pendingCount === 1 ? "task needs" : "tasks need"} your review
           </p>
-          <p className="text-xs text-purple-700">
-            Team members are waiting for your approval
-          </p>
+          <p className="text-xs text-purple-700">Team members are waiting for your approval</p>
         </div>
       </div>
       <button

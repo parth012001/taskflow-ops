@@ -82,7 +82,9 @@ import { prisma } from "@/lib/prisma";
 import { calculateAndSaveForAll, calculateForUser } from "@/lib/productivity/calculate";
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-const mockCalculateAndSaveForAll = calculateAndSaveForAll as jest.MockedFunction<typeof calculateAndSaveForAll>;
+const mockCalculateAndSaveForAll = calculateAndSaveForAll as jest.MockedFunction<
+  typeof calculateAndSaveForAll
+>;
 const mockCalculateForUser = calculateForUser as jest.MockedFunction<typeof calculateForUser>;
 
 function createMockRequest(
@@ -242,26 +244,19 @@ describe("Productivity Scoring API", () => {
   describe("GET /api/productivity/scores", () => {
     it("should return 401 when not authenticated", async () => {
       mockGetServerSession.mockResolvedValue(null);
-      const response = await getScores(
-        createMockRequest("/api/productivity/scores")
-      );
+      const response = await getScores(createMockRequest("/api/productivity/scores"));
       expect(response.status).toBe(401);
     });
 
     it("should return 403 for employees", async () => {
       mockGetServerSession.mockResolvedValue(mockEmployeeSession as any);
-      const response = await getScores(
-        createMockRequest("/api/productivity/scores")
-      );
+      const response = await getScores(createMockRequest("/api/productivity/scores"));
       expect(response.status).toBe(403);
     });
 
     it("should return scores for manager (subordinates only)", async () => {
       mockGetServerSession.mockResolvedValue(mockManagerSession as any);
-      (prisma.user.findMany as jest.Mock).mockResolvedValue([
-        { id: "emp-1" },
-        { id: "emp-2" },
-      ]);
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([{ id: "emp-1" }, { id: "emp-2" }]);
       (prisma.productivityScore.count as jest.Mock).mockResolvedValue(2);
       (prisma.productivityScore.findMany as jest.Mock).mockResolvedValue([
         {
@@ -282,9 +277,7 @@ describe("Productivity Scoring API", () => {
         },
       ]);
 
-      const response = await getScores(
-        createMockRequest("/api/productivity/scores")
-      );
+      const response = await getScores(createMockRequest("/api/productivity/scores"));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -314,9 +307,7 @@ describe("Productivity Scoring API", () => {
         },
       ]);
 
-      const response = await getScores(
-        createMockRequest("/api/productivity/scores")
-      );
+      const response = await getScores(createMockRequest("/api/productivity/scores"));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -329,9 +320,7 @@ describe("Productivity Scoring API", () => {
       (prisma.productivityScore.count as jest.Mock).mockResolvedValue(0);
       (prisma.productivityScore.findMany as jest.Mock).mockResolvedValue([]);
 
-      await getScores(
-        createMockRequest("/api/productivity/scores?sortBy=output&sortOrder=asc")
-      );
+      await getScores(createMockRequest("/api/productivity/scores?sortBy=output&sortOrder=asc"));
 
       expect(prisma.productivityScore.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -404,9 +393,7 @@ describe("Productivity Scoring API", () => {
       (prisma.productivityScore.count as jest.Mock).mockResolvedValue(0);
       (prisma.productivityScore.findMany as jest.Mock).mockResolvedValue([]);
 
-      await getScores(
-        createMockRequest("/api/productivity/scores?role=EMPLOYEE")
-      );
+      await getScores(createMockRequest("/api/productivity/scores?role=EMPLOYEE"));
 
       expect(prisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -422,19 +409,17 @@ describe("Productivity Scoring API", () => {
   describe("GET /api/productivity/scores/[userId]", () => {
     it("should return 401 when not authenticated", async () => {
       mockGetServerSession.mockResolvedValue(null);
-      const response = await getScoreByUser(
-        createMockRequest("/api/productivity/scores/emp-1"),
-        { params: Promise.resolve({ userId: "emp-1" }) }
-      );
+      const response = await getScoreByUser(createMockRequest("/api/productivity/scores/emp-1"), {
+        params: Promise.resolve({ userId: "emp-1" }),
+      });
       expect(response.status).toBe(401);
     });
 
     it("should return 403 when employee views another employee", async () => {
       mockGetServerSession.mockResolvedValue(mockEmployeeSession as any);
-      const response = await getScoreByUser(
-        createMockRequest("/api/productivity/scores/emp-2"),
-        { params: Promise.resolve({ userId: "emp-2" }) }
-      );
+      const response = await getScoreByUser(createMockRequest("/api/productivity/scores/emp-2"), {
+        params: Promise.resolve({ userId: "emp-2" }),
+      });
       expect(response.status).toBe(403);
     });
 
@@ -446,10 +431,9 @@ describe("Productivity Scoring API", () => {
       });
       mockCalculateForUser.mockResolvedValue(mockProductivityResult as any);
 
-      const response = await getScoreByUser(
-        createMockRequest("/api/productivity/scores/emp-1"),
-        { params: Promise.resolve({ userId: "emp-1" }) }
-      );
+      const response = await getScoreByUser(createMockRequest("/api/productivity/scores/emp-1"), {
+        params: Promise.resolve({ userId: "emp-1" }),
+      });
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -466,10 +450,9 @@ describe("Productivity Scoring API", () => {
       });
       mockCalculateForUser.mockResolvedValue(mockProductivityResult as any);
 
-      const response = await getScoreByUser(
-        createMockRequest("/api/productivity/scores/emp-1"),
-        { params: Promise.resolve({ userId: "emp-1" }) }
-      );
+      const response = await getScoreByUser(createMockRequest("/api/productivity/scores/emp-1"), {
+        params: Promise.resolve({ userId: "emp-1" }),
+      });
 
       expect(response.status).toBe(200);
     });
@@ -494,10 +477,9 @@ describe("Productivity Scoring API", () => {
       });
       mockCalculateForUser.mockResolvedValue(mockProductivityResult as any);
 
-      const response = await getScoreByUser(
-        createMockRequest("/api/productivity/scores/emp-1"),
-        { params: Promise.resolve({ userId: "emp-1" }) }
-      );
+      const response = await getScoreByUser(createMockRequest("/api/productivity/scores/emp-1"), {
+        params: Promise.resolve({ userId: "emp-1" }),
+      });
 
       expect(response.status).toBe(200);
     });
@@ -523,10 +505,9 @@ describe("Productivity Scoring API", () => {
       });
       mockCalculateForUser.mockResolvedValue(mockProductivityResult as any);
 
-      const response = await getScoreByUser(
-        createMockRequest("/api/productivity/scores/emp-1"),
-        { params: Promise.resolve({ userId: "emp-1" }) }
-      );
+      const response = await getScoreByUser(createMockRequest("/api/productivity/scores/emp-1"), {
+        params: Promise.resolve({ userId: "emp-1" }),
+      });
 
       expect(response.status).toBe(200);
     });
@@ -576,10 +557,9 @@ describe("Productivity Scoring API", () => {
         },
       });
 
-      const response = await getScoreByUser(
-        createMockRequest("/api/productivity/scores/emp-1"),
-        { params: Promise.resolve({ userId: "emp-1" }) }
-      );
+      const response = await getScoreByUser(createMockRequest("/api/productivity/scores/emp-1"), {
+        params: Promise.resolve({ userId: "emp-1" }),
+      });
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -595,9 +575,7 @@ describe("Productivity Scoring API", () => {
   describe("GET /api/productivity/trends", () => {
     it("should return 401 when not authenticated", async () => {
       mockGetServerSession.mockResolvedValue(null);
-      const response = await getTrends(
-        createMockRequest("/api/productivity/trends")
-      );
+      const response = await getTrends(createMockRequest("/api/productivity/trends"));
       expect(response.status).toBe(401);
     });
 
@@ -605,9 +583,7 @@ describe("Productivity Scoring API", () => {
       mockGetServerSession.mockResolvedValue(mockEmployeeSession as any);
       (prisma.productivitySnapshot.findMany as jest.Mock).mockResolvedValue([]);
 
-      const response = await getTrends(
-        createMockRequest("/api/productivity/trends")
-      );
+      const response = await getTrends(createMockRequest("/api/productivity/trends"));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -635,9 +611,7 @@ describe("Productivity Scoring API", () => {
         },
       ]);
 
-      const response = await getTrends(
-        createMockRequest("/api/productivity/trends")
-      );
+      const response = await getTrends(createMockRequest("/api/productivity/trends"));
       const data = await response.json();
 
       expect(response.status).toBe(200);

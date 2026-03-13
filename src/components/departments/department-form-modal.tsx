@@ -110,9 +110,7 @@ export function DepartmentFormModal({
     setIsSubmitting(true);
 
     try {
-      const url = isEditing
-        ? `/api/admin/departments/${department.id}`
-        : "/api/admin/departments";
+      const url = isEditing ? `/api/admin/departments/${department.id}` : "/api/admin/departments";
       const method = isEditing ? "PATCH" : "POST";
 
       const body: Record<string, unknown> = {
@@ -133,17 +131,13 @@ export function DepartmentFormModal({
       }
 
       toast.success(
-        isEditing
-          ? "Department updated successfully"
-          : "Department created successfully"
+        isEditing ? "Department updated successfully" : "Department created successfully"
       );
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving department:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save department"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to save department");
     } finally {
       setIsSubmitting(false);
     }
@@ -153,13 +147,9 @@ export function DepartmentFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit Department" : "Create Department"}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Department" : "Create Department"}</DialogTitle>
           {!isEditing && (
-            <DialogDescription>
-              Add a new department to your organization.
-            </DialogDescription>
+            <DialogDescription>Add a new department to your organization.</DialogDescription>
           )}
         </DialogHeader>
 
@@ -214,17 +204,11 @@ export function DepartmentFormModal({
             </div>
 
             <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isEditing ? "Update" : "Create Department"}
               </Button>
             </DialogFooter>

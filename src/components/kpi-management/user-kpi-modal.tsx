@@ -83,9 +83,7 @@ export function UserKpiModal({
 
       // Set all applicable KPIs
       kpiBuckets.forEach((bucket) => {
-        const existing = user.assignedKpis.find(
-          (a) => a.kpiBucketId === bucket.id
-        );
+        const existing = user.assignedKpis.find((a) => a.kpiBucketId === bucket.id);
 
         initialAssignments.set(bucket.id, {
           kpiBucketId: bucket.id,
@@ -101,13 +99,13 @@ export function UserKpiModal({
   }, [open, user, kpiBuckets]);
 
   // Separate applicable and non-applicable KPIs
-  const applicableKpis = useMemo(() =>
-    kpiBuckets.filter((bucket) => bucket.applicableRoles.includes(user.role)),
+  const applicableKpis = useMemo(
+    () => kpiBuckets.filter((bucket) => bucket.applicableRoles.includes(user.role)),
     [kpiBuckets, user.role]
   );
 
-  const nonApplicableKpis = useMemo(() =>
-    kpiBuckets.filter((bucket) => !bucket.applicableRoles.includes(user.role)),
+  const nonApplicableKpis = useMemo(
+    () => kpiBuckets.filter((bucket) => !bucket.applicableRoles.includes(user.role)),
     [kpiBuckets, user.role]
   );
 
@@ -118,21 +116,15 @@ export function UserKpiModal({
     let updated = 0;
 
     assignments.forEach((assignment) => {
-      const wasAssigned = user.assignedKpis.some(
-        (a) => a.kpiBucketId === assignment.kpiBucketId
-      );
+      const wasAssigned = user.assignedKpis.some((a) => a.kpiBucketId === assignment.kpiBucketId);
 
       if (assignment.isAssigned && !wasAssigned) {
         added++;
       } else if (!assignment.isAssigned && wasAssigned) {
         removed++;
       } else if (assignment.isAssigned && wasAssigned) {
-        const original = user.assignedKpis.find(
-          (a) => a.kpiBucketId === assignment.kpiBucketId
-        );
-        const newTarget = assignment.targetValue
-          ? parseFloat(assignment.targetValue)
-          : null;
+        const original = user.assignedKpis.find((a) => a.kpiBucketId === assignment.kpiBucketId);
+        const newTarget = assignment.targetValue ? parseFloat(assignment.targetValue) : null;
         if (original && original.targetValue !== newTarget) {
           updated++;
         }
@@ -211,9 +203,7 @@ export function UserKpiModal({
       const operations: Operation[] = [];
 
       assignments.forEach((assignment) => {
-        const wasAssigned = user.assignedKpis.some(
-          (a) => a.kpiBucketId === assignment.kpiBucketId
-        );
+        const wasAssigned = user.assignedKpis.some((a) => a.kpiBucketId === assignment.kpiBucketId);
         const bucket = kpiBuckets.find((b) => b.id === assignment.kpiBucketId);
         const bucketName = bucket?.name || assignment.kpiBucketId;
 
@@ -248,12 +238,8 @@ export function UserKpiModal({
           });
         } else if (assignment.isAssigned && wasAssigned && assignment.userKpiId) {
           // Check if target changed
-          const original = user.assignedKpis.find(
-            (a) => a.kpiBucketId === assignment.kpiBucketId
-          );
-          const newTarget = assignment.targetValue
-            ? parseFloat(assignment.targetValue)
-            : null;
+          const original = user.assignedKpis.find((a) => a.kpiBucketId === assignment.kpiBucketId);
+          const newTarget = assignment.targetValue ? parseFloat(assignment.targetValue) : null;
           if (original && original.targetValue !== newTarget) {
             operations.push({
               type: "update",
@@ -299,9 +285,7 @@ export function UserKpiModal({
         (r): r is PromiseFulfilledResult<{ operation: Operation; response: Response }> =>
           r.status === "fulfilled"
       );
-      const failed = results.filter(
-        (r): r is PromiseRejectedResult => r.status === "rejected"
-      );
+      const failed = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
 
       // Report results to user
       if (failed.length === 0) {
@@ -312,9 +296,7 @@ export function UserKpiModal({
       } else if (succeeded.length === 0) {
         // All failed
         const firstError = failed[0].reason;
-        toast.error(
-          firstError instanceof Error ? firstError.message : "All operations failed"
-        );
+        toast.error(firstError instanceof Error ? firstError.message : "All operations failed");
         // Still refresh to show current state
         onSuccess();
       } else {
@@ -323,13 +305,10 @@ export function UserKpiModal({
           .map((f) => (f.reason instanceof Error ? f.reason.message : "Unknown error"))
           .slice(0, 3); // Limit to first 3 errors
 
-        toast.warning(
-          `Partial update: ${succeeded.length} succeeded, ${failed.length} failed`,
-          {
-            description: failedMessages.join("; ") + (failed.length > 3 ? "..." : ""),
-            duration: 6000,
-          }
-        );
+        toast.warning(`Partial update: ${succeeded.length} succeeded, ${failed.length} failed`, {
+          description: failedMessages.join("; ") + (failed.length > 3 ? "..." : ""),
+          duration: 6000,
+        });
         // Refresh to show actual state - crucial for partial success
         onSuccess();
         // Keep modal open so user can retry failed operations
@@ -337,9 +316,7 @@ export function UserKpiModal({
     } catch (error) {
       // Unexpected error (network failure, etc.)
       console.error("Error saving KPI assignments:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save changes"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to save changes");
       // Refresh in case any operations succeeded before the error
       onSuccess();
     } finally {
@@ -357,13 +334,9 @@ export function UserKpiModal({
           </DialogTitle>
           <DialogDescription asChild>
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant="outline">
-                {roleLabels[user.role]}
-              </Badge>
+              <Badge variant="outline">{roleLabels[user.role]}</Badge>
               {user.department && (
-                <span className="text-sm text-muted-foreground">
-                  {user.department.name}
-                </span>
+                <span className="text-sm text-muted-foreground">{user.department.name}</span>
               )}
             </div>
           </DialogDescription>
@@ -464,9 +437,7 @@ export function UserKpiModal({
                               step="0.01"
                               placeholder="--"
                               value={assignment?.targetValue || ""}
-                              onChange={(e) =>
-                                handleTargetChange(bucket.id, e.target.value)
-                              }
+                              onChange={(e) => handleTargetChange(bucket.id, e.target.value)}
                               className="h-8 w-20 text-sm"
                             />
                           </>
@@ -494,9 +465,7 @@ export function UserKpiModal({
                 ) : (
                   <ChevronRight className="h-4 w-4" />
                 )}
-                <span className="font-medium">
-                  Not Applicable ({nonApplicableKpis.length})
-                </span>
+                <span className="font-medium">Not Applicable ({nonApplicableKpis.length})</span>
               </button>
               {showNonApplicable && (
                 <div className="space-y-2 mt-3">
@@ -505,11 +474,7 @@ export function UserKpiModal({
                       key={bucket.id}
                       className="flex items-center gap-4 p-3 border rounded-lg bg-muted/30 opacity-60"
                     >
-                      <input
-                        type="checkbox"
-                        disabled
-                        className="h-4 w-4 rounded border-gray-300"
-                      />
+                      <input type="checkbox" disabled className="h-4 w-4 rounded border-gray-300" />
                       <span className="text-sm text-muted-foreground">{bucket.name}</span>
                     </div>
                   ))}
@@ -538,11 +503,7 @@ export function UserKpiModal({
           )}
 
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>

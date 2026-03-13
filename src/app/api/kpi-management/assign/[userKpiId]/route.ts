@@ -30,10 +30,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!userKpi) {
-      return NextResponse.json(
-        { error: "KPI assignment not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "KPI assignment not found" }, { status: 404 });
     }
 
     const body = await request.json();
@@ -41,10 +38,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     if (!validationResult.success) {
       console.warn("Validation error:", validationResult.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { targetValue } = validationResult.data;
@@ -72,10 +66,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
   } catch (error) {
     console.error("PATCH /api/kpi-management/assign/[userKpiId] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -101,10 +92,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!userKpi) {
-      return NextResponse.json(
-        { error: "KPI assignment not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "KPI assignment not found" }, { status: 404 });
     }
 
     // Hard delete the assignment
@@ -115,9 +103,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ message: "KPI assignment removed successfully" });
   } catch (error) {
     console.error("DELETE /api/kpi-management/assign/[userKpiId] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

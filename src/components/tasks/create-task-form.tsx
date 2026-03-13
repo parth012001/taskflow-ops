@@ -11,11 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -104,7 +100,8 @@ export function CreateTaskForm({
   const deadlineMinute = useMemo(() => deadlineTime.split(":")[1] || "00", [deadlineTime]);
 
   const showReviewToggle = currentUserRole === Role.EMPLOYEE || currentUserRole === Role.MANAGER;
-  const skipReviewByDefault = currentUserRole === Role.DEPARTMENT_HEAD || currentUserRole === Role.ADMIN;
+  const skipReviewByDefault =
+    currentUserRole === Role.DEPARTMENT_HEAD || currentUserRole === Role.ADMIN;
 
   const {
     register,
@@ -168,14 +165,8 @@ export function CreateTaskForm({
             {/* Title */}
             <div className="space-y-1.5">
               <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                {...register("title")}
-                placeholder="Enter task title"
-              />
-              {errors.title && (
-                <p className="text-sm text-red-500">{errors.title.message}</p>
-              )}
+              <Input id="title" {...register("title")} placeholder="Enter task title" />
+              {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
             </div>
 
             {/* Description */}
@@ -218,7 +209,9 @@ export function CreateTaskForm({
                 <Label>Assign To</Label>
                 <Select
                   value={watch("assigneeId") || "self"}
-                  onValueChange={(value) => setValue("assigneeId", value === "self" ? undefined : value)}
+                  onValueChange={(value) =>
+                    setValue("assigneeId", value === "self" ? undefined : value)
+                  }
                 >
                   <SelectTrigger>
                     <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -268,7 +261,9 @@ export function CreateTaskForm({
                     {availableReviewers.length > 0 && (
                       <Select
                         value={watch("reviewerId") || "auto"}
-                        onValueChange={(value) => setValue("reviewerId", value === "auto" ? undefined : value)}
+                        onValueChange={(value) =>
+                          setValue("reviewerId", value === "auto" ? undefined : value)
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Auto (your manager)" />
@@ -277,7 +272,8 @@ export function CreateTaskForm({
                           <SelectItem value="auto">Auto (your manager)</SelectItem>
                           {availableReviewers.map((reviewer) => (
                             <SelectItem key={reviewer.id} value={reviewer.id}>
-                              {reviewer.firstName} {reviewer.lastName} ({reviewer.role === Role.DEPARTMENT_HEAD ? "Dept Head" : "Admin"})
+                              {reviewer.firstName} {reviewer.lastName} (
+                              {reviewer.role === Role.DEPARTMENT_HEAD ? "Dept Head" : "Admin"})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -432,11 +428,7 @@ export function CreateTaskForm({
           </div>
 
           <DialogFooter className="border-t px-6 py-4 mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>

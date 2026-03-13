@@ -24,34 +24,34 @@ This document provides a complete picture of how the Kanban board works in TaskF
 
 ### Core Components
 
-| File | Purpose |
-|------|---------|
-| `src/app/(dashboard)/tasks/page.tsx` | Main tasks page, orchestrates everything |
-| `src/components/tasks/kanban-board.tsx` | Kanban board with drag-drop |
-| `src/components/tasks/kanban-column.tsx` | Individual status column |
-| `src/components/tasks/task-card.tsx` | Draggable task card |
-| `src/components/tasks/task-detail-modal.tsx` | Full task details view |
-| `src/components/tasks/create-task-form.tsx` | Task creation dialog |
+| File                                         | Purpose                                  |
+| -------------------------------------------- | ---------------------------------------- |
+| `src/app/(dashboard)/tasks/page.tsx`         | Main tasks page, orchestrates everything |
+| `src/components/tasks/kanban-board.tsx`      | Kanban board with drag-drop              |
+| `src/components/tasks/kanban-column.tsx`     | Individual status column                 |
+| `src/components/tasks/task-card.tsx`         | Draggable task card                      |
+| `src/components/tasks/task-detail-modal.tsx` | Full task details view                   |
+| `src/components/tasks/create-task-form.tsx`  | Task creation dialog                     |
 
 ### API Routes
 
-| Route | Methods | Purpose |
-|-------|---------|---------|
-| `/api/tasks` | GET, POST | List tasks, create task |
-| `/api/tasks/[taskId]` | GET, PUT, DELETE | Single task CRUD |
-| `/api/tasks/[taskId]/transition` | POST | Status changes |
-| `/api/tasks/[taskId]/comments` | GET, POST | Task comments |
-| `/api/tasks/[taskId]/reassign` | POST | Reassign to different user |
-| `/api/tasks/[taskId]/carry-forward` | POST | Extend deadline |
-| `/api/tasks/assignees` | GET | Get users you can assign to |
+| Route                               | Methods          | Purpose                     |
+| ----------------------------------- | ---------------- | --------------------------- |
+| `/api/tasks`                        | GET, POST        | List tasks, create task     |
+| `/api/tasks/[taskId]`               | GET, PUT, DELETE | Single task CRUD            |
+| `/api/tasks/[taskId]/transition`    | POST             | Status changes              |
+| `/api/tasks/[taskId]/comments`      | GET, POST        | Task comments               |
+| `/api/tasks/[taskId]/reassign`      | POST             | Reassign to different user  |
+| `/api/tasks/[taskId]/carry-forward` | POST             | Extend deadline             |
+| `/api/tasks/assignees`              | GET              | Get users you can assign to |
 
 ### Business Logic
 
-| File | Purpose |
-|------|---------|
+| File                                  | Purpose                     |
+| ------------------------------------- | --------------------------- |
 | `src/lib/utils/task-state-machine.ts` | Transition validation rules |
-| `src/lib/utils/permissions.ts` | Role-based access control |
-| `src/lib/validations/task.ts` | Zod schemas |
+| `src/lib/utils/permissions.ts`        | Role-based access control   |
+| `src/lib/validations/task.ts`         | Zod schemas                 |
 
 ---
 
@@ -87,7 +87,7 @@ enum TaskStatus {
   ON_HOLD = "ON_HOLD",
   COMPLETED_PENDING_REVIEW = "COMPLETED_PENDING_REVIEW",
   REOPENED = "REOPENED",
-  CLOSED_APPROVED = "CLOSED_APPROVED"
+  CLOSED_APPROVED = "CLOSED_APPROVED",
 }
 ```
 
@@ -98,7 +98,7 @@ enum TaskPriority {
   URGENT_IMPORTANT = "URGENT_IMPORTANT",
   URGENT_NOT_IMPORTANT = "URGENT_NOT_IMPORTANT",
   NOT_URGENT_IMPORTANT = "NOT_URGENT_IMPORTANT",
-  NOT_URGENT_NOT_IMPORTANT = "NOT_URGENT_NOT_IMPORTANT"
+  NOT_URGENT_NOT_IMPORTANT = "NOT_URGENT_NOT_IMPORTANT",
 }
 ```
 
@@ -108,7 +108,7 @@ enum TaskPriority {
 enum TaskSize {
   EASY = "EASY",
   MEDIUM = "MEDIUM",
-  DIFFICULT = "DIFFICULT"
+  DIFFICULT = "DIFFICULT",
 }
 ```
 
@@ -138,17 +138,17 @@ enum TaskSize {
 
 ### Transition Rules
 
-| From | To | Who Can Do It | Requires Reason |
-|------|----|---------------|-----------------|
-| NEW | ACCEPTED | Task owner only | No |
-| NEW | IN_PROGRESS | Task owner only | No |
-| ACCEPTED | IN_PROGRESS | Task owner only | No |
-| IN_PROGRESS | ON_HOLD | Task owner only | **Yes** (min 10 chars) |
-| ON_HOLD | IN_PROGRESS | Task owner only | No |
-| IN_PROGRESS | COMPLETED_PENDING_REVIEW | Task owner only | No |
-| COMPLETED_PENDING_REVIEW | CLOSED_APPROVED | Manager+ of owner | No |
-| COMPLETED_PENDING_REVIEW | REOPENED | Manager+ of owner | **Yes** (min 10 chars) |
-| REOPENED | IN_PROGRESS | Task owner only | No |
+| From                     | To                       | Who Can Do It     | Requires Reason        |
+| ------------------------ | ------------------------ | ----------------- | ---------------------- |
+| NEW                      | ACCEPTED                 | Task owner only   | No                     |
+| NEW                      | IN_PROGRESS              | Task owner only   | No                     |
+| ACCEPTED                 | IN_PROGRESS              | Task owner only   | No                     |
+| IN_PROGRESS              | ON_HOLD                  | Task owner only   | **Yes** (min 10 chars) |
+| ON_HOLD                  | IN_PROGRESS              | Task owner only   | No                     |
+| IN_PROGRESS              | COMPLETED_PENDING_REVIEW | Task owner only   | No                     |
+| COMPLETED_PENDING_REVIEW | CLOSED_APPROVED          | Manager+ of owner | No                     |
+| COMPLETED_PENDING_REVIEW | REOPENED                 | Manager+ of owner | **Yes** (min 10 chars) |
+| REOPENED                 | IN_PROGRESS              | Task owner only   | No                     |
 
 ### Key Behaviors
 
@@ -169,39 +169,42 @@ EMPLOYEE → MANAGER → DEPARTMENT_HEAD → ADMIN
 
 ### Task Visibility
 
-| Role | Can See |
-|------|---------|
-| Employee | Only their own tasks |
-| Manager | Own tasks + direct subordinates' tasks |
-| Department Head | All tasks in their department |
-| Admin | All tasks in the system |
+| Role            | Can See                                |
+| --------------- | -------------------------------------- |
+| Employee        | Only their own tasks                   |
+| Manager         | Own tasks + direct subordinates' tasks |
+| Department Head | All tasks in their department          |
+| Admin           | All tasks in the system                |
 
 ### Task Actions by Role
 
-| Action | Employee | Manager | Dept Head | Admin |
-|--------|:--------:|:-------:|:---------:|:-----:|
-| Create task | ✓ | ✓ | ✓ | ✓ |
-| View own tasks | ✓ | ✓ | ✓ | ✓ |
-| View team tasks | ✗ | ✓ | ✓ | ✓ |
-| Edit own tasks | ✓ | ✓ | ✓ | ✓ |
-| Assign to others | ✗ | ✓ (subordinates) | ✓ (dept) | ✓ (any) |
-| Approve/Reject tasks | ✗ | ✓ (subordinates) | ✓ (dept) | ✓ (any) |
-| Delete tasks | ✗ | ✗ | ✗ | ✓ |
-| Reassign tasks | ✗ | ✓ (subordinates) | ✓ (dept) | ✓ (any) |
+| Action               | Employee |     Manager      | Dept Head |  Admin  |
+| -------------------- | :------: | :--------------: | :-------: | :-----: |
+| Create task          |    ✓     |        ✓         |     ✓     |    ✓    |
+| View own tasks       |    ✓     |        ✓         |     ✓     |    ✓    |
+| View team tasks      |    ✗     |        ✓         |     ✓     |    ✓    |
+| Edit own tasks       |    ✓     |        ✓         |     ✓     |    ✓    |
+| Assign to others     |    ✗     | ✓ (subordinates) | ✓ (dept)  | ✓ (any) |
+| Approve/Reject tasks |    ✗     | ✓ (subordinates) | ✓ (dept)  | ✓ (any) |
+| Delete tasks         |    ✗     |        ✗         |     ✗     |    ✓    |
+| Reassign tasks       |    ✗     | ✓ (subordinates) | ✓ (dept)  | ✓ (any) |
 
 ### Scoping Rules
 
 **Managers:**
+
 - Can only assign tasks to their direct subordinates
 - Can only approve/reject their subordinates' tasks
 - Cannot see tasks of users outside their reporting chain
 
 **Department Heads:**
+
 - Can assign to anyone in their department
 - Can approve/reject any task within their department
 - Full visibility within department only
 
 **Admins:**
+
 - No restrictions - full access to everything
 
 ---
@@ -210,19 +213,20 @@ EMPLOYEE → MANAGER → DEPARTMENT_HEAD → ADMIN
 
 ### Column Order (Left to Right)
 
-| # | Column | Status Value | Label Shown |
-|---|--------|--------------|-------------|
-| 1 | NEW | `NEW` | "New" |
-| 2 | ACCEPTED | `ACCEPTED` | "Accepted" |
-| 3 | IN_PROGRESS | `IN_PROGRESS` | "In Progress" |
-| 4 | ON_HOLD | `ON_HOLD` | "On Hold" |
-| 5 | COMPLETED_PENDING_REVIEW | `COMPLETED_PENDING_REVIEW` | "Pending Review" |
-| 6 | REOPENED | `REOPENED` | "Reopened" |
-| 7 | CLOSED_APPROVED | `CLOSED_APPROVED` | "Completed" |
+| #   | Column                   | Status Value               | Label Shown      |
+| --- | ------------------------ | -------------------------- | ---------------- |
+| 1   | NEW                      | `NEW`                      | "New"            |
+| 2   | ACCEPTED                 | `ACCEPTED`                 | "Accepted"       |
+| 3   | IN_PROGRESS              | `IN_PROGRESS`              | "In Progress"    |
+| 4   | ON_HOLD                  | `ON_HOLD`                  | "On Hold"        |
+| 5   | COMPLETED_PENDING_REVIEW | `COMPLETED_PENDING_REVIEW` | "Pending Review" |
+| 6   | REOPENED                 | `REOPENED`                 | "Reopened"       |
+| 7   | CLOSED_APPROVED          | `CLOSED_APPROVED`          | "Completed"      |
 
 ### Task Card Display
 
 Each card shows:
+
 - Title
 - Priority badge (color-coded)
 - Size indicator
@@ -237,6 +241,7 @@ Each card shows:
 ### Technology
 
 Uses `@dnd-kit` library:
+
 - `DndContext` - Wrapper for drag-drop functionality
 - `DragOverlay` - Renders preview while dragging
 - `useDroppable()` - Makes columns accept drops
@@ -276,9 +281,9 @@ CLOSED_APPROVED → [] (no drops allowed - terminal)
 
 These cannot be done via drag-drop:
 
-| Transition | Reason |
-|------------|--------|
-| IN_PROGRESS → ON_HOLD | Requires `onHoldReason` |
+| Transition                          | Reason                     |
+| ----------------------------------- | -------------------------- |
+| IN_PROGRESS → ON_HOLD               | Requires `onHoldReason`    |
 | COMPLETED_PENDING_REVIEW → REOPENED | Requires `rejectionReason` |
 
 User must click the task card, open the detail modal, and use the action button there.
@@ -303,14 +308,14 @@ const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null);
 
 ### Data Fetching Strategy
 
-| Action | Strategy |
-|--------|----------|
-| Initial load | Fetch tasks, KPI buckets, assignable users |
-| Search | Debounced (300ms) API call with query param |
-| Task creation | POST → add to local state |
-| Task transition | Optimistic update → POST → revert on error |
-| Task deletion | DELETE → remove from local state |
-| Modal close | Refetch all tasks (in case of changes) |
+| Action          | Strategy                                    |
+| --------------- | ------------------------------------------- |
+| Initial load    | Fetch tasks, KPI buckets, assignable users  |
+| Search          | Debounced (300ms) API call with query param |
+| Task creation   | POST → add to local state                   |
+| Task transition | Optimistic update → POST → revert on error  |
+| Task deletion   | DELETE → remove from local state            |
+| Modal close     | Refetch all tasks (in case of changes)      |
 
 ### Optimistic Updates
 
@@ -342,6 +347,7 @@ if (!response.ok) {
 Returns tasks filtered by user's role/permissions.
 
 **Query Parameters:**
+
 - `search` - Search in title/description
 - `status` - Filter by status
 - `priority` - Filter by priority
@@ -357,6 +363,7 @@ Returns tasks filtered by user's role/permissions.
 Create a new task.
 
 **Required Fields:**
+
 - `title` (3-200 chars)
 - `priority` (TaskPriority enum)
 - `size` (TaskSize enum)
@@ -369,6 +376,7 @@ Create a new task.
 Change task status.
 
 **Body:**
+
 ```json
 {
   "toStatus": "IN_PROGRESS",
@@ -381,6 +389,7 @@ Change task status.
 Reassign task to different user.
 
 **Body:**
+
 ```json
 {
   "newOwnerId": "user-uuid",
@@ -393,6 +402,7 @@ Reassign task to different user.
 Extend deadline.
 
 **Body:**
+
 ```json
 {
   "newDeadline": "2024-01-20T00:00:00Z",
@@ -455,13 +465,13 @@ Extend deadline.
 
 ### Notifications Sent
 
-| Event | Recipients |
-|-------|------------|
-| Task submitted for review | Owner's manager |
-| Task approved | Task owner |
-| Task reopened | Task owner |
-| Task reassigned | Old owner, new owner |
-| Comment added | Task owner |
+| Event                     | Recipients           |
+| ------------------------- | -------------------- |
+| Task submitted for review | Owner's manager      |
+| Task approved             | Task owner           |
+| Task reopened             | Task owner           |
+| Task reassigned           | Old owner, new owner |
+| Comment added             | Task owner           |
 
 ---
 
@@ -509,6 +519,7 @@ Based on the architecture analysis, here are potential areas causing confusion:
 ## Summary
 
 The Kanban board is a full-featured implementation with:
+
 - 7 status columns
 - Role-based access control
 - Drag-and-drop with validation

@@ -13,10 +13,7 @@ export async function GET() {
 
     // Only ADMIN can access KPI management
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Only Admin can manage KPIs" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Only Admin can manage KPIs" }, { status: 403 });
     }
 
     // Fetch all active users except the current admin
@@ -52,11 +49,7 @@ export async function GET() {
           },
         },
       },
-      orderBy: [
-        { role: "asc" },
-        { firstName: "asc" },
-        { lastName: "asc" },
-      ],
+      orderBy: [{ role: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
     });
 
     // Transform the data to match expected response shape
@@ -79,9 +72,6 @@ export async function GET() {
     return NextResponse.json({ users: transformedUsers });
   } catch (error) {
     console.error("GET /api/kpi-management/users error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

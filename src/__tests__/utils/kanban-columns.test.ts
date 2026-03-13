@@ -134,7 +134,10 @@ describe("Kanban Columns Utility", () => {
     it("should return valid targets for IN_PROGRESS status (review ON, default)", () => {
       const targets = getValidDropTargets(TaskStatus.IN_PROGRESS);
       expect(targets).toContainEqual({ status: TaskStatus.ON_HOLD, requiresReason: true });
-      expect(targets).toContainEqual({ status: TaskStatus.COMPLETED_PENDING_REVIEW, requiresReason: false });
+      expect(targets).toContainEqual({
+        status: TaskStatus.COMPLETED_PENDING_REVIEW,
+        requiresReason: false,
+      });
       expect(targets).toContainEqual({ status: TaskStatus.ACCEPTED, requiresReason: false }); // backward
     });
 

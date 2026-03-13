@@ -98,9 +98,7 @@ describe("QuickActions", () => {
     });
 
     it("should show Reopen action for CLOSED_APPROVED when owner", () => {
-      render(
-        <QuickActions {...defaultProps} currentStatus={TaskStatus.CLOSED_APPROVED} />
-      );
+      render(<QuickActions {...defaultProps} currentStatus={TaskStatus.CLOSED_APPROVED} />);
 
       expect(screen.getByTitle("Reopen")).toBeInTheDocument();
     });

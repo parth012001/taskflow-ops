@@ -126,9 +126,7 @@ describe("Analytics - Company Health Response Shape", () => {
     expect(response.companyScore).toHaveProperty("totalEmployees");
 
     // Validate band is valid
-    expect(["thriving", "healthy", "atRisk", "critical"]).toContain(
-      response.companyScore.band
-    );
+    expect(["thriving", "healthy", "atRisk", "critical"]).toContain(response.companyScore.band);
 
     // Validate distribution
     expect(response.distribution).toHaveProperty("thriving");
@@ -150,8 +148,8 @@ describe("Analytics - Company Health Response Shape", () => {
     expect(response.alerts).toHaveProperty("unscorableCount");
 
     // unscorable + scored should equal total
-    expect(
-      response.companyScore.scoredCount + response.alerts.unscorableCount
-    ).toBe(response.companyScore.totalEmployees);
+    expect(response.companyScore.scoredCount + response.alerts.unscorableCount).toBe(
+      response.companyScore.totalEmployees
+    );
   });
 });

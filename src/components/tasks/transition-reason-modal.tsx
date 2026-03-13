@@ -112,9 +112,7 @@ export function TransitionReasonModal({
             <Icon className={`h-5 w-5 ${config.iconColor}`} />
             {config.title}
           </DialogTitle>
-          <DialogDescription>
-            {config.description}
-          </DialogDescription>
+          <DialogDescription>{config.description}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -144,12 +142,7 @@ export function TransitionReasonModal({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button

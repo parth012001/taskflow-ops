@@ -6,13 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 function LoginForm() {
   const router = useRouter();
@@ -64,9 +58,7 @@ function LoginForm() {
   return (
     <Card>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">
-          TaskFlow
-        </CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">TaskFlow</CardTitle>
         <CardDescription className="text-center">
           Sign in to your account to continue
         </CardDescription>
@@ -123,13 +115,15 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <Card>
-        <CardContent className="p-8 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-        </CardContent>
-      </Card>
-    }>
+    <Suspense
+      fallback={
+        <Card>
+          <CardContent className="p-8 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+          </CardContent>
+        </Card>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

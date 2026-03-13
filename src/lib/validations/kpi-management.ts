@@ -13,9 +13,7 @@ export const createKpiBucketSchema = z.object({
     .max(500, "Description must be less than 500 characters")
     .optional()
     .nullable(),
-  applicableRoles: z
-    .array(roleEnum)
-    .min(1, "At least one role must be selected"),
+  applicableRoles: z.array(roleEnum).min(1, "At least one role must be selected"),
 });
 
 // For updating an existing KPI bucket

@@ -34,9 +34,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(reviewers);
   } catch (error) {
     console.error("GET /api/tasks/reviewers error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

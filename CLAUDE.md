@@ -5,11 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ### Development
+
 - `npm run dev` — Start Next.js dev server
 - `npm run build` — Production build (includes Prisma generation)
 - `npm run lint` — ESLint
 
 ### Testing
+
 - `npm test` — Run all Jest tests once
 - `npm run test:watch` — Jest watch mode
 - `npm run test:coverage` — Jest with coverage
@@ -18,6 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npx playwright test e2e/specific.spec.ts` — Single E2E spec
 
 ### Database (Prisma + PostgreSQL)
+
 - `npm run db:migrate` — Create and apply migration
 - `npm run db:push` — Push schema changes without migration files
 - `npm run db:seed` — Run base seed
@@ -30,6 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Next.js 16 App Router** with React 19, TypeScript (strict), PostgreSQL via Prisma 6.
 
 ### Route Groups
+
 - `src/app/(auth)/` — Login page with public layout
 - `src/app/(dashboard)/` — All protected pages (sidebar + header layout)
 - `src/app/api/` — API route handlers
@@ -41,6 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Tasks have size (EASY=1pt, MEDIUM=2pt, DIFFICULT=4pt), priority (Eisenhower matrix), and KPI bucket assignments.
 
 **Productivity Scoring** — Four-pillar system in `src/lib/productivity/`:
+
 - `scoring-engine.ts` — Pure scoring functions for Output, Quality, Reliability, Consistency
 - `fetch-scoring-data.ts` — Gathers all data needed for scoring
 - `calculate.ts` — Orchestrates scoring, persists results and weekly snapshots
@@ -50,6 +55,7 @@ Department-level weights are configured via `ScoringConfig`. Scores are persiste
 **Analytics** — Three endpoints (`/api/analytics/`) for company health, department comparison, and trends. Use DB-level aggregation (Prisma aggregate + raw SQL) for performance.
 
 ### Auth & Permissions
+
 - NextAuth.js with JWT strategy, credentials provider, 8-hour sessions
 - Four roles: `EMPLOYEE`, `MANAGER`, `DEPARTMENT_HEAD`, `ADMIN`
 - Permission checks in `src/lib/utils/permissions.ts` — role-based matrix with specific capabilities (canViewTask, canApproveTask, canViewAnalytics, etc.)
@@ -57,12 +63,14 @@ Department-level weights are configured via `ScoringConfig`. Scores are persiste
 - Rate limiting via in-memory sliding window (`src/lib/rate-limit.ts`): authLimiter (5/min), mutationLimiter (10/min), generalLimiter (100/min)
 
 ### Data Fetching Patterns
+
 - Server Components by default; `"use client"` for interactive features
 - `src/lib/auth-fetch.ts` — Fetch wrapper that handles 401 (auto sign-out), 403, 429 with toast notifications
 - Zod validation schemas in `src/lib/validations/` for both API input and form validation
 - Forms use React Hook Form + Zod resolvers
 
 ### UI Stack
+
 - shadcn/ui components (Radix UI primitives) in `src/components/ui/`
 - Tailwind CSS 4 with `cn()` utility from tailwind-merge
 - Recharts for data visualization, Lucide React for icons, Sonner for toasts
@@ -81,6 +89,5 @@ Department-level weights are configured via `ScoringConfig`. Scores are persiste
 - Transactions use `prisma.$transaction` with callback pattern (`async (tx) => { ... }`)
 - API routes validate with Zod, return `NextResponse.json()`
 - Band thresholds for health scores: Thriving ≥80, Healthy ≥60, At Risk ≥40, Critical <40
-
 
 Do not put Co-authored by Claude Code while writing the commit message

@@ -39,7 +39,13 @@ interface PendingTransition {
   toStatus: TaskStatus;
 }
 
-export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading, quickActionContext }: KanbanBoardProps) {
+export function KanbanBoard({
+  tasks,
+  onTaskMove,
+  onTaskClick,
+  isLoading,
+  quickActionContext,
+}: KanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<TaskCardData | null>(null);
   const [pendingTransition, setPendingTransition] = useState<PendingTransition | null>(null);
 
@@ -52,18 +58,24 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading, quickAc
   );
 
   // Group tasks by column (each column can have multiple statuses)
-  const tasksByColumn = COLUMN_ORDER.reduce((acc, columnId) => {
-    const columnStatuses = KANBAN_COLUMNS[columnId].statuses;
-    acc[columnId] = tasks.filter((task) => columnStatuses.includes(task.status));
-    return acc;
-  }, {} as Record<KanbanColumnId, TaskCardData[]>);
+  const tasksByColumn = COLUMN_ORDER.reduce(
+    (acc, columnId) => {
+      const columnStatuses = KANBAN_COLUMNS[columnId].statuses;
+      acc[columnId] = tasks.filter((task) => columnStatuses.includes(task.status));
+      return acc;
+    },
+    {} as Record<KanbanColumnId, TaskCardData[]>
+  );
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const task = tasks.find((t) => t.id === event.active.id);
-    if (task) {
-      setActiveTask(task);
-    }
-  }, [tasks]);
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const task = tasks.find((t) => t.id === event.active.id);
+      if (task) {
+        setActiveTask(task);
+      }
+    },
+    [tasks]
+  );
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
@@ -204,11 +216,7 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick, isLoading, quickAc
           ))}
         </div>
 
-        <DragOverlay>
-          {activeTask ? (
-            <TaskCard task={activeTask} isDragging />
-          ) : null}
-        </DragOverlay>
+        <DragOverlay>{activeTask ? <TaskCard task={activeTask} isDragging /> : null}</DragOverlay>
       </DndContext>
 
       {/* Transition Reason Modal */}

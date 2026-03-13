@@ -38,19 +38,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!kpiBucket) {
-      return NextResponse.json(
-        { error: "KPI bucket not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "KPI bucket not found" }, { status: 404 });
     }
 
     return NextResponse.json(kpiBucket);
   } catch (error) {
     console.error("GET /api/kpi-management/buckets/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -76,10 +70,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!kpiBucket) {
-      return NextResponse.json(
-        { error: "KPI bucket not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "KPI bucket not found" }, { status: 404 });
     }
 
     const body = await request.json();
@@ -87,10 +78,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     if (!validationResult.success) {
       console.warn("Validation error:", validationResult.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { name, description, applicableRoles, isActive } = validationResult.data;
@@ -130,10 +118,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(updatedKpiBucket);
   } catch (error) {
     console.error("PATCH /api/kpi-management/buckets/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -166,10 +151,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!kpiBucket) {
-      return NextResponse.json(
-        { error: "KPI bucket not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "KPI bucket not found" }, { status: 404 });
     }
 
     // Soft delete by setting isActive to false
@@ -181,9 +163,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ message: "KPI bucket deactivated successfully" });
   } catch (error) {
     console.error("DELETE /api/kpi-management/buckets/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

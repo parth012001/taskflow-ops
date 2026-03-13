@@ -25,7 +25,10 @@ async function createTask(page: Page, title: string) {
   await expect(dialog).toBeVisible();
 
   await dialog.locator("#title").fill(title);
-  await dialog.locator("button").filter({ hasText: /Select KPI bucket/i }).click();
+  await dialog
+    .locator("button")
+    .filter({ hasText: /Select KPI bucket/i })
+    .click();
   await page.getByRole("option").first().click();
 
   await dialog.getByRole("button", { name: /Pick date/i }).click();
@@ -39,7 +42,9 @@ async function createTask(page: Page, title: string) {
 async function expectTaskInColumn(page: Page, columnName: string, taskTitle: string) {
   const column = await getKanbanColumn(page, columnName);
   const titleRegex = new RegExp(escapeRegExp(taskTitle));
-  await expect(column.getByRole("heading", { name: titleRegex, level: 4 })).toBeVisible({ timeout: 5_000 });
+  await expect(column.getByRole("heading", { name: titleRegex, level: 4 })).toBeVisible({
+    timeout: 5_000,
+  });
 }
 
 async function resetSession(page: Page) {
@@ -73,7 +78,10 @@ test.describe("Task lifecycle", () => {
     await dialog.locator("#title").fill(`E2E Task ${Date.now()}`);
 
     // Select KPI bucket (first available)
-    await dialog.locator("button").filter({ hasText: /Select KPI bucket/i }).click();
+    await dialog
+      .locator("button")
+      .filter({ hasText: /Select KPI bucket/i })
+      .click();
     await page.getByRole("option").first().click();
 
     // Pick a deadline date — click the "Pick date & time" button
@@ -113,7 +121,9 @@ test.describe("Task lifecycle", () => {
     await expectTaskInColumn(page, "In Progress", title);
   });
 
-  test("Employee can complete a task (IN_PROGRESS → COMPLETED_PENDING_REVIEW)", async ({ page }) => {
+  test("Employee can complete a task (IN_PROGRESS → COMPLETED_PENDING_REVIEW)", async ({
+    page,
+  }) => {
     await loginAsRole(page, "employee4");
     await page.goto("/tasks");
 
@@ -145,7 +155,9 @@ test.describe("Task lifecycle", () => {
     await expectTaskInColumn(page, "In Review", title);
   });
 
-  test("Manager can approve a task (COMPLETED_PENDING_REVIEW → CLOSED_APPROVED)", async ({ page }) => {
+  test("Manager can approve a task (COMPLETED_PENDING_REVIEW → CLOSED_APPROVED)", async ({
+    page,
+  }) => {
     const title = `E2E Approve ${Date.now()}`;
 
     await loginAsRole(page, "employee4");

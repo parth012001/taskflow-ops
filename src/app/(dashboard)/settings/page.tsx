@@ -176,9 +176,7 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-3xl">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500">
-          Manage your account settings and preferences
-        </p>
+        <p className="text-sm text-gray-500">Manage your account settings and preferences</p>
       </div>
 
       {/* Force Password Change Alert */}
@@ -200,9 +198,7 @@ export default function SettingsPage() {
             <User className="h-5 w-5" />
             Profile Information
           </CardTitle>
-          <CardDescription>
-            Update your personal information
-          </CardDescription>
+          <CardDescription>Update your personal information</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleProfileSubmit} className="space-y-4">
@@ -265,17 +261,13 @@ export default function SettingsPage() {
             <Building className="h-5 w-5" />
             Organization
           </CardTitle>
-          <CardDescription>
-            Your organization details
-          </CardDescription>
+          <CardDescription>Your organization details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-gray-500">Department</Label>
-              <p className="font-medium">
-                {profile?.departmentName || "Not assigned"}
-              </p>
+              <p className="font-medium">{profile?.departmentName || "Not assigned"}</p>
             </div>
             <div>
               <Label className="text-gray-500">Reports To</Label>
@@ -329,9 +321,7 @@ export default function SettingsPage() {
             <Lock className="h-5 w-5" />
             Change Password
           </CardTitle>
-          <CardDescription>
-            Update your password to keep your account secure
-          </CardDescription>
+          <CardDescription>Update your password to keep your account secure</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -356,9 +346,7 @@ export default function SettingsPage() {
                 required
                 minLength={8}
               />
-              <p className="text-xs text-gray-500">
-                Must be at least 8 characters
-              </p>
+              <p className="text-xs text-gray-500">Must be at least 8 characters</p>
             </div>
 
             <div className="space-y-2">

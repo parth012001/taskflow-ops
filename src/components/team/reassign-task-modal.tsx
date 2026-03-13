@@ -116,17 +116,13 @@ export function ReassignTaskModal({
             <UserPlus className="h-5 w-5 text-indigo-600" />
             Reassign Task
           </DialogTitle>
-          <DialogDescription>
-            Transfer this task to another team member.
-          </DialogDescription>
+          <DialogDescription>Transfer this task to another team member.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="rounded-lg bg-gray-50 p-3">
             <p className="text-sm font-medium text-gray-900">{taskTitle}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              Currently assigned to: {currentOwnerName}
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Currently assigned to: {currentOwnerName}</p>
           </div>
 
           <div className="space-y-2">
@@ -134,9 +130,7 @@ export function ReassignTaskModal({
               Assign To <span className="text-red-500">*</span>
             </Label>
             {availableMembers.length === 0 ? (
-              <p className="text-sm text-gray-500">
-                No other team members available
-              </p>
+              <p className="text-sm text-gray-500">No other team members available</p>
             ) : (
               <Select value={newOwnerId} onValueChange={setNewOwnerId}>
                 <SelectTrigger>
@@ -167,9 +161,7 @@ export function ReassignTaskModal({
               minLength={10}
               maxLength={500}
             />
-            <p className="text-xs text-gray-500">
-              {reason.length}/500 characters (min 10)
-            </p>
+            <p className="text-xs text-gray-500">{reason.length}/500 characters (min 10)</p>
           </div>
 
           <div className="space-y-2">
@@ -183,24 +175,14 @@ export function ReassignTaskModal({
               value={newDeadline}
               onChange={(e) => setNewDeadline(e.target.value)}
             />
-            <p className="text-xs text-gray-500">
-              Leave empty to keep the current deadline
-            </p>
+            <p className="text-xs text-gray-500">Leave empty to keep the current deadline</p>
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || !newOwnerId || reason.length < 10}
-            >
+            <Button type="submit" disabled={isSubmitting || !newOwnerId || reason.length < 10}>
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Reassign Task
             </Button>

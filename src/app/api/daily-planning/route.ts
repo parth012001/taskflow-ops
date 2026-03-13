@@ -124,13 +124,14 @@ export async function POST(request: NextRequest) {
     // Prevent future date completions (streak gaming prevention)
     const now = new Date();
     const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const sessionDateUTC = new Date(Date.UTC(
-      parsedDate.getUTCFullYear(),
-      parsedDate.getUTCMonth(),
-      parsedDate.getUTCDate()
-    ));
+    const sessionDateUTC = new Date(
+      Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), parsedDate.getUTCDate())
+    );
     if (sessionDateUTC > todayUTC) {
-      return NextResponse.json({ error: "Cannot complete rituals for future dates" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Cannot complete rituals for future dates" },
+        { status: 400 }
+      );
     }
 
     const body = await request.json();
@@ -138,10 +139,7 @@ export async function POST(request: NextRequest) {
 
     if (!validatedData.success) {
       console.warn("Validation error:", validatedData.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { taskIds, morningCompleted, eveningCompleted, morningNotes, eveningNotes } =
@@ -248,11 +246,9 @@ export async function POST(request: NextRequest) {
         let lastActiveUTC: Date | null = null;
         if (userStreak.lastActiveDate) {
           const lastActive = new Date(userStreak.lastActiveDate);
-          lastActiveUTC = new Date(Date.UTC(
-            lastActive.getUTCFullYear(),
-            lastActive.getUTCMonth(),
-            lastActive.getUTCDate()
-          ));
+          lastActiveUTC = new Date(
+            Date.UTC(lastActive.getUTCFullYear(), lastActive.getUTCMonth(), lastActive.getUTCDate())
+          );
         }
 
         if (lastActiveUTC) {
@@ -266,10 +262,7 @@ export async function POST(request: NextRequest) {
               where: { userId: session.user.id },
               data: {
                 currentStreak: userStreak.currentStreak + 1,
-                longestStreak: Math.max(
-                  userStreak.longestStreak,
-                  userStreak.currentStreak + 1
-                ),
+                longestStreak: Math.max(userStreak.longestStreak, userStreak.currentStreak + 1),
                 lastActiveDate: sessionDateUTC,
               },
             });

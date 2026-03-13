@@ -41,71 +41,65 @@ export async function fetchScoringDataForUser(
   windowStart: Date,
   windowEnd: Date
 ): Promise<ScoringData> {
-  const [
-    completedTasks,
-    activeTasks,
-    carryForwards,
-    planningSessions,
-    userKpis,
-    scoringConfig,
-  ] = await Promise.all([
-    // Completed tasks in window
-    prisma.task.findMany({
-      where: {
-        ownerId: userId,
-        deletedAt: null,
-        status: TaskStatus.CLOSED_APPROVED,
-        completedAt: { gte: windowStart, lte: windowEnd },
-      },
-      select: taskSelect,
-    }),
-
-    // Truly active tasks — excludes NEW (not started) and CLOSED_APPROVED
-    // (already counted in completedTasks). The previous OR clause pulled
-    // completed tasks into this list, inflating the carry-forward denominator.
-    prisma.task.findMany({
-      where: {
-        ownerId: userId,
-        deletedAt: null,
-        createdAt: { lte: windowEnd },
-        status: {
-          notIn: [TaskStatus.NEW, TaskStatus.CLOSED_APPROVED],
+  const [completedTasks, activeTasks, carryForwards, planningSessions, userKpis, scoringConfig] =
+    await Promise.all([
+      // Completed tasks in window
+      prisma.task.findMany({
+        where: {
+          ownerId: userId,
+          deletedAt: null,
+          status: TaskStatus.CLOSED_APPROVED,
+          completedAt: { gte: windowStart, lte: windowEnd },
         },
-      },
-      select: taskSelect,
-    }),
+        select: taskSelect,
+      }),
 
-    // Carry-forward logs
-    prisma.carryForwardLog.findMany({
-      where: {
-        userId,
-        createdAt: { gte: windowStart, lte: windowEnd },
-      },
-      select: { taskId: true, userId: true, createdAt: true },
-    }),
+      // Truly active tasks — excludes NEW (not started) and CLOSED_APPROVED
+      // (already counted in completedTasks). The previous OR clause pulled
+      // completed tasks into this list, inflating the carry-forward denominator.
+      prisma.task.findMany({
+        where: {
+          ownerId: userId,
+          deletedAt: null,
+          createdAt: { lte: windowEnd },
+          status: {
+            notIn: [TaskStatus.NEW, TaskStatus.CLOSED_APPROVED],
+          },
+        },
+        select: taskSelect,
+      }),
 
-    // Daily planning sessions
-    prisma.dailyPlanningSession.findMany({
-      where: {
-        userId,
-        sessionDate: { gte: windowStart, lte: windowEnd },
-      },
-      select: { sessionDate: true, morningCompleted: true },
-    }),
+      // Carry-forward logs
+      prisma.carryForwardLog.findMany({
+        where: {
+          userId,
+          createdAt: { gte: windowStart, lte: windowEnd },
+        },
+        select: { taskId: true, userId: true, createdAt: true },
+      }),
 
-    // User KPI assignments
-    prisma.userKpi.findMany({
-      where: { userId },
-      select: { kpiBucketId: true },
-    }),
+      // Daily planning sessions
+      prisma.dailyPlanningSession.findMany({
+        where: {
+          userId,
+          sessionDate: { gte: windowStart, lte: windowEnd },
+        },
+        select: { sessionDate: true, morningCompleted: true },
+      }),
 
-    // Scoring config (by department)
-    departmentId
-      ? prisma.scoringConfig.findUnique({
-          where: { departmentId },
-        })
-      : null,
-  ]);
+      // User KPI assignments
+      prisma.userKpi.findMany({
+        where: { userId },
+        select: { kpiBucketId: true },
+      }),
+
+      // Scoring config (by department)
+      departmentId
+        ? prisma.scoringConfig.findUnique({
+            where: { departmentId },
+          })
+        : null,
+    ]);
 
   // Fetch status histories for completed tasks
   const completedTaskIds = completedTasks.map((t) => t.id);

@@ -103,10 +103,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (!validatedData.success) {
       console.warn("Validation error:", validatedData.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { content, parentId } = validatedData.data;

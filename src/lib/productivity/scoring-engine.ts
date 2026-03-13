@@ -161,16 +161,13 @@ export function calculateQualityScore(
   for (const task of reviewedTasks) {
     const history = historyByTask.get(task.id) || [];
     // Check if task was ever REOPENED between first COMPLETED_PENDING_REVIEW and final CLOSED_APPROVED
-    const hasReopenedInReview = history.some(
-      (h) => h.toStatus === TaskStatus.REOPENED
-    );
+    const hasReopenedInReview = history.some((h) => h.toStatus === TaskStatus.REOPENED);
     if (!hasReopenedInReview) {
       firstPassCount++;
     }
   }
 
-  const firstPassRate =
-    reviewedTasks.length > 0 ? firstPassCount / reviewedTasks.length : 1;
+  const firstPassRate = reviewedTasks.length > 0 ? firstPassCount / reviewedTasks.length : 1;
 
   // Reopen rate: for ALL completed tasks, check if ever REOPENED from CLOSED_APPROVED
   let reopenedCount = 0;
@@ -179,9 +176,7 @@ export function calculateQualityScore(
   for (const task of completedTasks) {
     const history = historyByTask.get(task.id) || [];
     const wasReopened = history.some(
-      (h) =>
-        h.fromStatus === TaskStatus.CLOSED_APPROVED &&
-        h.toStatus === TaskStatus.REOPENED
+      (h) => h.fromStatus === TaskStatus.CLOSED_APPROVED && h.toStatus === TaskStatus.REOPENED
     );
     if (wasReopened && !reopenedTaskIds.has(task.id)) {
       reopenedCount++;
@@ -228,9 +223,7 @@ export function calculateReliabilityScore(
   const carryForwardTotal = carryForwards.length;
   const activeTaskCount = activeTasks.length;
   const carryForwardScore =
-    activeTaskCount > 0
-      ? 1 - Math.min(1, carryForwardTotal / activeTaskCount)
-      : 1;
+    activeTaskCount > 0 ? 1 - Math.min(1, carryForwardTotal / activeTaskCount) : 1;
 
   const score = (onTimeRate * 0.65 + carryForwardScore * 0.35) * 100;
 
@@ -255,9 +248,7 @@ export function calculateConsistencyScore(
   const totalWorkdays = getWorkdayCount(windowStart, windowEnd);
 
   // Planning rate
-  const daysWithMorning = planningSessions.filter(
-    (s) => s.morningCompleted
-  ).length;
+  const daysWithMorning = planningSessions.filter((s) => s.morningCompleted).length;
   const planningRate = totalWorkdays > 0 ? daysWithMorning / totalWorkdays : 0;
 
   // KPI spread — when no KPIs are assigned, the metric is unmeasurable.
@@ -269,9 +260,7 @@ export function calculateConsistencyScore(
     kpiSpread = 0;
     score = planningRate * 100;
   } else {
-    const activeBucketIds = new Set(
-      completedTasks.map((t) => t.kpiBucketId)
-    );
+    const activeBucketIds = new Set(completedTasks.map((t) => t.kpiBucketId));
     kpiSpread = Math.min(1, activeBucketIds.size / assignedBuckets);
     score = (planningRate * 0.5 + kpiSpread * 0.5) * 100;
   }
@@ -287,10 +276,7 @@ export function calculateConsistencyScore(
 // Composite Score
 // ============================================
 
-export function calculateComposite(
-  pillars: PillarScores,
-  weights: ScoringWeights
-): number {
+export function calculateComposite(pillars: PillarScores, weights: ScoringWeights): number {
   const composite =
     pillars.output * weights.outputWeight +
     pillars.quality * weights.qualityWeight +

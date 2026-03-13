@@ -1,13 +1,7 @@
 "use client";
 
 import { Megaphone, Calendar, AlertCircle } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -28,12 +22,13 @@ interface AnnouncementsWidgetProps {
   maxItems?: number;
 }
 
-const typeConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
-  GENERAL: { label: "General", variant: "secondary" },
-  BIRTHDAY: { label: "Birthday", variant: "outline" },
-  EVENT: { label: "Event", variant: "default" },
-  POLICY: { label: "Policy", variant: "secondary" },
-};
+const typeConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> =
+  {
+    GENERAL: { label: "General", variant: "secondary" },
+    BIRTHDAY: { label: "Birthday", variant: "outline" },
+    EVENT: { label: "Event", variant: "default" },
+    POLICY: { label: "Policy", variant: "secondary" },
+  };
 
 function formatTimeAgo(dateString: Date | string): string {
   const date = new Date(dateString);
@@ -50,10 +45,7 @@ function formatTimeAgo(dateString: Date | string): string {
   return date.toLocaleDateString();
 }
 
-export function AnnouncementsWidget({
-  announcements,
-  maxItems = 3,
-}: AnnouncementsWidgetProps) {
+export function AnnouncementsWidget({ announcements, maxItems = 3 }: AnnouncementsWidgetProps) {
   const displayedAnnouncements = announcements.slice(0, maxItems);
 
   if (announcements.length === 0) {
@@ -83,9 +75,7 @@ export function AnnouncementsWidget({
                   key={announcement.id}
                   className={cn(
                     "p-3 rounded-lg border",
-                    isHighPriority
-                      ? "border-l-4 border-l-red-500 bg-red-50/50"
-                      : "bg-gray-50/50"
+                    isHighPriority ? "border-l-4 border-l-red-500 bg-red-50/50" : "bg-gray-50/50"
                   )}
                 >
                   <div className="flex items-start gap-2">
@@ -107,9 +97,7 @@ export function AnnouncementsWidget({
                       <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">
                         {announcement.content}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        — {announcement.author}
-                      </p>
+                      <p className="text-xs text-gray-400 mt-1">— {announcement.author}</p>
                     </div>
                   </div>
                 </div>

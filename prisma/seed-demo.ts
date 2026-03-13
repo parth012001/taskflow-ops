@@ -1,4 +1,11 @@
-import { PrismaClient, Role, TaskStatus, TaskPriority, TaskSize, AssignedByType } from "@prisma/client";
+import {
+  PrismaClient,
+  Role,
+  TaskStatus,
+  TaskPriority,
+  TaskSize,
+  AssignedByType,
+} from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -292,7 +299,8 @@ async function main() {
   const task1 = await prisma.task.create({
     data: {
       title: "Create PO for Office Supplies",
-      description: "Generate purchase order for Q1 office supplies including stationery and printer cartridges",
+      description:
+        "Generate purchase order for Q1 office supplies including stationery and printer cartridges",
       ownerId: employee1.id,
       assignerId: manager1.id,
       assignedByType: AssignedByType.MANAGER,
@@ -426,7 +434,8 @@ async function main() {
       estimatedMinutes: 120,
       actualMinutes: 90,
       deadline: tomorrow,
-      rejectionReason: "Report is missing vendor rating analysis and cost comparison section. Please add these and resubmit.",
+      rejectionReason:
+        "Report is missing vendor rating analysis and cost comparison section. Please add these and resubmit.",
     },
   });
 

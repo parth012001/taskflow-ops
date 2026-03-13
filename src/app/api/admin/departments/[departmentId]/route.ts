@@ -16,10 +16,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     const { departmentId } = await params;
@@ -43,20 +40,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!department || department.deletedAt) {
-      return NextResponse.json(
-        { error: "Department not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Department not found" }, { status: 404 });
     }
 
     const { deletedAt: _, ...result } = department;
     return NextResponse.json({ department: result });
   } catch (error) {
     console.error("GET /api/admin/departments/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -69,10 +60,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     const rateLimit = mutationLimiter.check(`dept:${session.user.id}`);
@@ -100,20 +88,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!existing || existing.deletedAt) {
-      return NextResponse.json(
-        { error: "Department not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Department not found" }, { status: 404 });
     }
 
     const { name, description, headId } = parsed.data;
 
     // Check if there are any fields to update
     if (name === undefined && description === undefined && headId === undefined) {
-      return NextResponse.json(
-        { error: "No fields to update" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
     // Check name uniqueness if name is being changed
@@ -187,10 +169,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ department });
   } catch (error) {
     console.error("PATCH /api/admin/departments/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -203,10 +182,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     const rateLimit = mutationLimiter.check(`dept:${session.user.id}`);
@@ -225,10 +201,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!department || department.deletedAt) {
-      return NextResponse.json(
-        { error: "Department not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Department not found" }, { status: 404 });
     }
 
     // Check for active users
@@ -254,9 +227,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ message: "Department deleted successfully" });
   } catch (error) {
     console.error("DELETE /api/admin/departments/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

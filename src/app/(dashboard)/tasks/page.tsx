@@ -68,29 +68,32 @@ export default function TasksPage() {
   } = useTaskFilters();
 
   // Fetch tasks - accepts optional search param to avoid stale closure
-  const fetchTasks = useCallback(async (search?: string, view?: ViewMode, filterParams?: URLSearchParams) => {
-    try {
-      const params = filterParams ?? toQueryParams();
-      if (search) params.set("search", search);
+  const fetchTasks = useCallback(
+    async (search?: string, view?: ViewMode, filterParams?: URLSearchParams) => {
+      try {
+        const params = filterParams ?? toQueryParams();
+        if (search) params.set("search", search);
 
-      // Apply view mode filter
-      const currentView = view ?? viewMode;
-      if (currentView === "my" && session?.user?.id) {
-        params.set("ownerId", session.user.id);
+        // Apply view mode filter
+        const currentView = view ?? viewMode;
+        if (currentView === "my" && session?.user?.id) {
+          params.set("ownerId", session.user.id);
+        }
+        // 'team' and 'all' views - API handles based on user role
+
+        const response = await fetch(`/api/tasks?${params.toString()}`);
+        if (!response.ok) throw new Error("Failed to fetch tasks");
+
+        const data = await response.json();
+        setTasks(data.tasks);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      } finally {
+        setIsLoading(false);
       }
-      // 'team' and 'all' views - API handles based on user role
-
-      const response = await fetch(`/api/tasks?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch tasks");
-
-      const data = await response.json();
-      setTasks(data.tasks);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [viewMode, session?.user?.id, toQueryParams]);
+    },
+    [viewMode, session?.user?.id, toQueryParams]
+  );
 
   // Fetch KPI buckets
   const fetchKpiBuckets = useCallback(async () => {
@@ -158,7 +161,13 @@ export default function TasksPage() {
     fetchAssignableUsers();
     fetchAvailableReviewers();
     fetchPendingReviewCount();
-  }, [fetchTasks, fetchKpiBuckets, fetchAssignableUsers, fetchAvailableReviewers, fetchPendingReviewCount]);
+  }, [
+    fetchTasks,
+    fetchKpiBuckets,
+    fetchAssignableUsers,
+    fetchAvailableReviewers,
+    fetchPendingReviewCount,
+  ]);
 
   // Debounced search - only runs on search query changes, not initial mount
   useEffect(() => {
@@ -174,14 +183,17 @@ export default function TasksPage() {
   }, [searchQuery, fetchTasks]);
 
   // Handle view mode changes
-  const handleViewChange = useCallback((view: ViewMode) => {
-    setViewMode(view);
-    setIsLoading(true);
-    if (view === "my") {
-      setOwnerIds([]);
-    }
-    fetchTasks(searchQuery, view);
-  }, [fetchTasks, searchQuery, setOwnerIds]);
+  const handleViewChange = useCallback(
+    (view: ViewMode) => {
+      setViewMode(view);
+      setIsLoading(true);
+      if (view === "my") {
+        setOwnerIds([]);
+      }
+      fetchTasks(searchQuery, view);
+    },
+    [fetchTasks, searchQuery, setOwnerIds]
+  );
 
   // Refetch when filters change
   useEffect(() => {
@@ -224,9 +236,7 @@ export default function TasksPage() {
   const handleTaskMove = async (taskId: string, newStatus: TaskStatus, reason?: string) => {
     // Optimistic update
     setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId ? { ...task, status: newStatus } : task
-      )
+      prev.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task))
     );
 
     try {
@@ -273,9 +283,7 @@ export default function TasksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-          <p className="text-sm text-gray-500">
-            Manage and track your tasks across all stages
-          </p>
+          <p className="text-sm text-gray-500">Manage and track your tasks across all stages</p>
         </div>
         <Button onClick={() => setShowCreateForm(true)}>
           <Plus className="w-4 h-4 mr-2" />
@@ -285,11 +293,7 @@ export default function TasksPage() {
 
       {/* View Tabs */}
       {userRole && (
-        <ViewTabs
-          role={userRole}
-          activeView={viewMode}
-          onViewChange={handleViewChange}
-        />
+        <ViewTabs role={userRole} activeView={viewMode} onViewChange={handleViewChange} />
       )}
 
       {/* Search */}

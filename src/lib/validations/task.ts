@@ -27,11 +27,7 @@ export const createTaskSchema = z.object({
   priority: z.nativeEnum(TaskPriority),
   size: z.nativeEnum(TaskSize),
   kpiBucketId: z.string().cuid("Invalid KPI bucket ID"),
-  estimatedMinutes: z
-    .number()
-    .int()
-    .min(5, "Minimum 5 minutes")
-    .max(480, "Maximum 8 hours"),
+  estimatedMinutes: z.number().int().min(5, "Minimum 5 minutes").max(480, "Maximum 8 hours"),
   deadline: datetimeLocalSchema,
   startDate: datetimeLocalSchema.optional(),
   assigneeId: z.string().cuid().optional(), // For managers assigning to subordinates

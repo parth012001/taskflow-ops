@@ -2,7 +2,15 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Check, CheckCheck, MessageSquare, FileCheck, RotateCcw, Loader2 } from "lucide-react";
+import {
+  Bell,
+  Check,
+  CheckCheck,
+  MessageSquare,
+  FileCheck,
+  RotateCcw,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,11 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface Notification {
@@ -100,9 +104,7 @@ export function NotificationDropdown() {
     if (!notification.isRead) {
       // Optimistically update UI
       setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notification.id ? { ...n, isRead: true } : n
-        )
+        prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
 
@@ -175,9 +177,7 @@ export function NotificationDropdown() {
             <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
           </div>
         ) : notifications.length === 0 ? (
-          <div className="py-8 text-center text-sm text-gray-500">
-            No notifications yet
-          </div>
+          <div className="py-8 text-center text-sm text-gray-500">No notifications yet</div>
         ) : (
           <ScrollArea className="h-80">
             {notifications.map((notification) => {
@@ -205,17 +205,12 @@ export function NotificationDropdown() {
                     <TooltipTrigger asChild>
                       <div className="flex-1 min-w-0">
                         <p
-                          className={cn(
-                            "text-sm truncate",
-                            !notification.isRead && "font-medium"
-                          )}
+                          className={cn("text-sm truncate", !notification.isRead && "font-medium")}
                         >
                           {notification.title || notification.message}
                         </p>
                         {notification.title && (
-                          <p className="text-xs text-gray-500 truncate">
-                            {notification.message}
-                          </p>
+                          <p className="text-xs text-gray-500 truncate">{notification.message}</p>
                         )}
                         <p className="text-xs text-gray-400 mt-0.5">
                           {formatTimeAgo(notification.createdAt)}

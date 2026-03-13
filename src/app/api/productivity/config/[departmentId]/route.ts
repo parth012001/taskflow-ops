@@ -16,10 +16,7 @@ export async function PATCH(
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
     const rateCheck = mutationLimiter.check(`config:${session.user.id}`);
@@ -39,10 +36,7 @@ export async function PATCH(
     });
 
     if (!department) {
-      return NextResponse.json(
-        { error: "Department not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Department not found" }, { status: 404 });
     }
 
     const body = await request.json();
@@ -50,10 +44,7 @@ export async function PATCH(
 
     if (!parsed.success) {
       console.warn("Validation error:", parsed.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const data = parsed.data;
@@ -83,13 +74,7 @@ export async function PATCH(
 
     return NextResponse.json({ config });
   } catch (error) {
-    console.error(
-      "PATCH /api/productivity/config/[departmentId] error:",
-      error
-    );
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("PATCH /api/productivity/config/[departmentId] error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

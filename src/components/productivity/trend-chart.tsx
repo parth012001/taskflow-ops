@@ -3,15 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { authFetch } from "@/lib/auth-fetch";
 import { format, parseISO } from "date-fns";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface TrendDataPoint {
   weekStartDate: string;
@@ -33,9 +25,7 @@ export function TrendChart({ userId }: TrendChartProps) {
   const fetchTrends = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await authFetch(
-        `/api/productivity/trends?userId=${userId}&weeks=12`
-      );
+      const response = await authFetch(`/api/productivity/trends?userId=${userId}&weeks=12`);
       if (response.ok) {
         const result = await response.json();
         setData(result.trends);
@@ -76,9 +66,7 @@ export function TrendChart({ userId }: TrendChartProps) {
           tick={{ fontSize: 12 }}
         />
         <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-        <Tooltip
-          labelFormatter={(value) => format(parseISO(String(value)), "MMM d, yyyy")}
-        />
+        <Tooltip labelFormatter={(value) => format(parseISO(String(value)), "MMM d, yyyy")} />
         <Legend />
         <Line
           type="monotone"

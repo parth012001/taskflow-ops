@@ -48,9 +48,7 @@ describe("ReviewQueueBanner", () => {
   });
 
   it("should apply custom className", () => {
-    const { container } = render(
-      <ReviewQueueBanner {...defaultProps} className="custom-class" />
-    );
+    const { container } = render(<ReviewQueueBanner {...defaultProps} className="custom-class" />);
 
     expect(container.firstChild).toHaveClass("custom-class");
   });

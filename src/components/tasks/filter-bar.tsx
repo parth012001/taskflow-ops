@@ -154,12 +154,7 @@ export function FilterBar({
                     onChange={() => onPriorityToggle(priority)}
                     className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <span
-                    className={cn(
-                      "w-2 h-2 rounded-full",
-                      PRIORITY_CONFIG[priority].color
-                    )}
-                  />
+                  <span className={cn("w-2 h-2 rounded-full", PRIORITY_CONFIG[priority].color)} />
                   <span className="text-sm">{PRIORITY_CONFIG[priority].label}</span>
                 </label>
               ))}
@@ -173,10 +168,7 @@ export function FilterBar({
             <Button
               variant="outline"
               size="sm"
-              className={cn(
-                "gap-1",
-                filters.kpiBucketId && "bg-indigo-50 border-indigo-300"
-              )}
+              className={cn("gap-1", filters.kpiBucketId && "bg-indigo-50 border-indigo-300")}
             >
               <Folder className="w-4 h-4" />
               KPI Bucket
@@ -221,10 +213,7 @@ export function FilterBar({
             <Button
               variant="outline"
               size="sm"
-              className={cn(
-                "gap-1",
-                filters.datePreset && "bg-indigo-50 border-indigo-300"
-              )}
+              className={cn("gap-1", filters.datePreset && "bg-indigo-50 border-indigo-300")}
             >
               <Calendar className="w-4 h-4" />
               Due Date
@@ -298,7 +287,9 @@ export function FilterBar({
                       onChange={() => onOwnerToggle(user.id)}
                       className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span className="text-sm">{user.firstName} {user.lastName}</span>
+                    <span className="text-sm">
+                      {user.firstName} {user.lastName}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -357,16 +348,18 @@ export function FilterBar({
           )}
 
           {/* Team Member Chips */}
-          {assignableUsers && onOwnerToggle && filters.ownerIds.map((ownerId) => {
-            const user = assignableUsers.find((u) => u.id === ownerId);
-            return user ? (
-              <FilterChip
-                key={ownerId}
-                label={`${user.firstName} ${user.lastName}`}
-                onRemove={() => onOwnerToggle(ownerId)}
-              />
-            ) : null;
-          })}
+          {assignableUsers &&
+            onOwnerToggle &&
+            filters.ownerIds.map((ownerId) => {
+              const user = assignableUsers.find((u) => u.id === ownerId);
+              return user ? (
+                <FilterChip
+                  key={ownerId}
+                  label={`${user.firstName} ${user.lastName}`}
+                  onRemove={() => onOwnerToggle(ownerId)}
+                />
+              ) : null;
+            })}
         </div>
       )}
     </div>

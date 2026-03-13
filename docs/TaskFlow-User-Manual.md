@@ -79,12 +79,12 @@ If you have not yet completed your morning planning session for the day, a banne
 
 Four cards summarise your current workload:
 
-| Card | What It Shows |
-|------|---------------|
-| **In Progress** | Tasks you are actively working on right now |
+| Card               | What It Shows                                                        |
+| ------------------ | -------------------------------------------------------------------- |
+| **In Progress**    | Tasks you are actively working on right now                          |
 | **Pending Review** | Tasks you have submitted and are waiting for your manager to approve |
-| **Overdue** | Tasks that have passed their deadline without being completed |
-| **Completed** | Tasks you have closed within the current scoring window (28 days) |
+| **Overdue**        | Tasks that have passed their deadline without being completed        |
+| **Completed**      | Tasks you have closed within the current scoring window (28 days)    |
 
 ### Today's Summary
 
@@ -104,7 +104,7 @@ If you have earned any awards or badges (Star of the Day, High Performer of the 
 
 ### Recent Activity
 
-A timeline of your most recent task status changes — for example, "Moved *Create PO for Office Supplies* to In Progress — 2 hours ago."
+A timeline of your most recent task status changes — for example, "Moved _Create PO for Office Supplies_ to In Progress — 2 hours ago."
 
 ### Task Distribution by KPI
 
@@ -124,15 +124,15 @@ Tasks are the fundamental unit of work in TaskFlow. Every task has an owner, a p
 
 Navigate to **Tasks** from the sidebar. You will see a Kanban-style board with columns representing each stage of a task's lifecycle:
 
-| Column | Meaning |
-|--------|---------|
-| **New** | Task has been created but not yet acknowledged |
-| **Accepted** | Owner has acknowledged the task and plans to work on it |
-| **In Progress** | Owner is actively working on the task |
-| **On Hold** | Work is paused (a reason must be provided) |
+| Column             | Meaning                                                        |
+| ------------------ | -------------------------------------------------------------- |
+| **New**            | Task has been created but not yet acknowledged                 |
+| **Accepted**       | Owner has acknowledged the task and plans to work on it        |
+| **In Progress**    | Owner is actively working on the task                          |
+| **On Hold**        | Work is paused (a reason must be provided)                     |
 | **Pending Review** | Owner has finished and submitted the task for manager approval |
-| **Approved** | Task has been reviewed and closed |
-| **Reopened** | Task was sent back after review for further work |
+| **Approved**       | Task has been reviewed and closed                              |
+| **Reopened**       | Task was sent back after review for further work               |
 
 Depending on your role, you will see different tabs at the top of the page:
 
@@ -160,14 +160,14 @@ Click the **New Task** button in the top-right corner. A form will appear asking
 - **Title** — A short, clear name for the task.
 - **Description** — Additional detail about what needs to be done.
 - **Priority** — Choose from the Eisenhower matrix:
-  - *Urgent & Important* — Do this first.
-  - *Urgent, Not Important* — Delegate if possible.
-  - *Not Urgent, Important* — Schedule for later.
-  - *Not Urgent, Not Important* — Consider whether it is needed.
+  - _Urgent & Important_ — Do this first.
+  - _Urgent, Not Important_ — Delegate if possible.
+  - _Not Urgent, Important_ — Schedule for later.
+  - _Not Urgent, Not Important_ — Consider whether it is needed.
 - **Size** — An estimate of effort:
-  - *Easy* (1 point) — Quick task, under an hour.
-  - *Medium* (2 points) — A few hours of focused work.
-  - *Difficult* (4 points) — Significant effort, potentially spanning days.
+  - _Easy_ (1 point) — Quick task, under an hour.
+  - _Medium_ (2 points) — A few hours of focused work.
+  - _Difficult_ (4 points) — Significant effort, potentially spanning days.
 - **KPI Bucket** — Which goal area does this task contribute to?
 - **Deadline** — When it needs to be done.
 - **Estimated Time** — How many minutes you expect it to take.
@@ -251,7 +251,7 @@ If a task's deadline has passed and it is still active, a carry-forward button a
 
 ## 6. Team Oversight
 
-*This section applies to Managers, Department Heads, and Admins.*
+_This section applies to Managers, Department Heads, and Admins._
 
 ### Team Page
 
@@ -299,7 +299,7 @@ On the Tasks page, switch to the **Team Tasks** tab to see all tasks belonging t
 
 ## 7. Productivity Scoring
 
-*The Productivity page is available to Managers, Department Heads, and Admins. Employees can see their own scores on their dashboard.*
+_The Productivity page is available to Managers, Department Heads, and Admins. Employees can see their own scores on their dashboard._
 
 TaskFlow measures productivity through four pillars, each capturing a different dimension of work performance. Together, they form a composite score from 0 to 100.
 
@@ -323,7 +323,7 @@ This measures whether your work passes review without being sent back.
 Two factors are considered:
 
 - **First-Pass Rate (60% of the Quality score):** Of all tasks that went through manager review, what percentage were approved on the first submission without being reopened? If your manager never sends your work back, this is 100%.
-- **Reopen Rate (40% of the Quality score):** Of all your completed tasks, how many were reopened *after* already being approved? This catches issues that surface after sign-off — bugs found later, documents that need correction after the fact.
+- **Reopen Rate (40% of the Quality score):** Of all your completed tasks, how many were reopened _after_ already being approved? This catches issues that surface after sign-off — bugs found later, documents that need correction after the fact.
 
 At least three reviewed tasks are needed in the scoring window for the first-pass rate to be counted. Below that threshold, only the reopen rate is used, since a single reviewed task would give an unreliable 0% or 100%.
 
@@ -355,12 +355,12 @@ Two factors are considered equally (50/50):
 
 The four pillar scores are combined using department-level weights that your administrator configures. The default weights for Procurement are:
 
-| Pillar | Weight |
-|--------|--------|
-| Output | 35% |
-| Quality | 25% |
-| Reliability | 25% |
-| Consistency | 15% |
+| Pillar      | Weight |
+| ----------- | ------ |
+| Output      | 35%    |
+| Quality     | 25%    |
+| Reliability | 25%    |
+| Consistency | 15%    |
 
 Different departments can set different weights depending on what matters most to their work. An engineering team might weigh Quality higher; a sales team might weigh Output higher.
 
@@ -370,12 +370,12 @@ Different departments can set different weights depending on what matters most t
 
 Composite scores map to four health bands:
 
-| Band | Score Range | Meaning |
-|------|------------|---------|
-| **Thriving** | 80–100 | Excellent performance across all dimensions |
-| **Healthy** | 60–79 | Solid, reliable contributor |
-| **At Risk** | 40–59 | Some areas need attention |
-| **Critical** | 0–39 | Significant intervention needed |
+| Band         | Score Range | Meaning                                     |
+| ------------ | ----------- | ------------------------------------------- |
+| **Thriving** | 80–100      | Excellent performance across all dimensions |
+| **Healthy**  | 60–79       | Solid, reliable contributor                 |
+| **At Risk**  | 40–59       | Some areas need attention                   |
+| **Critical** | 0–39        | Significant intervention needed             |
 
 ### Minimum Threshold
 
@@ -395,7 +395,7 @@ Every time scores are calculated, TaskFlow saves a weekly snapshot. This creates
 
 ## 8. Company Analytics
 
-*This section is available to Department Heads and Admins.*
+_This section is available to Department Heads and Admins._
 
 Navigate to **Analytics** from the sidebar. This page presents the health of your organisation at a glance.
 
@@ -432,7 +432,7 @@ A comparative view showing how different departments perform against each other.
 
 ## 9. Announcements
 
-*Creating and managing announcements is available to Department Heads and Admins. All users can view announcements on their dashboard.*
+_Creating and managing announcements is available to Department Heads and Admins. All users can view announcements on their dashboard._
 
 ### Viewing Announcements
 
@@ -456,7 +456,7 @@ The announcements table shows all announcements with their current status (Activ
 
 ## 10. Administration
 
-*This section is available to Admins only.*
+_This section is available to Admins only._
 
 ### User Management
 
@@ -529,23 +529,23 @@ On the Productivity page, click the **Recalculate** button to trigger a fresh ca
 
 ## Appendix A — Role Permissions at a Glance
 
-| Capability | Employee | Manager | Dept Head | Admin |
-|---|:-:|:-:|:-:|:-:|
-| View own dashboard & tasks | Yes | Yes | Yes | Yes |
-| Create and manage own tasks | Yes | Yes | Yes | Yes |
-| Use daily planning | Yes | Yes | Yes | Yes |
-| Change own password | Yes | Yes | Yes | Yes |
-| View team members' tasks | — | Yes | Yes | Yes |
-| Approve or reopen tasks | — | Yes | Yes | Yes |
-| Reassign tasks | — | Yes | Yes | Yes |
-| View team page | — | Yes | Yes | Yes |
-| View productivity leaderboard | — | Yes | Yes | Yes |
-| View company analytics | — | — | Yes | Yes |
-| Create announcements | — | — | Yes | Yes |
-| Manage KPI buckets | — | — | Yes | Yes |
-| Manage users | — | — | — | Yes |
-| Configure scoring weights | — | — | — | Yes |
-| Recalculate productivity scores | — | — | — | Yes |
+| Capability                      | Employee | Manager | Dept Head | Admin |
+| ------------------------------- | :------: | :-----: | :-------: | :---: |
+| View own dashboard & tasks      |   Yes    |   Yes   |    Yes    |  Yes  |
+| Create and manage own tasks     |   Yes    |   Yes   |    Yes    |  Yes  |
+| Use daily planning              |   Yes    |   Yes   |    Yes    |  Yes  |
+| Change own password             |   Yes    |   Yes   |    Yes    |  Yes  |
+| View team members' tasks        |    —     |   Yes   |    Yes    |  Yes  |
+| Approve or reopen tasks         |    —     |   Yes   |    Yes    |  Yes  |
+| Reassign tasks                  |    —     |   Yes   |    Yes    |  Yes  |
+| View team page                  |    —     |   Yes   |    Yes    |  Yes  |
+| View productivity leaderboard   |    —     |   Yes   |    Yes    |  Yes  |
+| View company analytics          |    —     |    —    |    Yes    |  Yes  |
+| Create announcements            |    —     |    —    |    Yes    |  Yes  |
+| Manage KPI buckets              |    —     |    —    |    Yes    |  Yes  |
+| Manage users                    |    —     |    —    |     —     |  Yes  |
+| Configure scoring weights       |    —     |    —    |     —     |  Yes  |
+| Recalculate productivity scores |    —     |    —    |     —     |  Yes  |
 
 ---
 
@@ -650,13 +650,13 @@ Composite = Output × Output Weight
 
 ### Health Bands
 
-| Band | Range |
-|------|-------|
+| Band     | Range  |
+| -------- | ------ |
 | Thriving | 80–100 |
-| Healthy | 60–79 |
-| At Risk | 40–59 |
-| Critical | 0–39 |
+| Healthy  | 60–79  |
+| At Risk  | 40–59  |
+| Critical | 0–39   |
 
 ---
 
-*TaskFlow — Built to make work measurable, fair, and visible.*
+_TaskFlow — Built to make work measurable, fair, and visible._

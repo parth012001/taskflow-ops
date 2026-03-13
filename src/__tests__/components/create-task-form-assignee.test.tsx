@@ -33,9 +33,27 @@ describe("CreateTaskForm - Assign to Dropdown", () => {
   ];
 
   const assignableUsers: AssignableUser[] = [
-    { id: "user-1", firstName: "John", lastName: "Doe", email: "john@test.com", role: Role.EMPLOYEE },
-    { id: "user-2", firstName: "Jane", lastName: "Smith", email: "jane@test.com", role: Role.EMPLOYEE },
-    { id: "user-3", firstName: "Bob", lastName: "Wilson", email: "bob@test.com", role: Role.MANAGER },
+    {
+      id: "user-1",
+      firstName: "John",
+      lastName: "Doe",
+      email: "john@test.com",
+      role: Role.EMPLOYEE,
+    },
+    {
+      id: "user-2",
+      firstName: "Jane",
+      lastName: "Smith",
+      email: "jane@test.com",
+      role: Role.EMPLOYEE,
+    },
+    {
+      id: "user-3",
+      firstName: "Bob",
+      lastName: "Wilson",
+      email: "bob@test.com",
+      role: Role.MANAGER,
+    },
   ];
 
   const defaultProps = {
@@ -55,7 +73,9 @@ describe("CreateTaskForm - Assign to Dropdown", () => {
 
       // The "Assign To" label should not be in the document
       expect(screen.queryByText("Assign To")).not.toBeInTheDocument();
-      expect(screen.queryByText("Select a team member to assign this task to")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Select a team member to assign this task to")
+      ).not.toBeInTheDocument();
     });
 
     it("should NOT show 'Assign To' dropdown when assignableUsers prop is not provided", () => {
@@ -145,11 +165,7 @@ describe("CreateTaskForm - Assign to Dropdown", () => {
 
     it("should work with empty kpiBuckets (edge case)", () => {
       render(
-        <CreateTaskForm
-          {...defaultProps}
-          kpiBuckets={[]}
-          assignableUsers={assignableUsers}
-        />
+        <CreateTaskForm {...defaultProps} kpiBuckets={[]} assignableUsers={assignableUsers} />
       );
 
       // Should still render the Assign To dropdown
@@ -169,13 +185,7 @@ describe("CreateTaskForm - Assign to Dropdown", () => {
 
   describe("Modal state", () => {
     it("should not render anything when modal is closed", () => {
-      render(
-        <CreateTaskForm
-          {...defaultProps}
-          open={false}
-          assignableUsers={assignableUsers}
-        />
-      );
+      render(<CreateTaskForm {...defaultProps} open={false} assignableUsers={assignableUsers} />);
 
       expect(screen.queryByText("Create New Task")).not.toBeInTheDocument();
       expect(screen.queryByText("Assign To")).not.toBeInTheDocument();
@@ -191,7 +201,13 @@ describe("CreateTaskForm - Assign to Dropdown", () => {
   describe("Single user edge case", () => {
     it("should show dropdown with single assignable user", () => {
       const singleUser: AssignableUser[] = [
-        { id: "user-1", firstName: "Solo", lastName: "User", email: "solo@test.com", role: Role.EMPLOYEE },
+        {
+          id: "user-1",
+          firstName: "Solo",
+          lastName: "User",
+          email: "solo@test.com",
+          role: Role.EMPLOYEE,
+        },
       ];
 
       render(<CreateTaskForm {...defaultProps} assignableUsers={singleUser} />);

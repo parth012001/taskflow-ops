@@ -32,12 +32,7 @@ interface ConfigEditDialogProps {
   onSuccess: () => void;
 }
 
-export function ConfigEditDialog({
-  open,
-  onOpenChange,
-  config,
-  onSuccess,
-}: ConfigEditDialogProps) {
+export function ConfigEditDialog({ open, onOpenChange, config, onSuccess }: ConfigEditDialogProps) {
   const [weeklyOutputTarget, setWeeklyOutputTarget] = useState(15);
   const [outputWeight, setOutputWeight] = useState(0.35);
   const [qualityWeight, setQualityWeight] = useState(0.25);
@@ -63,20 +58,17 @@ export function ConfigEditDialog({
 
     setIsSaving(true);
     try {
-      const response = await authFetch(
-        `/api/productivity/config/${config.departmentId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            weeklyOutputTarget,
-            outputWeight,
-            qualityWeight,
-            reliabilityWeight,
-            consistencyWeight,
-          }),
-        }
-      );
+      const response = await authFetch(`/api/productivity/config/${config.departmentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          weeklyOutputTarget,
+          outputWeight,
+          qualityWeight,
+          reliabilityWeight,
+          consistencyWeight,
+        }),
+      });
 
       if ([401, 403, 429].includes(response.status)) return;
       if (!response.ok) {
@@ -89,9 +81,7 @@ export function ConfigEditDialog({
       onOpenChange(false);
     } catch (error) {
       console.error("Error updating config:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update config"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to update config");
     } finally {
       setIsSaving(false);
     }
@@ -101,9 +91,7 @@ export function ConfigEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            Edit Config — {config?.departmentName}
-          </DialogTitle>
+          <DialogTitle>Edit Config — {config?.departmentName}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -173,13 +161,10 @@ export function ConfigEditDialog({
 
           <div
             className={`text-sm font-medium px-3 py-2 rounded-md ${
-              isWeightValid
-                ? "bg-green-50 text-green-700"
-                : "bg-red-50 text-red-700"
+              isWeightValid ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
             }`}
           >
-            Weight sum: {weightSum.toFixed(2)}{" "}
-            {isWeightValid ? "— Valid" : "— Must equal 1.0"}
+            Weight sum: {weightSum.toFixed(2)} {isWeightValid ? "— Valid" : "— Must equal 1.0"}
           </div>
         </div>
 
@@ -187,10 +172,7 @@ export function ConfigEditDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!isWeightValid || isSaving}
-          >
+          <Button onClick={handleSave} disabled={!isWeightValid || isSaving}>
             {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Save
           </Button>

@@ -6,13 +6,7 @@ import { toast } from "sonner";
 import { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -100,9 +94,7 @@ export function UserKpiPanel({ onDataChange }: UserKpiPanelProps) {
       setKpiBuckets(bucketsData.kpiBuckets.filter((b: KpiBucket) => b.isActive));
     } catch (error) {
       console.error("Error fetching data:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load data"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to load data");
       setUsers([]);
       setKpiBuckets([]);
     } finally {
@@ -134,16 +126,17 @@ export function UserKpiPanel({ onDataChange }: UserKpiPanelProps) {
       <Card>
         <CardHeader>
           <CardTitle>User KPI Assignments</CardTitle>
-          <CardDescription>
-            Assign KPI buckets to users based on their roles
-          </CardDescription>
+          <CardDescription>Assign KPI buckets to users based on their roles</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             /* Loading Skeleton */
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border rounded-lg animate-pulse">
+                <div
+                  key={i}
+                  className="flex items-center gap-4 p-4 border rounded-lg animate-pulse"
+                >
                   <div className="flex-shrink-0">
                     <div className="h-10 w-10 bg-gray-200 rounded-full" />
                   </div>
@@ -165,7 +158,8 @@ export function UserKpiPanel({ onDataChange }: UserKpiPanelProps) {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Users Found</h3>
               <p className="text-gray-500 max-w-sm mx-auto">
-                Users will appear here once they are added to the system. You can then assign KPI buckets to track their performance.
+                Users will appear here once they are added to the system. You can then assign KPI
+                buckets to track their performance.
               </p>
             </div>
           ) : (
@@ -199,10 +193,7 @@ export function UserKpiPanel({ onDataChange }: UserKpiPanelProps) {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={roleBadgeColors[user.role]}
-                        >
+                        <Badge variant="outline" className={roleBadgeColors[user.role]}>
                           {roleLabels[user.role]}
                         </Badge>
                       </TableCell>
@@ -211,18 +202,17 @@ export function UserKpiPanel({ onDataChange }: UserKpiPanelProps) {
                       </TableCell>
                       <TableCell>
                         {isUnassigned ? (
-                          <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
+                          <Badge
+                            variant="outline"
+                            className="bg-amber-100 text-amber-700 border-amber-200"
+                          >
                             <AlertTriangle className="h-3 w-3 mr-1" />
                             Unassigned
                           </Badge>
                         ) : (
                           <div className="flex flex-wrap gap-1">
                             {user.assignedKpis.slice(0, 3).map((kpi) => (
-                              <Badge
-                                key={kpi.userKpiId}
-                                variant="secondary"
-                                className="text-xs"
-                              >
+                              <Badge key={kpi.userKpiId} variant="secondary" className="text-xs">
                                 {kpi.kpiBucketName}
                               </Badge>
                             ))}
@@ -235,11 +225,7 @@ export function UserKpiPanel({ onDataChange }: UserKpiPanelProps) {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleManageKpis(user)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleManageKpis(user)}>
                           <Settings2 className="h-4 w-4 mr-1" />
                           Manage
                         </Button>

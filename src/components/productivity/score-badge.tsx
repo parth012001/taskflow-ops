@@ -18,10 +18,7 @@ export function ScoreBadge({ score, size = "sm" }: ScoreBadgeProps) {
   return (
     <Badge
       variant="outline"
-      className={cn(
-        getScoreColor(score),
-        size === "lg" && "text-sm px-3 py-1"
-      )}
+      className={cn(getScoreColor(score), size === "lg" && "text-sm px-3 py-1")}
     >
       {Math.round(score)}
     </Badge>

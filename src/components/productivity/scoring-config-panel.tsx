@@ -5,13 +5,7 @@ import { toast } from "sonner";
 import { authFetch } from "@/lib/auth-fetch";
 import { Pencil, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -95,9 +89,7 @@ export function ScoringConfigPanel({ onDataChange }: ScoringConfigPanelProps) {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                 <Settings className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No configurations
-              </h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No configurations</h3>
               <p className="text-gray-500 max-w-sm mx-auto">
                 Department scoring configs will appear here once departments are created.
               </p>
@@ -120,12 +112,8 @@ export function ScoringConfigPanel({ onDataChange }: ScoringConfigPanelProps) {
                 <TableBody>
                   {configs.map((config) => (
                     <TableRow key={config.departmentId}>
-                      <TableCell className="font-medium">
-                        {config.departmentName}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {config.weeklyOutputTarget}
-                      </TableCell>
+                      <TableCell className="font-medium">{config.departmentName}</TableCell>
+                      <TableCell className="text-center">{config.weeklyOutputTarget}</TableCell>
                       <TableCell className="text-center text-blue-600">
                         {Math.round(config.outputWeight * 100)}%
                       </TableCell>

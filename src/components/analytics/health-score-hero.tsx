@@ -46,16 +46,19 @@ export function HealthScoreHero({ data }: HealthScoreHeroProps) {
               </Badge>
 
               {data.change !== 0 && (
-                <span className={cn(
-                  "flex items-center gap-1 text-sm font-medium",
-                  data.change > 0 ? "text-green-600" : "text-red-600"
-                )}>
+                <span
+                  className={cn(
+                    "flex items-center gap-1 text-sm font-medium",
+                    data.change > 0 ? "text-green-600" : "text-red-600"
+                  )}
+                >
                   {data.change > 0 ? (
                     <TrendingUp className="h-4 w-4" />
                   ) : (
                     <TrendingDown className="h-4 w-4" />
                   )}
-                  {data.change > 0 ? "+" : ""}{data.change}
+                  {data.change > 0 ? "+" : ""}
+                  {data.change}
                   <span className="text-gray-400 font-normal ml-1">vs last period</span>
                 </span>
               )}
@@ -63,7 +66,9 @@ export function HealthScoreHero({ data }: HealthScoreHeroProps) {
 
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Users className="h-4 w-4" />
-              <span>{data.scoredCount} of {data.totalEmployees} employees scored</span>
+              <span>
+                {data.scoredCount} of {data.totalEmployees} employees scored
+              </span>
             </div>
           </div>
         </div>
@@ -71,30 +76,10 @@ export function HealthScoreHero({ data }: HealthScoreHeroProps) {
 
       {/* Pillar cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <PillarCard
-          title="Output"
-          score={data.output}
-          color="blue"
-          stats={[]}
-        />
-        <PillarCard
-          title="Quality"
-          score={data.quality}
-          color="green"
-          stats={[]}
-        />
-        <PillarCard
-          title="Reliability"
-          score={data.reliability}
-          color="purple"
-          stats={[]}
-        />
-        <PillarCard
-          title="Consistency"
-          score={data.consistency}
-          color="amber"
-          stats={[]}
-        />
+        <PillarCard title="Output" score={data.output} color="blue" stats={[]} />
+        <PillarCard title="Quality" score={data.quality} color="green" stats={[]} />
+        <PillarCard title="Reliability" score={data.reliability} color="purple" stats={[]} />
+        <PillarCard title="Consistency" score={data.consistency} color="amber" stats={[]} />
       </div>
     </div>
   );

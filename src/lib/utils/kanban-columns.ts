@@ -69,12 +69,7 @@ export const KANBAN_COLUMNS: Record<KanbanColumnId, KanbanColumnConfig> = {
 /**
  * Ordered list of column IDs for rendering
  */
-export const COLUMN_ORDER: KanbanColumnId[] = [
-  "TODO",
-  "IN_PROGRESS",
-  "IN_REVIEW",
-  "DONE",
-];
+export const COLUMN_ORDER: KanbanColumnId[] = ["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"];
 
 /**
  * Get the column ID for a given task status
@@ -142,7 +137,10 @@ export interface DropTarget {
  * Get valid drop targets from a source status
  * Returns statuses that the task can transition to via drag-drop
  */
-export function getValidDropTargets(fromStatus: TaskStatus, requiresReview: boolean = true): DropTarget[] {
+export function getValidDropTargets(
+  fromStatus: TaskStatus,
+  requiresReview: boolean = true
+): DropTarget[] {
   switch (fromStatus) {
     case TaskStatus.NEW:
       return [
@@ -150,9 +148,7 @@ export function getValidDropTargets(fromStatus: TaskStatus, requiresReview: bool
         { status: TaskStatus.IN_PROGRESS, requiresReason: false },
       ];
     case TaskStatus.ACCEPTED:
-      return [
-        { status: TaskStatus.IN_PROGRESS, requiresReason: false },
-      ];
+      return [{ status: TaskStatus.IN_PROGRESS, requiresReason: false }];
     case TaskStatus.IN_PROGRESS:
       if (requiresReview) {
         return [
@@ -167,9 +163,7 @@ export function getValidDropTargets(fromStatus: TaskStatus, requiresReview: bool
         { status: TaskStatus.CLOSED_APPROVED, requiresReason: false },
       ];
     case TaskStatus.ON_HOLD:
-      return [
-        { status: TaskStatus.IN_PROGRESS, requiresReason: false },
-      ];
+      return [{ status: TaskStatus.IN_PROGRESS, requiresReason: false }];
     case TaskStatus.COMPLETED_PENDING_REVIEW:
       return [
         { status: TaskStatus.IN_PROGRESS, requiresReason: false },
@@ -177,13 +171,9 @@ export function getValidDropTargets(fromStatus: TaskStatus, requiresReview: bool
         { status: TaskStatus.REOPENED, requiresReason: true },
       ];
     case TaskStatus.REOPENED:
-      return [
-        { status: TaskStatus.IN_PROGRESS, requiresReason: false },
-      ];
+      return [{ status: TaskStatus.IN_PROGRESS, requiresReason: false }];
     case TaskStatus.CLOSED_APPROVED:
-      return [
-        { status: TaskStatus.REOPENED, requiresReason: true },
-      ];
+      return [{ status: TaskStatus.REOPENED, requiresReason: true }];
     default:
       return [];
   }

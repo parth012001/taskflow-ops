@@ -3,22 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/auth-fetch";
-import {
-  RefreshCw,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  BarChart3,
-} from "lucide-react";
+import { RefreshCw, ChevronLeft, ChevronRight, Loader2, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -66,11 +54,7 @@ interface Department {
 
 interface ScoresPanelProps {
   isAdmin: boolean;
-  onStatsLoaded?: (stats: {
-    average: number;
-    topScore: number;
-    totalScored: number;
-  }) => void;
+  onStatsLoaded?: (stats: { average: number; topScore: number; totalScored: number }) => void;
 }
 
 const roleLabels: Record<string, string> = {
@@ -212,16 +196,10 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
             <CardTitle>Productivity Leaderboard</CardTitle>
-            <CardDescription>
-              Scores based on the last 28 days of activity
-            </CardDescription>
+            <CardDescription>Scores based on the last 28 days of activity</CardDescription>
           </div>
           {isAdmin && (
-            <Button
-              variant="outline"
-              onClick={handleRecalculate}
-              disabled={isRecalculating}
-            >
+            <Button variant="outline" onClick={handleRecalculate} disabled={isRecalculating}>
               {isRecalculating ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
@@ -235,10 +213,7 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
           {/* Filters */}
           <div className="flex flex-wrap gap-3 mb-4">
             {isAdmin && (
-              <Select
-                value={departmentFilter || "all"}
-                onValueChange={handleDepartmentChange}
-              >
+              <Select value={departmentFilter || "all"} onValueChange={handleDepartmentChange}>
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="All Departments" />
                 </SelectTrigger>
@@ -252,10 +227,7 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
                 </SelectContent>
               </Select>
             )}
-            <Select
-              value={roleFilter || "all"}
-              onValueChange={handleRoleChange}
-            >
+            <Select value={roleFilter || "all"} onValueChange={handleRoleChange}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="All Roles" />
               </SelectTrigger>
@@ -298,9 +270,7 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                 <BarChart3 className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No scores yet
-              </h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No scores yet</h3>
               <p className="text-gray-500 max-w-sm mx-auto">
                 {isAdmin
                   ? "Run a recalculation to generate scores for all users."
@@ -343,7 +313,8 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
                           <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
                               <span className="text-xs font-medium text-gray-600">
-                                {score.firstName[0]}{score.lastName[0]}
+                                {score.firstName[0]}
+                                {score.lastName[0]}
                               </span>
                             </div>
                             <span className="font-medium text-gray-900">
@@ -352,9 +323,7 @@ export function ScoresPanel({ isAdmin, onStatsLoaded }: ScoresPanelProps) {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-gray-600">
-                            {score.department || "—"}
-                          </span>
+                          <span className="text-sm text-gray-600">{score.department || "—"}</span>
                         </TableCell>
                         <TableCell>
                           <Badge

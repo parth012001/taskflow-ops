@@ -134,18 +134,10 @@ describe("updateScoringConfigSchema", () => {
   });
 
   it("should validate weeklyOutputTarget boundaries", () => {
-    expect(
-      updateScoringConfigSchema.safeParse({ weeklyOutputTarget: 0 }).success
-    ).toBe(false);
-    expect(
-      updateScoringConfigSchema.safeParse({ weeklyOutputTarget: 1 }).success
-    ).toBe(true);
-    expect(
-      updateScoringConfigSchema.safeParse({ weeklyOutputTarget: 100 }).success
-    ).toBe(true);
-    expect(
-      updateScoringConfigSchema.safeParse({ weeklyOutputTarget: 101 }).success
-    ).toBe(false);
+    expect(updateScoringConfigSchema.safeParse({ weeklyOutputTarget: 0 }).success).toBe(false);
+    expect(updateScoringConfigSchema.safeParse({ weeklyOutputTarget: 1 }).success).toBe(true);
+    expect(updateScoringConfigSchema.safeParse({ weeklyOutputTarget: 100 }).success).toBe(true);
+    expect(updateScoringConfigSchema.safeParse({ weeklyOutputTarget: 101 }).success).toBe(false);
   });
 
   it("should pass with no fields (empty update)", () => {

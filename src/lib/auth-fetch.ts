@@ -11,10 +11,7 @@ import { toast } from "sonner";
  * Returns the Response for successful requests or auth-failed responses
  * (so callers can still check response.ok).
  */
-export async function authFetch(
-  input: RequestInfo | URL,
-  init?: RequestInit
-): Promise<Response> {
+export async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const response = await fetch(input, init);
 
   if (response.status === 401) {

@@ -21,12 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { CarryForwardModal } from "@/components/tasks/carry-forward-modal";
 
@@ -149,9 +144,8 @@ export default function DailyPlanningPage() {
 
   // Remove task from plan
   const removeTaskFromPlan = async (taskId: string) => {
-    const newTaskIds = planningSession?.tasks
-      .filter((t) => t.task.id !== taskId)
-      .map((t) => t.task.id) || [];
+    const newTaskIds =
+      planningSession?.tasks.filter((t) => t.task.id !== taskId).map((t) => t.task.id) || [];
 
     await updateSession({ taskIds: newTaskIds });
   };
@@ -187,10 +181,8 @@ export default function DailyPlanningPage() {
   };
 
   // Calculate totals
-  const totalEstimatedMinutes = planningSession?.tasks.reduce(
-    (sum, t) => sum + t.task.estimatedMinutes,
-    0
-  ) || 0;
+  const totalEstimatedMinutes =
+    planningSession?.tasks.reduce((sum, t) => sum + t.task.estimatedMinutes, 0) || 0;
 
   const totalHours = Math.floor(totalEstimatedMinutes / 60);
   const totalMinutes = totalEstimatedMinutes % 60;
@@ -209,9 +201,7 @@ export default function DailyPlanningPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Daily Planning</h1>
-          <p className="text-sm text-gray-500">
-            Plan your day for maximum productivity
-          </p>
+          <p className="text-sm text-gray-500">Plan your day for maximum productivity</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={goToPreviousDay}>
@@ -243,7 +233,8 @@ export default function DailyPlanningPage() {
                 {planningSession?.tasks.length || 0} tasks planned
                 {totalEstimatedMinutes > 0 && (
                   <span className="ml-2">
-                    ({totalHours > 0 && `${totalHours}h `}{totalMinutes}m estimated)
+                    ({totalHours > 0 && `${totalHours}h `}
+                    {totalMinutes}m estimated)
                   </span>
                 )}
               </p>
@@ -281,11 +272,7 @@ export default function DailyPlanningPage() {
             <Card>
               <CardContent className="py-12 text-center">
                 <p className="text-gray-500">No tasks planned for this day</p>
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => setShowTaskPicker(true)}
-                >
+                <Button variant="outline" className="mt-4" onClick={() => setShowTaskPicker(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add your first task
                 </Button>
@@ -390,7 +377,9 @@ export default function DailyPlanningPage() {
           </Card>
 
           {/* Evening Ritual */}
-          <Card className={planningSession?.eveningCompleted ? "border-indigo-200 bg-indigo-50" : ""}>
+          <Card
+            className={planningSession?.eveningCompleted ? "border-indigo-200 bg-indigo-50" : ""}
+          >
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Moon className="w-4 h-4 text-indigo-500" />
@@ -442,9 +431,7 @@ export default function DailyPlanningPage() {
           </DialogHeader>
           <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {availableTasks.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">
-                No available tasks to add
-              </p>
+              <p className="text-sm text-gray-500 text-center py-4">No available tasks to add</p>
             ) : (
               availableTasks.map((task) => (
                 <button
@@ -453,12 +440,7 @@ export default function DailyPlanningPage() {
                   onClick={() => addTaskToPlan(task.id)}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <div
-                      className={cn(
-                        "w-2 h-2 rounded-full",
-                        priorityColors[task.priority]
-                      )}
-                    />
+                    <div className={cn("w-2 h-2 rounded-full", priorityColors[task.priority])} />
                     <span className="font-medium text-sm">{task.title}</span>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-gray-500">

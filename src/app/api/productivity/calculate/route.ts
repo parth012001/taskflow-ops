@@ -12,10 +12,7 @@ export async function POST() {
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
     const rateCheck = mutationLimiter.check(`calculate:${session.user.id}`);
@@ -38,9 +35,6 @@ export async function POST() {
     });
   } catch (error) {
     console.error("POST /api/productivity/calculate error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

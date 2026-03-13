@@ -2,13 +2,7 @@
 
 import { RecognitionType } from "@prisma/client";
 import { Trophy } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RecognitionBadge } from "./recognition-badge";
 
 interface Recognition {
@@ -31,9 +25,7 @@ export function RecognitionWidget({ recognitions }: RecognitionWidgetProps) {
             <Trophy className="h-5 w-5 text-amber-500" />
             Your Achievements
           </CardTitle>
-          <CardDescription>
-            Keep completing your daily rituals to earn badges!
-          </CardDescription>
+          <CardDescription>Keep completing your daily rituals to earn badges!</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8 text-gray-400">

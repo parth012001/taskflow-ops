@@ -11,10 +11,7 @@ export async function GET() {
     }
 
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
     const departments = await prisma.department.findMany({
@@ -41,9 +38,6 @@ export async function GET() {
     return NextResponse.json({ configs });
   } catch (error) {
     console.error("GET /api/productivity/config error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

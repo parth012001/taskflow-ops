@@ -28,10 +28,7 @@ export async function GET() {
     // their own) so they can benchmark cross-department performance. Scoping is
     // handled at the productivity-scorecard level, not the analytics overview.
     if (!canViewAnalytics(session.user.role as Role)) {
-      return NextResponse.json(
-        { error: "Analytics access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Analytics access required" }, { status: 403 });
     }
 
     const rateCheck = generalLimiter.check(`analytics-dept:${session.user.id}`);
@@ -70,9 +67,7 @@ export async function GET() {
       _count: { id: true },
     });
     const countByDept = new Map(
-      userCounts
-        .filter((c) => c.departmentId)
-        .map((c) => [c.departmentId!, c._count.id])
+      userCounts.filter((c) => c.departmentId).map((c) => [c.departmentId!, c._count.id])
     );
 
     const departments = deptAggregates.map((row) => {
@@ -93,9 +88,6 @@ export async function GET() {
     return NextResponse.json({ departments });
   } catch (error) {
     console.error("GET /api/analytics/department-comparison error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

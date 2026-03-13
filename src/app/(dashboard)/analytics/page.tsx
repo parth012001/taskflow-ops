@@ -78,10 +78,7 @@ export default function AnalyticsPage() {
     }
   }, [status, userRole, fetchHealthData]);
 
-  if (
-    status === "loading" ||
-    (status === "authenticated" && !canViewAnalytics(userRole))
-  ) {
+  if (status === "loading" || (status === "authenticated" && !canViewAnalytics(userRole))) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
@@ -98,9 +95,7 @@ export default function AnalyticsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Company Health</h1>
-          <p className="text-gray-500">
-            Aggregated productivity metrics across the organization
-          </p>
+          <p className="text-gray-500">Aggregated productivity metrics across the organization</p>
         </div>
       </div>
 

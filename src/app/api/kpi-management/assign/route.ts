@@ -14,10 +14,7 @@ export async function POST(request: NextRequest) {
 
     // Only ADMIN can assign KPIs
     if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden: Only Admin can assign KPIs" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Only Admin can assign KPIs" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -25,10 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (!validationResult.success) {
       console.warn("Validation error:", validationResult.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { userId, kpiBucketId, targetValue } = validationResult.data;
@@ -39,10 +33,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found or inactive" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found or inactive" }, { status: 404 });
     }
 
     // Check if KPI bucket exists and is active
@@ -51,10 +42,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!kpiBucket) {
-      return NextResponse.json(
-        { error: "KPI bucket not found or inactive" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "KPI bucket not found or inactive" }, { status: 404 });
     }
 
     // Check if the KPI bucket is applicable to the user's role
@@ -111,9 +99,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("POST /api/kpi-management/assign error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

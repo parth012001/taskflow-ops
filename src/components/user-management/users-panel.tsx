@@ -18,13 +18,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -50,12 +44,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserFormModal } from "./user-form-modal";
 import { ResetPasswordModal } from "./reset-password-modal";
 
@@ -156,7 +145,14 @@ export function UsersPanel() {
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.page, pagination.limit, debouncedSearch, roleFilter, departmentFilter, statusFilter]);
+  }, [
+    pagination.page,
+    pagination.limit,
+    debouncedSearch,
+    roleFilter,
+    departmentFilter,
+    statusFilter,
+  ]);
 
   const fetchDepartments = useCallback(async () => {
     try {
@@ -238,9 +234,7 @@ export function UsersPanel() {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
             <CardTitle>User Management</CardTitle>
-            <CardDescription>
-              Create and manage user accounts for your organization
-            </CardDescription>
+            <CardDescription>Create and manage user accounts for your organization</CardDescription>
           </div>
           <Button onClick={() => setIsFormOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -259,7 +253,10 @@ export function UsersPanel() {
                 className="pl-9"
               />
             </div>
-            <Select value={roleFilter || "all"} onValueChange={(v) => setRoleFilter(v === "all" ? "" : v)}>
+            <Select
+              value={roleFilter || "all"}
+              onValueChange={(v) => setRoleFilter(v === "all" ? "" : v)}
+            >
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="All Roles" />
               </SelectTrigger>
@@ -271,7 +268,10 @@ export function UsersPanel() {
                 <SelectItem value="ADMIN">Admin</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={departmentFilter || "all"} onValueChange={(v) => setDepartmentFilter(v === "all" ? "" : v)}>
+            <Select
+              value={departmentFilter || "all"}
+              onValueChange={(v) => setDepartmentFilter(v === "all" ? "" : v)}
+            >
               <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder="All Depts" />
               </SelectTrigger>
@@ -284,7 +284,10 @@ export function UsersPanel() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter || "all"} onValueChange={(v) => setStatusFilter(v === "all" ? "" : v)}>
+            <Select
+              value={statusFilter || "all"}
+              onValueChange={(v) => setStatusFilter(v === "all" ? "" : v)}
+            >
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
@@ -393,15 +396,16 @@ export function UsersPanel() {
 
                         {/* Reports To column */}
                         <TableCell>
-                          <span className="text-sm text-gray-600">
-                            {user.managerName || "—"}
-                          </span>
+                          <span className="text-sm text-gray-600">{user.managerName || "—"}</span>
                         </TableCell>
 
                         {/* Status column */}
                         <TableCell>
                           {user.isActive ? (
-                            <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                            <Badge
+                              variant="outline"
+                              className="text-green-600 border-green-200 bg-green-50"
+                            >
                               Active
                             </Badge>
                           ) : (

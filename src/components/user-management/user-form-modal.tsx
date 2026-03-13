@@ -62,12 +62,7 @@ const roleOptions: { value: Role; label: string }[] = [
   { value: "DEPARTMENT_HEAD", label: "Department Head" },
 ];
 
-export function UserFormModal({
-  open,
-  onOpenChange,
-  user,
-  onSuccess,
-}: UserFormModalProps) {
+export function UserFormModal({ open, onOpenChange, user, onSuccess }: UserFormModalProps) {
   const isEditing = !!user;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -264,12 +259,7 @@ export function UserFormModal({
                   <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm font-mono">
                     {createdUser.temporaryPassword}
                   </code>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopyPassword}
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={handleCopyPassword}>
                     {copied ? (
                       <Check className="h-4 w-4 text-green-600" />
                     ) : (
@@ -329,9 +319,7 @@ export function UserFormModal({
             {isEditing && (
               <div className="space-y-2">
                 <Label className="text-gray-500">Email</Label>
-                <p className="text-sm py-2 px-3 bg-gray-50 rounded border">
-                  {user?.email}
-                </p>
+                <p className="text-sm py-2 px-3 bg-gray-50 rounded border">{user?.email}</p>
                 <p className="text-xs text-gray-500">Email cannot be changed</p>
               </div>
             )}
@@ -427,9 +415,7 @@ export function UserFormModal({
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Auto-generate Password</Label>
-                    <p className="text-xs text-gray-500">
-                      Generate a secure random password
-                    </p>
+                    <p className="text-xs text-gray-500">Generate a secure random password</p>
                   </div>
                   <Switch
                     checked={autoGeneratePassword}
@@ -473,11 +459,7 @@ export function UserFormModal({
             )}
 
             <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>

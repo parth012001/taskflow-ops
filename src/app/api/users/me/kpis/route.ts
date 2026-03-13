@@ -40,9 +40,6 @@ export async function GET() {
     return NextResponse.json({ assignedKpis });
   } catch (error) {
     console.error("GET /api/users/me/kpis error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

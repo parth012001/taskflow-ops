@@ -134,9 +134,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const completionRate = totalActiveThisWeek > 0
-      ? Math.round((completedThisWeek / totalActiveThisWeek) * 100)
-      : 0;
+    const completionRate =
+      totalActiveThisWeek > 0 ? Math.round((completedThisWeek / totalActiveThisWeek) * 100) : 0;
 
     // Get recent activity (last 5 status changes)
     const recentActivity = await prisma.taskStatusHistory.findMany({
@@ -217,7 +216,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       statusCounts: statusMap,
       totalTasks: Object.values(statusMap).reduce((a, b) => a + b, 0),
-      activeTasks: statusMap.IN_PROGRESS + statusMap.ON_HOLD + statusMap.NEW + statusMap.ACCEPTED + statusMap.REOPENED,
+      activeTasks:
+        statusMap.IN_PROGRESS +
+        statusMap.ON_HOLD +
+        statusMap.NEW +
+        statusMap.ACCEPTED +
+        statusMap.REOPENED,
       completedTasks: statusMap.CLOSED_APPROVED,
       overdueCount,
       dueTodayCount,
@@ -234,11 +238,13 @@ export async function GET(request: NextRequest) {
         changedBy: `${a.changedBy.firstName} ${a.changedBy.lastName}`,
         createdAt: a.createdAt,
       })),
-      streak: userStreak ? {
-        current: userStreak.currentStreak,
-        longest: userStreak.longestStreak,
-        lastActive: userStreak.lastActiveDate,
-      } : null,
+      streak: userStreak
+        ? {
+            current: userStreak.currentStreak,
+            longest: userStreak.longestStreak,
+            lastActive: userStreak.lastActiveDate,
+          }
+        : null,
       recognitions: recognitions.map((r) => ({
         id: r.id,
         type: r.type,
@@ -258,9 +264,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/dashboard/stats error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -12,15 +12,20 @@ export default function AnnouncementsPage() {
 
   // Redirect if not authorized
   useEffect(() => {
-    if (status === "authenticated" &&
-        (!session?.user || !["ADMIN", "DEPARTMENT_HEAD"].includes(session.user.role))) {
+    if (
+      status === "authenticated" &&
+      (!session?.user || !["ADMIN", "DEPARTMENT_HEAD"].includes(session.user.role))
+    ) {
       router.push("/dashboard");
     }
   }, [status, session, router]);
 
   // Show loading state while checking auth or if not authorized
-  if (status === "loading" ||
-      (status === "authenticated" && (!session?.user || !["ADMIN", "DEPARTMENT_HEAD"].includes(session.user.role)))) {
+  if (
+    status === "loading" ||
+    (status === "authenticated" &&
+      (!session?.user || !["ADMIN", "DEPARTMENT_HEAD"].includes(session.user.role)))
+  ) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -36,9 +41,7 @@ export default function AnnouncementsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>
-          <p className="text-gray-500">
-            Create and manage company-wide announcements
-          </p>
+          <p className="text-gray-500">Create and manage company-wide announcements</p>
         </div>
       </div>
 

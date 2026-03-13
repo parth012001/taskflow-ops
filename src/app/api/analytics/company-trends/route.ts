@@ -17,10 +17,7 @@ export async function GET(request: NextRequest) {
     // DEPARTMENT_HEAD users intentionally see company-wide trends (not just
     // their own department) so they can benchmark cross-department performance.
     if (!canViewAnalytics(session.user.role as Role)) {
-      return NextResponse.json(
-        { error: "Analytics access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Analytics access required" }, { status: 403 });
     }
 
     const rateCheck = generalLimiter.check(`analytics-trends:${session.user.id}`);
@@ -83,9 +80,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ trends });
   } catch (error) {
     console.error("GET /api/analytics/company-trends error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

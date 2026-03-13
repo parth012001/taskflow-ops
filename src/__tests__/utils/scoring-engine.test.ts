@@ -116,9 +116,15 @@ describe("calculateOutputScore", () => {
 
   it("should correctly mix task sizes and priorities", () => {
     const tasks = [
-      createMockCompletedTask({ size: TaskSize.EASY, priority: TaskPriority.URGENT_IMPORTANT }),  // 1 * 1.5 = 1.5
-      createMockCompletedTask({ size: TaskSize.MEDIUM, priority: TaskPriority.NOT_URGENT_IMPORTANT }),  // 2 * 1.0 = 2
-      createMockCompletedTask({ size: TaskSize.DIFFICULT, priority: TaskPriority.URGENT_IMPORTANT }),  // 4 * 1.5 = 6
+      createMockCompletedTask({ size: TaskSize.EASY, priority: TaskPriority.URGENT_IMPORTANT }), // 1 * 1.5 = 1.5
+      createMockCompletedTask({
+        size: TaskSize.MEDIUM,
+        priority: TaskPriority.NOT_URGENT_IMPORTANT,
+      }), // 2 * 1.0 = 2
+      createMockCompletedTask({
+        size: TaskSize.DIFFICULT,
+        priority: TaskPriority.URGENT_IMPORTANT,
+      }), // 4 * 1.5 = 6
     ];
     const result = calculateOutputScore(tasks, 15);
     expect(result.points).toBe(9.5);
@@ -145,9 +151,21 @@ describe("calculateQualityScore", () => {
     const tasks = [task1, task2, task3];
 
     const histories = [
-      ...createMockStatusHistory("t1", [[null, TaskStatus.NEW], [TaskStatus.NEW, TaskStatus.COMPLETED_PENDING_REVIEW], [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED]]),
-      ...createMockStatusHistory("t2", [[null, TaskStatus.NEW], [TaskStatus.NEW, TaskStatus.COMPLETED_PENDING_REVIEW], [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED]]),
-      ...createMockStatusHistory("t3", [[null, TaskStatus.NEW], [TaskStatus.NEW, TaskStatus.COMPLETED_PENDING_REVIEW], [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED]]),
+      ...createMockStatusHistory("t1", [
+        [null, TaskStatus.NEW],
+        [TaskStatus.NEW, TaskStatus.COMPLETED_PENDING_REVIEW],
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+      ...createMockStatusHistory("t2", [
+        [null, TaskStatus.NEW],
+        [TaskStatus.NEW, TaskStatus.COMPLETED_PENDING_REVIEW],
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
+      ...createMockStatusHistory("t3", [
+        [null, TaskStatus.NEW],
+        [TaskStatus.NEW, TaskStatus.COMPLETED_PENDING_REVIEW],
+        [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
+      ]),
     ];
 
     const result = calculateQualityScore(tasks, histories);
@@ -328,9 +346,7 @@ describe("calculateReliabilityScore", () => {
 
   it("should count task completed exactly at deadline as on-time", () => {
     const deadline = new Date("2026-02-15T17:00:00.000Z");
-    const tasks = [
-      createMockCompletedTask({ completedAt: deadline, deadline }),
-    ];
+    const tasks = [createMockCompletedTask({ completedAt: deadline, deadline })];
 
     const result = calculateReliabilityScore(tasks, [], tasks);
     expect(result.onTimeRate).toBe(1);
@@ -339,22 +355,30 @@ describe("calculateReliabilityScore", () => {
   it("should count task completed 1ms after deadline as late", () => {
     const deadline = new Date("2026-02-15T17:00:00.000Z");
     const lateBy1ms = new Date(deadline.getTime() + 1);
-    const tasks = [
-      createMockCompletedTask({ completedAt: lateBy1ms, deadline }),
-    ];
+    const tasks = [createMockCompletedTask({ completedAt: lateBy1ms, deadline })];
 
     const result = calculateReliabilityScore(tasks, [], tasks);
     expect(result.onTimeRate).toBe(0);
   });
 
   it("should return carryForwardScore of 1 when zero carry-forwards", () => {
-    const tasks = [createMockCompletedTask({ completedAt: new Date(), deadline: new Date(Date.now() + 86400000) })];
+    const tasks = [
+      createMockCompletedTask({
+        completedAt: new Date(),
+        deadline: new Date(Date.now() + 86400000),
+      }),
+    ];
     const result = calculateReliabilityScore(tasks, [], tasks);
     expect(result.carryForwardScore).toBe(1);
   });
 
   it("should reduce score with many carry-forwards", () => {
-    const tasks = [createMockCompletedTask({ completedAt: new Date(), deadline: new Date(Date.now() + 86400000) })];
+    const tasks = [
+      createMockCompletedTask({
+        completedAt: new Date(),
+        deadline: new Date(Date.now() + 86400000),
+      }),
+    ];
     const carryForwards: CarryForwardEntry[] = Array.from({ length: 5 }, () => ({
       taskId: "t1",
       userId: "u1",
@@ -367,7 +391,12 @@ describe("calculateReliabilityScore", () => {
   });
 
   it("should cap carry-forward penalty at 0", () => {
-    const tasks = [createMockCompletedTask({ completedAt: new Date(), deadline: new Date(Date.now() + 86400000) })];
+    const tasks = [
+      createMockCompletedTask({
+        completedAt: new Date(),
+        deadline: new Date(Date.now() + 86400000),
+      }),
+    ];
     const carryForwards: CarryForwardEntry[] = Array.from({ length: 10 }, () => ({
       taskId: "t1",
       userId: "u1",
@@ -417,10 +446,7 @@ describe("calculateConsistencyScore", () => {
   });
 
   it("should return kpiSpread 1.0 when all KPI buckets are active", () => {
-    const userKpis: UserKpiEntry[] = [
-      { kpiBucketId: "kpi-1" },
-      { kpiBucketId: "kpi-2" },
-    ];
+    const userKpis: UserKpiEntry[] = [{ kpiBucketId: "kpi-1" }, { kpiBucketId: "kpi-2" }];
     const tasks = [
       createMockCompletedTask({ kpiBucketId: "kpi-1" }),
       createMockCompletedTask({ kpiBucketId: "kpi-2" }),
@@ -589,9 +615,7 @@ describe("calculateQualityScore — edge cases", () => {
       ...createMockStatusHistory("t3", [
         [TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.CLOSED_APPROVED],
       ]),
-      ...createMockStatusHistory("t4", [
-        [TaskStatus.NEW, TaskStatus.CLOSED_APPROVED],
-      ]),
+      ...createMockStatusHistory("t4", [[TaskStatus.NEW, TaskStatus.CLOSED_APPROVED]]),
     ];
 
     const result = calculateQualityScore(tasks, histories);
@@ -694,7 +718,10 @@ describe("calculateReliabilityScore — edge cases", () => {
 
   it("should handle carry-forwards exceeding active task count", () => {
     const tasks = [
-      createMockCompletedTask({ completedAt: new Date(), deadline: new Date(Date.now() + 86400000) }),
+      createMockCompletedTask({
+        completedAt: new Date(),
+        deadline: new Date(Date.now() + 86400000),
+      }),
     ];
     const carryForwards: CarryForwardEntry[] = Array.from({ length: 100 }, () => ({
       taskId: "t1",
@@ -711,7 +738,10 @@ describe("calculateReliabilityScore — edge cases", () => {
 
   it("should handle zero active tasks with carry-forwards", () => {
     const completed = [
-      createMockCompletedTask({ completedAt: new Date(), deadline: new Date(Date.now() + 86400000) }),
+      createMockCompletedTask({
+        completedAt: new Date(),
+        deadline: new Date(Date.now() + 86400000),
+      }),
     ];
     const carryForwards: CarryForwardEntry[] = [
       { taskId: "t1", userId: "u1", createdAt: new Date() },
@@ -734,12 +764,14 @@ describe("calculateReliabilityScore — edge cases", () => {
     );
 
     const trulyActiveTasks = Array.from({ length: 3 }, () =>
-      createMockCompletedTask({ status: TaskStatus.IN_PROGRESS, completedAt: null, deadline: tomorrow })
+      createMockCompletedTask({
+        status: TaskStatus.IN_PROGRESS,
+        completedAt: null,
+        deadline: tomorrow,
+      })
     );
 
-    const carryForwards: CarryForwardEntry[] = [
-      { taskId: "t1", userId: "u1", createdAt: now },
-    ];
+    const carryForwards: CarryForwardEntry[] = [{ taskId: "t1", userId: "u1", createdAt: now }];
 
     // Only truly active tasks should be passed (not completed + active)
     const result = calculateReliabilityScore(completedTasks, carryForwards, trulyActiveTasks);
@@ -876,10 +908,7 @@ describe("calculateConsistencyScore — edge cases", () => {
       morningCompleted: true,
     }));
 
-    const userKpis: UserKpiEntry[] = [
-      { kpiBucketId: "kpi-1" },
-      { kpiBucketId: "kpi-2" },
-    ];
+    const userKpis: UserKpiEntry[] = [{ kpiBucketId: "kpi-1" }, { kpiBucketId: "kpi-2" }];
     // Only work in 1 of 2 KPIs
     const tasks = [createMockCompletedTask({ kpiBucketId: "kpi-1" })];
 

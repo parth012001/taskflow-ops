@@ -55,27 +55,22 @@ import { GET as getDepartments } from "@/app/api/admin/departments/route";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 
-const mockGetServerSession = getServerSession as jest.MockedFunction<
-  typeof getServerSession
+const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
+const mockPrismaUserFindUnique = prisma.user.findUnique as jest.MockedFunction<
+  typeof prisma.user.findUnique
 >;
-const mockPrismaUserFindUnique = prisma.user
-  .findUnique as jest.MockedFunction<typeof prisma.user.findUnique>;
 const mockPrismaUserFindMany = prisma.user.findMany as jest.MockedFunction<
   typeof prisma.user.findMany
 >;
-const mockPrismaUserCount = prisma.user.count as jest.MockedFunction<
-  typeof prisma.user.count
+const mockPrismaUserCount = prisma.user.count as jest.MockedFunction<typeof prisma.user.count>;
+const mockPrismaUserCreate = prisma.user.create as jest.MockedFunction<typeof prisma.user.create>;
+const mockPrismaUserUpdate = prisma.user.update as jest.MockedFunction<typeof prisma.user.update>;
+const mockPrismaDeptFindUnique = prisma.department.findUnique as jest.MockedFunction<
+  typeof prisma.department.findUnique
 >;
-const mockPrismaUserCreate = prisma.user.create as jest.MockedFunction<
-  typeof prisma.user.create
+const mockPrismaDeptFindMany = prisma.department.findMany as jest.MockedFunction<
+  typeof prisma.department.findMany
 >;
-const mockPrismaUserUpdate = prisma.user.update as jest.MockedFunction<
-  typeof prisma.user.update
->;
-const mockPrismaDeptFindUnique = prisma.department
-  .findUnique as jest.MockedFunction<typeof prisma.department.findUnique>;
-const mockPrismaDeptFindMany = prisma.department
-  .findMany as jest.MockedFunction<typeof prisma.department.findMany>;
 
 function createMockRequest(
   url: string,
@@ -357,10 +352,9 @@ describe("Admin User Management API", () => {
     it("should return user by id", async () => {
       mockPrismaUserFindUnique.mockResolvedValue(mockUser as any);
 
-      const response = await getUserById(
-        createMockRequest("/api/admin/users/user-1"),
-        { params: Promise.resolve({ id: "user-1" }) }
-      );
+      const response = await getUserById(createMockRequest("/api/admin/users/user-1"), {
+        params: Promise.resolve({ id: "user-1" }),
+      });
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -370,10 +364,9 @@ describe("Admin User Management API", () => {
     it("should return 404 when user not found", async () => {
       mockPrismaUserFindUnique.mockResolvedValue(null);
 
-      const response = await getUserById(
-        createMockRequest("/api/admin/users/nonexistent"),
-        { params: Promise.resolve({ id: "nonexistent" }) }
-      );
+      const response = await getUserById(createMockRequest("/api/admin/users/nonexistent"), {
+        params: Promise.resolve({ id: "nonexistent" }),
+      });
       const data = await response.json();
 
       expect(response.status).toBe(404);

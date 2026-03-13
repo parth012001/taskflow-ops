@@ -112,30 +112,28 @@ describe("Task State Machine", () => {
 
     describe("IN_PROGRESS → CLOSED_APPROVED (skip review)", () => {
       it("should allow owner to complete directly when requiresReview is false", () => {
-        const result = validateTransition(
-          TaskStatus.IN_PROGRESS,
-          TaskStatus.CLOSED_APPROVED,
-          { ...baseContext, requiresReview: false }
-        );
+        const result = validateTransition(TaskStatus.IN_PROGRESS, TaskStatus.CLOSED_APPROVED, {
+          ...baseContext,
+          requiresReview: false,
+        });
         expect(result.valid).toBe(true);
       });
 
       it("should reject when requiresReview is true", () => {
-        const result = validateTransition(
-          TaskStatus.IN_PROGRESS,
-          TaskStatus.CLOSED_APPROVED,
-          { ...baseContext, requiresReview: true }
-        );
+        const result = validateTransition(TaskStatus.IN_PROGRESS, TaskStatus.CLOSED_APPROVED, {
+          ...baseContext,
+          requiresReview: true,
+        });
         expect(result.valid).toBe(false);
         expect(result.error).toBe("This task requires review. Submit for review instead.");
       });
 
       it("should reject non-owner even when requiresReview is false", () => {
-        const result = validateTransition(
-          TaskStatus.IN_PROGRESS,
-          TaskStatus.CLOSED_APPROVED,
-          { ...baseContext, requiresReview: false, currentUserId: "other-user" }
-        );
+        const result = validateTransition(TaskStatus.IN_PROGRESS, TaskStatus.CLOSED_APPROVED, {
+          ...baseContext,
+          requiresReview: false,
+          currentUserId: "other-user",
+        });
         expect(result.valid).toBe(false);
         expect(result.error).toBe("Only task owner can complete the task");
       });
@@ -264,41 +262,32 @@ describe("Task State Machine", () => {
 
     describe("CLOSED_APPROVED → REOPENED (reopen completed task)", () => {
       it("should allow owner to reopen with reason", () => {
-        const result = validateTransition(
-          TaskStatus.CLOSED_APPROVED,
-          TaskStatus.REOPENED,
-          { ...baseContext, reason: "I realized I missed a requirement" }
-        );
+        const result = validateTransition(TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED, {
+          ...baseContext,
+          reason: "I realized I missed a requirement",
+        });
         expect(result.valid).toBe(true);
       });
 
       it("should allow manager to reopen subordinate task with reason", () => {
-        const result = validateTransition(
-          TaskStatus.CLOSED_APPROVED,
-          TaskStatus.REOPENED,
-          {
-            taskOwnerId: "employee-1",
-            currentUserId: "manager-1",
-            currentUserRole: Role.MANAGER,
-            isManager: true,
-            reason: "This needs more work before release",
-          }
-        );
+        const result = validateTransition(TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED, {
+          taskOwnerId: "employee-1",
+          currentUserId: "manager-1",
+          currentUserRole: Role.MANAGER,
+          isManager: true,
+          reason: "This needs more work before release",
+        });
         expect(result.valid).toBe(true);
       });
 
       it("should allow department head to reopen any task with reason", () => {
-        const result = validateTransition(
-          TaskStatus.CLOSED_APPROVED,
-          TaskStatus.REOPENED,
-          {
-            taskOwnerId: "employee-1",
-            currentUserId: "dept-head-1",
-            currentUserRole: Role.DEPARTMENT_HEAD,
-            isManager: false,
-            reason: "Reopening for quality review",
-          }
-        );
+        const result = validateTransition(TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED, {
+          taskOwnerId: "employee-1",
+          currentUserId: "dept-head-1",
+          currentUserRole: Role.DEPARTMENT_HEAD,
+          isManager: false,
+          reason: "Reopening for quality review",
+        });
         expect(result.valid).toBe(true);
       });
 
@@ -313,43 +302,34 @@ describe("Task State Machine", () => {
       });
 
       it("should reject short reason", () => {
-        const result = validateTransition(
-          TaskStatus.CLOSED_APPROVED,
-          TaskStatus.REOPENED,
-          { ...baseContext, reason: "short" }
-        );
+        const result = validateTransition(TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED, {
+          ...baseContext,
+          reason: "short",
+        });
         expect(result.valid).toBe(false);
         expect(result.error).toBe("Reopen reason must be at least 10 characters");
       });
 
       it("should reject unrelated manager reopening", () => {
-        const result = validateTransition(
-          TaskStatus.CLOSED_APPROVED,
-          TaskStatus.REOPENED,
-          {
-            taskOwnerId: "employee-1",
-            currentUserId: "other-manager",
-            currentUserRole: Role.MANAGER,
-            isManager: false,
-            reason: "This should not be allowed for non-managing manager",
-          }
-        );
+        const result = validateTransition(TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED, {
+          taskOwnerId: "employee-1",
+          currentUserId: "other-manager",
+          currentUserRole: Role.MANAGER,
+          isManager: false,
+          reason: "This should not be allowed for non-managing manager",
+        });
         expect(result.valid).toBe(false);
         expect(result.error).toBe("Only the employee's manager can reopen this task");
       });
 
       it("should reject random employee reopening someone else's task", () => {
-        const result = validateTransition(
-          TaskStatus.CLOSED_APPROVED,
-          TaskStatus.REOPENED,
-          {
-            taskOwnerId: "employee-1",
-            currentUserId: "employee-2",
-            currentUserRole: Role.EMPLOYEE,
-            isManager: false,
-            reason: "I want to reopen someone else's task",
-          }
-        );
+        const result = validateTransition(TaskStatus.CLOSED_APPROVED, TaskStatus.REOPENED, {
+          taskOwnerId: "employee-1",
+          currentUserId: "employee-2",
+          currentUserRole: Role.EMPLOYEE,
+          isManager: false,
+          reason: "I want to reopen someone else's task",
+        });
         expect(result.valid).toBe(false);
         expect(result.error).toBe("Only task owner or managers can reopen a completed task");
       });
@@ -442,7 +422,9 @@ describe("Task State Machine", () => {
     });
 
     it("should require reason for REOPENED transition", () => {
-      expect(transitionRequiresReason(TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.REOPENED)).toBe(true);
+      expect(
+        transitionRequiresReason(TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.REOPENED)
+      ).toBe(true);
     });
 
     it("should not require reason for ACCEPTED transition", () => {
@@ -458,7 +440,9 @@ describe("Task State Machine", () => {
     });
 
     it("should not require reason for COMPLETED_PENDING_REVIEW → IN_PROGRESS (withdraw)", () => {
-      expect(transitionRequiresReason(TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.IN_PROGRESS)).toBe(false);
+      expect(
+        transitionRequiresReason(TaskStatus.COMPLETED_PENDING_REVIEW, TaskStatus.IN_PROGRESS)
+      ).toBe(false);
     });
   });
 

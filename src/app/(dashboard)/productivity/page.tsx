@@ -37,10 +37,7 @@ export default function ProductivityPage() {
     }
   }, [status, userRole, router]);
 
-  if (
-    status === "loading" ||
-    (status === "authenticated" && !isManagerOrAbove(userRole))
-  ) {
+  if (status === "loading" || (status === "authenticated" && !isManagerOrAbove(userRole))) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
@@ -56,12 +53,8 @@ export default function ProductivityPage() {
           <BarChart3 className="h-6 w-6 text-indigo-600" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Productivity Scores
-          </h1>
-          <p className="text-gray-500">
-            Track and compare team productivity metrics
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">Productivity Scores</h1>
+          <p className="text-gray-500">Track and compare team productivity metrics</p>
         </div>
       </div>
 

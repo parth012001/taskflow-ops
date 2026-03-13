@@ -5,9 +5,7 @@ test.describe("Department Management (Admin)", () => {
   test("Admin can see the departments table", async ({ page }) => {
     await loginAsRole(page, "admin");
     await page.goto("/admin/departments");
-    await expect(
-      page.getByRole("heading", { name: "Departments" })
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Departments" })).toBeVisible();
 
     // Wait for table to load
     await expect(page.locator("table")).toBeVisible();
@@ -19,9 +17,7 @@ test.describe("Department Management (Admin)", () => {
   test("Admin can create a department", async ({ page }) => {
     await loginAsRole(page, "admin");
     await page.goto("/admin/departments");
-    await expect(
-      page.getByRole("heading", { name: "Departments" })
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Departments" })).toBeVisible();
 
     await page.getByRole("button", { name: /Create Department/i }).click();
 
@@ -30,27 +26,19 @@ test.describe("Department Management (Admin)", () => {
 
     // Fill name
     await dialog.getByLabel(/Name/i).fill(`E2E Dept ${Date.now()}`);
-    await dialog
-      .getByLabel(/Description/i)
-      .fill("Created by E2E test");
+    await dialog.getByLabel(/Description/i).fill("Created by E2E test");
 
     // Submit
-    await dialog
-      .getByRole("button", { name: /Create Department/i })
-      .click();
+    await dialog.getByRole("button", { name: /Create Department/i }).click();
 
     // Wait for success toast
-    await expect(
-      page.locator("[data-sonner-toast]").first()
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("[data-sonner-toast]").first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("Admin can edit a department", async ({ page }) => {
     await loginAsRole(page, "admin");
     await page.goto("/admin/departments");
-    await expect(
-      page.getByRole("heading", { name: "Departments" })
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Departments" })).toBeVisible();
 
     // Wait for the table
     await expect(page.locator("table tbody tr").first()).toBeVisible();
@@ -74,9 +62,7 @@ test.describe("Department Management (Admin)", () => {
     await dialog.getByRole("button", { name: /Update/i }).click();
 
     // Wait for success toast
-    await expect(
-      page.locator("[data-sonner-toast]").first()
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("[data-sonner-toast]").first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("Non-admin is redirected to dashboard", async ({ page }) => {

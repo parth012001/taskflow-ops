@@ -6,13 +6,7 @@ import { toast } from "sonner";
 import { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -31,12 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KpiBucketFormModal } from "./kpi-bucket-form-modal";
 
 interface KpiBucket {
@@ -101,9 +90,7 @@ export function KpiBucketsPanel({ onDataChange }: KpiBucketsPanelProps) {
       setKpiBuckets(data.kpiBuckets);
     } catch (error) {
       console.error("Error fetching KPI buckets:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load KPI buckets"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to load KPI buckets");
       setKpiBuckets([]);
     } finally {
       setIsLoading(false);
@@ -147,9 +134,7 @@ export function KpiBucketsPanel({ onDataChange }: KpiBucketsPanelProps) {
       onDataChange?.();
     } catch (error) {
       console.error("Error deactivating KPI bucket:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to deactivate KPI bucket"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to deactivate KPI bucket");
     } finally {
       setIsDeactivating(false);
       setDeactivateConfirmId(null);
@@ -186,9 +171,7 @@ export function KpiBucketsPanel({ onDataChange }: KpiBucketsPanelProps) {
       onDataChange?.();
     } catch (error) {
       console.error("Error reactivating KPI bucket:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to reactivate KPI bucket"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to reactivate KPI bucket");
     } finally {
       setIsReactivating(false);
       setReactivateConfirmId(null);
@@ -211,9 +194,7 @@ export function KpiBucketsPanel({ onDataChange }: KpiBucketsPanelProps) {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>KPI Buckets</CardTitle>
-            <CardDescription>
-              Create and manage KPI categories for task tracking
-            </CardDescription>
+            <CardDescription>Create and manage KPI categories for task tracking</CardDescription>
           </div>
           <Button onClick={() => setIsFormOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -225,7 +206,10 @@ export function KpiBucketsPanel({ onDataChange }: KpiBucketsPanelProps) {
             /* Loading Skeleton */
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border rounded-lg animate-pulse">
+                <div
+                  key={i}
+                  className="flex items-center gap-4 p-4 border rounded-lg animate-pulse"
+                >
                   <div className="h-4 bg-gray-200 rounded w-32" />
                   <div className="h-4 bg-gray-200 rounded w-48 flex-1" />
                   <div className="h-4 bg-gray-200 rounded w-24" />
@@ -242,7 +226,8 @@ export function KpiBucketsPanel({ onDataChange }: KpiBucketsPanelProps) {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No KPI Buckets Yet</h3>
               <p className="text-gray-500 max-w-sm mx-auto mb-4">
-                KPI buckets help you categorize and track performance metrics for tasks. Create your first bucket to get started.
+                KPI buckets help you categorize and track performance metrics for tasks. Create your
+                first bucket to get started.
               </p>
               <Button onClick={() => setIsFormOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -397,9 +382,8 @@ export function KpiBucketsPanel({ onDataChange }: KpiBucketsPanelProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Deactivate KPI Bucket</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to deactivate this KPI bucket? It will no
-              longer be available for new tasks, but existing tasks will retain
-              their KPI assignment.
+              Are you sure you want to deactivate this KPI bucket? It will no longer be available
+              for new tasks, but existing tasks will retain their KPI assignment.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -424,8 +408,8 @@ export function KpiBucketsPanel({ onDataChange }: KpiBucketsPanelProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Reactivate KPI Bucket</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to reactivate this KPI bucket? It will
-              become available for new tasks again.
+              Are you sure you want to reactivate this KPI bucket? It will become available for new
+              tasks again.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

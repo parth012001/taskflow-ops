@@ -98,9 +98,7 @@ const navigation = [
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
 
-  const filteredNavigation = navigation.filter((item) =>
-    item.roles.includes(user.role)
-  );
+  const filteredNavigation = navigation.filter((item) => item.roles.includes(user.role));
 
   return (
     <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">

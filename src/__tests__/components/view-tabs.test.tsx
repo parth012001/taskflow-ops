@@ -16,9 +16,7 @@ describe("ViewTabs", () => {
 
   describe("Tab visibility by role", () => {
     it("should not render tabs for EMPLOYEE role", () => {
-      const { container } = render(
-        <ViewTabs {...defaultProps} role={Role.EMPLOYEE} />
-      );
+      const { container } = render(<ViewTabs {...defaultProps} role={Role.EMPLOYEE} />);
 
       // Should render nothing
       expect(container).toBeEmptyDOMElement();
@@ -70,13 +68,7 @@ describe("ViewTabs", () => {
     it("should call onViewChange with 'all' when clicking All Tasks", async () => {
       const user = userEvent.setup();
       const onViewChange = jest.fn();
-      render(
-        <ViewTabs
-          {...defaultProps}
-          role={Role.ADMIN}
-          onViewChange={onViewChange}
-        />
-      );
+      render(<ViewTabs {...defaultProps} role={Role.ADMIN} onViewChange={onViewChange} />);
 
       await user.click(screen.getByText("All Tasks"));
 
@@ -93,9 +85,7 @@ describe("ViewTabs", () => {
     });
 
     it("should show all tab as active for admin with all view", () => {
-      render(
-        <ViewTabs {...defaultProps} role={Role.ADMIN} activeView="all" />
-      );
+      render(<ViewTabs {...defaultProps} role={Role.ADMIN} activeView="all" />);
 
       const allTasksButton = screen.getByText("All Tasks").closest("button");
       expect(allTasksButton).toHaveClass("bg-white");

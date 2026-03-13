@@ -5,13 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   CheckSquare,
@@ -37,7 +31,8 @@ import { Role } from "@prisma/client";
 
 // Dynamic import for confetti (no SSR needed)
 const ConfettiCelebration = dynamic(
-  () => import("@/components/gamification/confetti-celebration").then((mod) => mod.ConfettiCelebration),
+  () =>
+    import("@/components/gamification/confetti-celebration").then((mod) => mod.ConfettiCelebration),
   { ssr: false }
 );
 
@@ -98,7 +93,9 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showMorningBanner, setShowMorningBanner] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [confettiType, setConfettiType] = useState<"task-completion" | "streak-milestone">("task-completion");
+  const [confettiType, setConfettiType] = useState<"task-completion" | "streak-milestone">(
+    "task-completion"
+  );
   const [productivityScore, setProductivityScore] = useState<{
     composite: number;
     output: number;
@@ -156,7 +153,10 @@ export default function DashboardPage() {
   useEffect(() => {
     const checkMorningRitual = async () => {
       // Check if already dismissed for this session
-      if (typeof window !== "undefined" && sessionStorage.getItem("morningBannerDismissed") === "true") {
+      if (
+        typeof window !== "undefined" &&
+        sessionStorage.getItem("morningBannerDismissed") === "true"
+      ) {
         return;
       }
 
@@ -239,12 +239,21 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link href="/daily-planning">
-              <Button variant="outline" size="sm" className="border-amber-300 text-amber-700 hover:bg-amber-100">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-amber-300 text-amber-700 hover:bg-amber-100"
+              >
                 Start Planning
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
-            <Button variant="ghost" size="sm" onClick={dismissMorningBanner} className="text-amber-600 hover:text-amber-700 hover:bg-amber-100">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={dismissMorningBanner}
+              className="text-amber-600 hover:text-amber-700 hover:bg-amber-100"
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -287,12 +296,22 @@ export default function DashboardPage() {
             <div className="flex items-center gap-6">
               <CompositeGauge score={productivityScore.composite} size={80} />
               <div className="flex-1 space-y-2">
-                {([
-                  { label: "Output", value: productivityScore.output, color: "bg-blue-500" },
-                  { label: "Quality", value: productivityScore.quality, color: "bg-green-500" },
-                  { label: "Reliability", value: productivityScore.reliability, color: "bg-purple-500" },
-                  { label: "Consistency", value: productivityScore.consistency, color: "bg-amber-500" },
-                ] as const).map((pillar) => (
+                {(
+                  [
+                    { label: "Output", value: productivityScore.output, color: "bg-blue-500" },
+                    { label: "Quality", value: productivityScore.quality, color: "bg-green-500" },
+                    {
+                      label: "Reliability",
+                      value: productivityScore.reliability,
+                      color: "bg-purple-500",
+                    },
+                    {
+                      label: "Consistency",
+                      value: productivityScore.consistency,
+                      color: "bg-amber-500",
+                    },
+                  ] as const
+                ).map((pillar) => (
                   <div key={pillar.label} className="flex items-center gap-2">
                     <span className="text-xs text-gray-500 w-20">{pillar.label}</span>
                     <div className="flex-1 h-2 bg-gray-100 rounded-full">
@@ -342,9 +361,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recognition Widget */}
-      {stats?.recognitions && (
-        <RecognitionWidget recognitions={stats.recognitions} />
-      )}
+      {stats?.recognitions && <RecognitionWidget recognitions={stats.recognitions} />}
 
       {/* Quick actions and today's summary */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -417,9 +434,7 @@ export default function DashboardPage() {
                       <CheckSquare className="w-4 h-4 text-indigo-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 truncate">
-                        {activity.taskTitle}
-                      </p>
+                      <p className="text-sm text-gray-900 truncate">{activity.taskTitle}</p>
                       <p className="text-xs text-gray-500">
                         {activity.fromStatus
                           ? `${getStatusLabel(activity.fromStatus)} → ${getStatusLabel(activity.toStatus)}`
@@ -435,9 +450,7 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  No recent activity
-                </p>
+                <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
               )}
             </div>
           </CardContent>
@@ -449,9 +462,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Task Distribution by KPI</CardTitle>
-            <CardDescription>
-              Your tasks across different key performance areas
-            </CardDescription>
+            <CardDescription>Your tasks across different key performance areas</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -463,9 +474,8 @@ export default function DashboardPage() {
                   "bg-amber-500",
                   "bg-pink-500",
                 ];
-                const percentage = stats.totalTasks > 0
-                  ? Math.round((kpi.count / stats.totalTasks) * 100)
-                  : 0;
+                const percentage =
+                  stats.totalTasks > 0 ? Math.round((kpi.count / stats.totalTasks) * 100) : 0;
 
                 return (
                   <div key={kpi.kpiBucketId} className="text-center">
@@ -491,9 +501,7 @@ export default function DashboardPage() {
                           className={colors[index % colors.length].replace("bg-", "text-")}
                         />
                       </svg>
-                      <span className="absolute text-sm font-semibold">
-                        {kpi.count}
-                      </span>
+                      <span className="absolute text-sm font-semibold">{kpi.count}</span>
                     </div>
                     <p className="mt-2 text-xs text-gray-500 truncate" title={kpi.name}>
                       {kpi.name}
@@ -525,7 +533,10 @@ export default function DashboardPage() {
                 </div>
               </div>
               <Link href="/tasks?status=COMPLETED_PENDING_REVIEW">
-                <Button variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-100">
+                <Button
+                  variant="outline"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                >
                   Review Now
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

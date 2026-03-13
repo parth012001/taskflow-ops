@@ -21,7 +21,9 @@ test.describe("Sidebar navigation visibility", () => {
     await expect(sidebarLink(page, "/settings/users")).not.toBeVisible();
   });
 
-  test("Manager sees Dashboard, Tasks, Daily Planning, Team, Productivity, Settings", async ({ page }) => {
+  test("Manager sees Dashboard, Tasks, Daily Planning, Team, Productivity, Settings", async ({
+    page,
+  }) => {
     await loginAsRole(page, "manager");
 
     await expect(sidebarLink(page, "/dashboard")).toBeVisible();
@@ -36,7 +38,9 @@ test.describe("Sidebar navigation visibility", () => {
     await expect(sidebarLink(page, "/settings/users")).not.toBeVisible();
   });
 
-  test("Department Head sees Dashboard, Tasks, Daily Planning, Team, Productivity, Announcements, Settings", async ({ page }) => {
+  test("Department Head sees Dashboard, Tasks, Daily Planning, Team, Productivity, Announcements, Settings", async ({
+    page,
+  }) => {
     await loginAsRole(page, "departmentHead");
 
     await expect(sidebarLink(page, "/dashboard")).toBeVisible();

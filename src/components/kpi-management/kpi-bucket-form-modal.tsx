@@ -32,7 +32,11 @@ interface KpiBucketFormModalProps {
   onSuccess: () => void;
 }
 
-const roleOptions: { value: Role; label: string; colors: { bg: string; border: string; text: string; selectedBg: string } }[] = [
+const roleOptions: {
+  value: Role;
+  label: string;
+  colors: { bg: string; border: string; text: string; selectedBg: string };
+}[] = [
   {
     value: "EMPLOYEE",
     label: "Employee",
@@ -84,7 +88,7 @@ export function KpiBucketFormModal({
       if (bucket) {
         setName(bucket.name);
         setDescription(bucket.description || "");
-        setApplicableRoles(bucket.applicableRoles.filter(r => r !== "ADMIN"));
+        setApplicableRoles(bucket.applicableRoles.filter((r) => r !== "ADMIN"));
         setIsActive(bucket.isActive);
       } else {
         setName("");
@@ -97,9 +101,7 @@ export function KpiBucketFormModal({
 
   const handleRoleToggle = (role: Role) => {
     setApplicableRoles((prev) =>
-      prev.includes(role)
-        ? prev.filter((r) => r !== role)
-        : [...prev, role]
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
     );
   };
 
@@ -147,16 +149,12 @@ export function KpiBucketFormModal({
         throw new Error(error.error || "Failed to save KPI bucket");
       }
 
-      toast.success(
-        isEditing ? "KPI bucket updated" : "KPI bucket created"
-      );
+      toast.success(isEditing ? "KPI bucket updated" : "KPI bucket created");
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving KPI bucket:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save KPI bucket"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to save KPI bucket");
     } finally {
       setIsSubmitting(false);
     }
@@ -166,9 +164,7 @@ export function KpiBucketFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit KPI Bucket" : "Create KPI Bucket"}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? "Edit KPI Bucket" : "Create KPI Bucket"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -193,9 +189,7 @@ export function KpiBucketFormModal({
               rows={3}
               maxLength={500}
             />
-            <p className="text-xs text-gray-400 text-right">
-              {description.length}/500
-            </p>
+            <p className="text-xs text-gray-400 text-right">{description.length}/500</p>
           </div>
 
           <div className="space-y-2">
@@ -222,7 +216,13 @@ export function KpiBucketFormModal({
                       {option.label}
                     </span>
                     {isSelected && (
-                      <div className={cn("flex items-center justify-center w-5 h-5 rounded-full", option.colors.border, option.colors.selectedBg)}>
+                      <div
+                        className={cn(
+                          "flex items-center justify-center w-5 h-5 rounded-full",
+                          option.colors.border,
+                          option.colors.selectedBg
+                        )}
+                      >
                         <Check className={cn("h-3 w-3", option.colors.text)} />
                       </div>
                     )}
@@ -251,17 +251,11 @@ export function KpiBucketFormModal({
           )}
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditing ? "Update" : "Create"}
             </Button>
           </DialogFooter>

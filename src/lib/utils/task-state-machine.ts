@@ -243,11 +243,10 @@ const transitions: StatusTransition[] = [
     requiresManagerApproval: false,
     validationFn: (ctx) => {
       const isOwner = ctx.taskOwnerId === ctx.currentUserId;
-      const isManagerPlus = (
+      const isManagerPlus =
         ctx.currentUserRole === Role.MANAGER ||
         ctx.currentUserRole === Role.DEPARTMENT_HEAD ||
-        ctx.currentUserRole === Role.ADMIN
-      );
+        ctx.currentUserRole === Role.ADMIN;
       if (!isOwner && !isManagerPlus) {
         return { valid: false, error: "Only task owner or managers can reopen a completed task" };
       }
@@ -284,9 +283,7 @@ export function validateTransition(
   toStatus: TaskStatus,
   context: TransitionContext
 ): ValidationResult {
-  const transition = transitions.find(
-    (t) => t.from === fromStatus && t.to === toStatus
-  );
+  const transition = transitions.find((t) => t.from === fromStatus && t.to === toStatus);
 
   if (!transition) {
     return {
@@ -322,10 +319,7 @@ export function getTransitionConfig(
 /**
  * Check if a transition requires a reason
  */
-export function transitionRequiresReason(
-  fromStatus: TaskStatus,
-  toStatus: TaskStatus
-): boolean {
+export function transitionRequiresReason(fromStatus: TaskStatus, toStatus: TaskStatus): boolean {
   const config = getTransitionConfig(fromStatus, toStatus);
   return config?.requiresReason ?? false;
 }
@@ -365,10 +359,7 @@ export function getStatusColor(status: TaskStatus): {
   text: string;
   border: string;
 } {
-  const colors: Record<
-    TaskStatus,
-    { bg: string; text: string; border: string }
-  > = {
+  const colors: Record<TaskStatus, { bg: string; text: string; border: string }> = {
     NEW: { bg: "bg-gray-100", text: "text-gray-700", border: "border-gray-300" },
     ACCEPTED: {
       bg: "bg-blue-100",

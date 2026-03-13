@@ -17,11 +17,7 @@ export const TEST_USERS = {
  * Log in via the UI. Retries once after a 13-second wait if the first
  * attempt fails (to handle the 5-req/min per-email auth rate limiter).
  */
-export async function loginAs(
-  page: Page,
-  email: string,
-  password: string
-): Promise<void> {
+export async function loginAs(page: Page, email: string, password: string): Promise<void> {
   const attemptLogin = async () => {
     await page.goto("/login");
     await page.locator("#email").waitFor({ state: "visible" });
@@ -48,10 +44,7 @@ export async function loginAs(
   }
 }
 
-export async function loginAsRole(
-  page: Page,
-  role: keyof typeof TEST_USERS
-): Promise<void> {
+export async function loginAsRole(page: Page, role: keyof typeof TEST_USERS): Promise<void> {
   const { email, password } = TEST_USERS[role];
   await loginAs(page, email, password);
 }

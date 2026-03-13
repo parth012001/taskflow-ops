@@ -99,10 +99,7 @@ export function canViewTask(
   if (viewerId === taskOwnerId) return true;
 
   // Manager can view subordinates' tasks
-  if (
-    viewerRole === "MANAGER" &&
-    viewerSubordinateIds.includes(taskOwnerId)
-  ) {
+  if (viewerRole === "MANAGER" && viewerSubordinateIds.includes(taskOwnerId)) {
     return true;
   }
 
@@ -117,11 +114,7 @@ export function canViewTask(
 /**
  * Check if user can edit a specific task
  */
-export function canEditTask(
-  editorRole: Role,
-  editorId: string,
-  taskOwnerId: string
-): boolean {
+export function canEditTask(editorRole: Role, editorId: string, taskOwnerId: string): boolean {
   // Only owner can edit their task
   return editorId === taskOwnerId;
 }
@@ -142,10 +135,7 @@ export function canApproveTask(
   if (approverId === taskOwnerId) return false;
 
   // Manager can approve subordinates' tasks
-  if (
-    approverRole === "MANAGER" &&
-    approverSubordinateIds.includes(taskOwnerId)
-  ) {
+  if (approverRole === "MANAGER" && approverSubordinateIds.includes(taskOwnerId)) {
     return true;
   }
 

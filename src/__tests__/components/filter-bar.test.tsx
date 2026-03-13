@@ -176,9 +176,7 @@ describe("FilterBar", () => {
         statuses: [TaskStatus.IN_PROGRESS],
       };
 
-      render(
-        <FilterBar {...defaultProps} filters={filtersWithStatus} hasActiveFilters={true} />
-      );
+      render(<FilterBar {...defaultProps} filters={filtersWithStatus} hasActiveFilters={true} />);
 
       expect(screen.getByText("In Progress")).toBeInTheDocument();
     });
@@ -189,9 +187,7 @@ describe("FilterBar", () => {
         priorities: [TaskPriority.URGENT_IMPORTANT],
       };
 
-      render(
-        <FilterBar {...defaultProps} filters={filtersWithPriority} hasActiveFilters={true} />
-      );
+      render(<FilterBar {...defaultProps} filters={filtersWithPriority} hasActiveFilters={true} />);
 
       expect(screen.getByText("P1")).toBeInTheDocument();
     });
@@ -202,9 +198,7 @@ describe("FilterBar", () => {
         kpiBucketId: "1",
       };
 
-      render(
-        <FilterBar {...defaultProps} filters={filtersWithBucket} hasActiveFilters={true} />
-      );
+      render(<FilterBar {...defaultProps} filters={filtersWithBucket} hasActiveFilters={true} />);
 
       expect(screen.getByText("Sales KPIs")).toBeInTheDocument();
     });
@@ -216,9 +210,7 @@ describe("FilterBar", () => {
         statuses: [TaskStatus.IN_PROGRESS],
       };
 
-      render(
-        <FilterBar {...defaultProps} filters={filtersWithStatus} hasActiveFilters={true} />
-      );
+      render(<FilterBar {...defaultProps} filters={filtersWithStatus} hasActiveFilters={true} />);
 
       const removeButton = screen.getByRole("button", { name: /Remove In Progress filter/i });
       await user.click(removeButton);
@@ -241,21 +233,13 @@ describe("FilterBar", () => {
     });
 
     it("should not render Team Member button when assignableUsers is empty", () => {
-      render(
-        <FilterBar
-          {...defaultProps}
-          assignableUsers={[]}
-          onOwnerToggle={jest.fn()}
-        />
-      );
+      render(<FilterBar {...defaultProps} assignableUsers={[]} onOwnerToggle={jest.fn()} />);
 
       expect(screen.queryByText("Team Member")).not.toBeInTheDocument();
     });
 
     it("should not render Team Member button when onOwnerToggle is not provided", () => {
-      render(
-        <FilterBar {...defaultProps} assignableUsers={mockAssignableUsers} />
-      );
+      render(<FilterBar {...defaultProps} assignableUsers={mockAssignableUsers} />);
 
       expect(screen.queryByText("Team Member")).not.toBeInTheDocument();
     });
@@ -434,13 +418,7 @@ describe("FilterBar", () => {
         ownerIds: ["user-1"],
       };
 
-      render(
-        <FilterBar
-          {...defaultProps}
-          filters={filtersWithOwners}
-          hasActiveFilters={true}
-        />
-      );
+      render(<FilterBar {...defaultProps} filters={filtersWithOwners} hasActiveFilters={true} />);
 
       // No chip for user-1 should appear since assignableUsers is undefined
       expect(screen.queryByText("Alice Wong")).not.toBeInTheDocument();

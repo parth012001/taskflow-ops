@@ -48,8 +48,12 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-const mockPrismaUserFindMany = prisma.user.findMany as jest.MockedFunction<typeof prisma.user.findMany>;
-const mockPrismaTaskFindMany = prisma.task.findMany as jest.MockedFunction<typeof prisma.task.findMany>;
+const mockPrismaUserFindMany = prisma.user.findMany as jest.MockedFunction<
+  typeof prisma.user.findMany
+>;
+const mockPrismaTaskFindMany = prisma.task.findMany as jest.MockedFunction<
+  typeof prisma.task.findMany
+>;
 const mockPrismaTaskCount = prisma.task.count as jest.MockedFunction<typeof prisma.task.count>;
 
 // Consistent CUID test IDs
@@ -66,9 +70,7 @@ const UNAUTH_USER = "cm7qk0b0a0000abcduserid07";
  * Creates a mock NextRequest-like object with a URL containing search params.
  * Supports multiple values for the same key (e.g., multiple ownerId values).
  */
-function createMockNextRequest(
-  params: Record<string, string | string[]> = {}
-): any {
+function createMockNextRequest(params: Record<string, string | string[]> = {}): any {
   const url = new URL("http://localhost:3000/api/tasks");
   for (const [key, value] of Object.entries(params)) {
     if (Array.isArray(value)) {
@@ -126,11 +128,7 @@ describe("GET /api/tasks", () => {
 
   describe("MANAGER role - ownerId filtering", () => {
     const managerId = MGR_1;
-    const subordinates = [
-      { id: EMP_1 },
-      { id: EMP_2 },
-      { id: EMP_3 },
-    ];
+    const subordinates = [{ id: EMP_1 }, { id: EMP_2 }, { id: EMP_3 }];
 
     beforeEach(() => {
       mockGetServerSession.mockResolvedValue({
@@ -177,9 +175,7 @@ describe("GET /api/tasks", () => {
     });
 
     it("should return 403 when manager requests unauthorized ownerId", async () => {
-      const response = await GET(
-        createMockNextRequest({ ownerId: UNAUTH_USER })
-      );
+      const response = await GET(createMockNextRequest({ ownerId: UNAUTH_USER }));
       const data = await response.json();
 
       expect(response.status).toBe(403);
@@ -187,9 +183,7 @@ describe("GET /api/tasks", () => {
     });
 
     it("should return 403 when any ownerId in the list is unauthorized", async () => {
-      const response = await GET(
-        createMockNextRequest({ ownerId: [EMP_1, UNAUTH_USER] })
-      );
+      const response = await GET(createMockNextRequest({ ownerId: [EMP_1, UNAUTH_USER] }));
       const data = await response.json();
 
       expect(response.status).toBe(403);

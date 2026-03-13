@@ -1,21 +1,9 @@
 "use client";
 
 import { RecognitionType } from "@prisma/client";
-import {
-  Star,
-  Crown,
-  Trophy,
-  Award,
-  Users,
-  TrendingUp,
-  LucideIcon,
-} from "lucide-react";
+import { Star, Crown, Trophy, Award, Users, TrendingUp, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BadgeConfig {
   icon: LucideIcon;
@@ -124,9 +112,7 @@ export function RecognitionBadge({
       {showLabel && (
         <div className="text-center">
           <p className="text-xs font-medium text-gray-700">{config.label}</p>
-          {formattedDate && (
-            <p className="text-[10px] text-gray-400">{formattedDate}</p>
-          )}
+          {formattedDate && <p className="text-[10px] text-gray-400">{formattedDate}</p>}
         </div>
       )}
     </div>
@@ -140,9 +126,7 @@ export function RecognitionBadge({
       <TooltipContent side="top" className="max-w-xs">
         <p className="font-medium">{config.label}</p>
         <p className="text-xs opacity-80">{config.description}</p>
-        {formattedDate && (
-          <p className="text-xs opacity-60 mt-1">Earned on {formattedDate}</p>
-        )}
+        {formattedDate && <p className="text-xs opacity-60 mt-1">Earned on {formattedDate}</p>}
       </TooltipContent>
     </Tooltip>
   );

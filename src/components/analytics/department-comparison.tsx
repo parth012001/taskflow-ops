@@ -2,14 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { authFetch } from "@/lib/auth-fetch";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -94,9 +87,7 @@ export function DepartmentComparison() {
     return (
       <Card>
         <CardContent className="py-12">
-          <p className="text-center text-sm text-gray-500">
-            No department data available
-          </p>
+          <p className="text-center text-sm text-gray-500">No department data available</p>
         </CardContent>
       </Card>
     );
@@ -117,12 +108,7 @@ export function DepartmentComparison() {
         <ResponsiveContainer width="100%" height={Math.max(120, departments.length * 50)}>
           <BarChart data={chartData} layout="vertical">
             <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
-            <YAxis
-              type="category"
-              dataKey="name"
-              tick={{ fontSize: 12 }}
-              width={100}
-            />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
             <Tooltip />
             <Bar dataKey="composite" fill="#6366f1" radius={[0, 4, 4, 0]} />
           </BarChart>
@@ -146,22 +132,42 @@ export function DepartmentComparison() {
                 <TableRow key={dept.id}>
                   <TableCell className="font-medium">{dept.name}</TableCell>
                   <TableCell className="text-center p-1">
-                    <span className={cn("inline-block rounded px-2 py-1 text-xs font-medium", getScoreBg(dept.output))}>
+                    <span
+                      className={cn(
+                        "inline-block rounded px-2 py-1 text-xs font-medium",
+                        getScoreBg(dept.output)
+                      )}
+                    >
                       {Math.round(dept.output)}
                     </span>
                   </TableCell>
                   <TableCell className="text-center p-1">
-                    <span className={cn("inline-block rounded px-2 py-1 text-xs font-medium", getScoreBg(dept.quality))}>
+                    <span
+                      className={cn(
+                        "inline-block rounded px-2 py-1 text-xs font-medium",
+                        getScoreBg(dept.quality)
+                      )}
+                    >
                       {Math.round(dept.quality)}
                     </span>
                   </TableCell>
                   <TableCell className="text-center p-1">
-                    <span className={cn("inline-block rounded px-2 py-1 text-xs font-medium", getScoreBg(dept.reliability))}>
+                    <span
+                      className={cn(
+                        "inline-block rounded px-2 py-1 text-xs font-medium",
+                        getScoreBg(dept.reliability)
+                      )}
+                    >
                       {Math.round(dept.reliability)}
                     </span>
                   </TableCell>
                   <TableCell className="text-center p-1">
-                    <span className={cn("inline-block rounded px-2 py-1 text-xs font-medium", getScoreBg(dept.consistency))}>
+                    <span
+                      className={cn(
+                        "inline-block rounded px-2 py-1 text-xs font-medium",
+                        getScoreBg(dept.consistency)
+                      )}
+                    >
                       {Math.round(dept.consistency)}
                     </span>
                   </TableCell>

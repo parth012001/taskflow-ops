@@ -225,10 +225,7 @@ describe("NotificationDropdown", () => {
     });
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Error fetching notifications:",
-        expect.any(Error)
-      );
+      expect(consoleSpy).toHaveBeenCalledWith("Error fetching notifications:", expect.any(Error));
     });
 
     consoleSpy.mockRestore();

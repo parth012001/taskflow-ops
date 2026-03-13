@@ -49,9 +49,7 @@ export async function GET() {
     return NextResponse.json({
       ...user,
       departmentName: user.department?.name || null,
-      managerName: user.manager
-        ? `${user.manager.firstName} ${user.manager.lastName}`
-        : null,
+      managerName: user.manager ? `${user.manager.firstName} ${user.manager.lastName}` : null,
     });
   } catch (error) {
     console.error("GET /api/users/me error:", error);
@@ -73,10 +71,7 @@ export async function PATCH(request: NextRequest) {
       const validatedData = changePasswordSchema.safeParse(body);
       if (!validatedData.success) {
         console.warn("Validation error:", validatedData.error.flatten());
-        return NextResponse.json(
-          { error: "Invalid input" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid input" }, { status: 400 });
       }
 
       const { currentPassword, newPassword } = validatedData.data;
@@ -94,10 +89,7 @@ export async function PATCH(request: NextRequest) {
       // Verify current password
       const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
       if (!isValidPassword) {
-        return NextResponse.json(
-          { error: "Current password is incorrect" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
       }
 
       // Hash new password and update
@@ -119,10 +111,7 @@ export async function PATCH(request: NextRequest) {
     const validatedData = updateProfileSchema.safeParse(body);
     if (!validatedData.success) {
       console.warn("Validation error:", validatedData.error.flatten());
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { firstName, lastName } = validatedData.data;
@@ -133,10 +122,7 @@ export async function PATCH(request: NextRequest) {
     if (lastName !== undefined) updateData.lastName = lastName;
 
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json(
-        { error: "No valid fields to update" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
     }
 
     const updatedUser = await prisma.user.update({
