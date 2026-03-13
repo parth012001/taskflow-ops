@@ -81,3 +81,6 @@ Department-level weights are configured via `ScoringConfig`. Scores are persiste
 - Transactions use `prisma.$transaction` with callback pattern (`async (tx) => { ... }`)
 - API routes validate with Zod, return `NextResponse.json()`
 - Band thresholds for health scores: Thriving ≥80, Healthy ≥60, At Risk ≥40, Critical <40
+
+
+Do not put Co-authored by Claude Code while writing the commit message
