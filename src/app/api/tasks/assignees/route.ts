@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { canAssignTasks } from "@/lib/utils/permissions";
 import { Role } from "@prisma/client";
+import { getSubordinateIds } from "@/lib/utils/manager-helpers";
 
 interface AssignableUser {
   id: string;
@@ -40,9 +41,10 @@ export async function GET() {
 
     if (userRole === "MANAGER") {
       // Managers can only assign to their direct subordinates
+      const subordinateIds = await getSubordinateIds(userId);
       assignableUsers = await prisma.user.findMany({
         where: {
-          managerId: userId,
+          id: { in: subordinateIds },
           isActive: true,
           deletedAt: null,
         },

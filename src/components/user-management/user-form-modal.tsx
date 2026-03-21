@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Copy, Check, Eye, EyeOff } from "lucide-react";
+import { Loader2, Copy, Check, Eye, EyeOff, X } from "lucide-react";
 import { toast } from "sonner";
 import { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -32,7 +33,8 @@ interface User {
   role: Role;
   isActive: boolean;
   department: { id: string; name: string } | null;
-  manager: { id: string; firstName: string; lastName: string } | null;
+  managers?: { id: string; firstName: string; lastName: string }[];
+  manager?: { id: string; firstName: string; lastName: string } | null;
 }
 
 interface Department {
@@ -75,7 +77,7 @@ export function UserFormModal({ open, onOpenChange, user, onSuccess }: UserFormM
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState<Role>("EMPLOYEE");
   const [departmentId, setDepartmentId] = useState<string>("");
-  const [managerId, setManagerId] = useState<string>("");
+  const [managerIds, setManagerIds] = useState<string[]>([]);
   const [password, setPassword] = useState("");
   const [autoGeneratePassword, setAutoGeneratePassword] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -120,7 +122,7 @@ export function UserFormModal({ open, onOpenChange, user, onSuccess }: UserFormM
         setLastName(user.lastName);
         setRole(user.role);
         setDepartmentId(user.department?.id || "");
-        setManagerId(user.manager?.id || "");
+        setManagerIds(user.managers?.map((m) => m.id) || (user.manager ? [user.manager.id] : []));
         setPassword("");
         setAutoGeneratePassword(true);
       } else {
@@ -129,7 +131,7 @@ export function UserFormModal({ open, onOpenChange, user, onSuccess }: UserFormM
         setLastName("");
         setRole("EMPLOYEE");
         setDepartmentId("");
-        setManagerId("");
+        setManagerIds([]);
         setPassword("");
         setAutoGeneratePassword(true);
       }
@@ -174,7 +176,7 @@ export function UserFormModal({ open, onOpenChange, user, onSuccess }: UserFormM
         lastName: lastName.trim(),
         role,
         departmentId: departmentId || null,
-        managerId: managerId || null,
+        managerIds,
       };
 
       if (!isEditing) {
@@ -388,25 +390,70 @@ export function UserFormModal({ open, onOpenChange, user, onSuccess }: UserFormM
               </Select>
             </div>
 
-            {/* Manager */}
+            {/* Manager(s) */}
             <div className="space-y-2">
-              <Label htmlFor="manager">Reports To</Label>
+              <Label htmlFor="manager">
+                Reports To{" "}
+                <span className="text-xs text-gray-400 font-normal">
+                  ({managerIds.length}/5)
+                </span>
+              </Label>
+              {managerIds.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {managerIds.map((mId) => {
+                    const mgr = filteredManagers.find((m) => m.id === mId);
+                    const displayName = mgr
+                      ? `${mgr.firstName} ${mgr.lastName}`
+                      : "Unknown manager";
+                    return (
+                      <Badge key={mId} variant="secondary" className="gap-1 pr-1">
+                        {displayName}
+                        <button
+                          type="button"
+                          aria-label={`Remove ${displayName}`}
+                          className="ml-1 rounded-full hover:bg-gray-300 p-0.5"
+                          onClick={() =>
+                            setManagerIds((prev) => prev.filter((id) => id !== mId))
+                          }
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
               <Select
-                value={managerId || "none"}
-                onValueChange={(v) => setManagerId(v === "none" ? "" : v)}
+                value=""
+                onValueChange={(v) => {
+                  if (v && !managerIds.includes(v)) {
+                    setManagerIds((prev) => [...prev, v]);
+                  }
+                }}
+                disabled={managerIds.length >= 5}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select manager (optional)" />
+                  <SelectValue
+                    placeholder={
+                      managerIds.length >= 5
+                        ? "Maximum 5 managers reached"
+                        : "Add manager (optional)"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No manager</SelectItem>
-                  {filteredManagers.map((manager) => (
-                    <SelectItem key={manager.id} value={manager.id}>
-                      {manager.firstName} {manager.lastName} ({manager.role.replace("_", " ")})
-                    </SelectItem>
-                  ))}
+                  {filteredManagers
+                    .filter((m) => !managerIds.includes(m.id))
+                    .map((manager) => (
+                      <SelectItem key={manager.id} value={manager.id}>
+                        {manager.firstName} {manager.lastName} ({manager.role.replace("_", " ")})
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-gray-500">
+                Select one or more managers. Leave empty for no reporting relationship.
+              </p>
             </div>
 
             {/* Password section - only for create */}

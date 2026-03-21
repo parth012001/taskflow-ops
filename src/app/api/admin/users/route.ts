@@ -9,6 +9,7 @@ import {
   listUsersQuerySchema,
   generateRandomPassword,
 } from "@/lib/validations/user-management";
+import { validateManagerIds, replaceManagers } from "@/lib/utils/manager-helpers";
 
 // GET /api/admin/users - List all users with pagination and filters
 export async function GET(request: NextRequest) {
@@ -87,11 +88,15 @@ export async function GET(request: NextRequest) {
         department: {
           select: { id: true, name: true },
         },
-        manager: {
-          select: { id: true, firstName: true, lastName: true },
+        managerRelations: {
+          select: {
+            manager: {
+              select: { id: true, firstName: true, lastName: true },
+            },
+          },
         },
         _count: {
-          select: { subordinates: true },
+          select: { subordinateRelations: true },
         },
       },
       orderBy: { [sortBy]: sortOrder },
@@ -100,11 +105,19 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      users: users.map((user) => ({
-        ...user,
-        managerName: user.manager ? `${user.manager.firstName} ${user.manager.lastName}` : null,
-        subordinateCount: user._count.subordinates,
-      })),
+      users: users.map((user) => {
+        const managers = user.managerRelations.map((r) => r.manager);
+        const firstManager = managers[0];
+        const managerName = firstManager
+          ? `${firstManager.firstName} ${firstManager.lastName}${managers.length > 1 ? ` +${managers.length - 1}` : ""}`
+          : null;
+        return {
+          ...user,
+          managers,
+          managerName,
+          subordinateCount: user._count.subordinateRelations,
+        };
+      }),
       pagination: {
         page,
         limit,
@@ -144,7 +157,7 @@ export async function POST(request: NextRequest) {
       lastName,
       role,
       departmentId,
-      managerId,
+      managerIds,
       password,
       autoGeneratePassword,
     } = validationResult.data;
@@ -158,27 +171,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
     }
 
-    // Validate managerId if provided
-    if (managerId) {
-      const manager = await prisma.user.findUnique({
-        where: { id: managerId },
-        select: { role: true, isActive: true },
-      });
-
-      if (!manager) {
-        return NextResponse.json({ error: "Manager not found" }, { status: 400 });
-      }
-
-      if (!manager.isActive) {
-        return NextResponse.json({ error: "Selected manager is inactive" }, { status: 400 });
-      }
-
-      // Manager must be MANAGER or above
-      if (manager.role === "EMPLOYEE") {
-        return NextResponse.json(
-          { error: "Selected user cannot be a manager (role too low)" },
-          { status: 400 }
-        );
+    // Validate managerIds if provided
+    if (managerIds.length > 0) {
+      const validation = await validateManagerIds(managerIds);
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
       }
     }
 
@@ -197,39 +194,54 @@ export async function POST(request: NextRequest) {
     const finalPassword = autoGeneratePassword ? generateRandomPassword() : password!;
     const passwordHash = await bcrypt.hash(finalPassword, 12);
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        firstName,
-        lastName,
-        role,
-        departmentId: departmentId || null,
-        managerId: managerId || null,
-        passwordHash,
-        mustChangePassword: true,
-        isActive: true,
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        department: {
-          select: { id: true, name: true },
+    // Create user and manager relationships in a transaction
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email,
+          firstName,
+          lastName,
+          role,
+          departmentId: departmentId || null,
+          passwordHash,
+          mustChangePassword: true,
+          isActive: true,
         },
-        manager: {
-          select: { id: true, firstName: true, lastName: true },
+      });
+
+      if (managerIds.length > 0) {
+        await replaceManagers(tx, newUser.id, managerIds);
+      }
+
+      return tx.user.findUniqueOrThrow({
+        where: { id: newUser.id },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          isActive: true,
+          createdAt: true,
+          department: {
+            select: { id: true, name: true },
+          },
+          managerRelations: {
+            select: {
+              manager: {
+                select: { id: true, firstName: true, lastName: true },
+              },
+            },
+          },
         },
-      },
+      });
     });
+
+    const managers = user.managerRelations.map((r) => r.manager);
 
     return NextResponse.json(
       {
-        user,
+        user: { ...user, managers },
         ...(autoGeneratePassword && { temporaryPassword: finalPassword }),
       },
       { status: 201 }

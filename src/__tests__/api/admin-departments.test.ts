@@ -87,7 +87,6 @@ const mockAdminSession = {
     firstName: "Admin",
     lastName: "User",
     role: "ADMIN",
-    managerId: null,
     departmentId: null,
   },
 };
@@ -99,7 +98,6 @@ const mockManagerSession = {
     firstName: "Manager",
     lastName: "User",
     role: "MANAGER",
-    managerId: null,
     departmentId: "dept-1",
   },
 };

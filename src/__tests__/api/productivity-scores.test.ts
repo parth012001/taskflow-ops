@@ -30,6 +30,10 @@ jest.mock("@/lib/prisma", () => ({
       findUnique: jest.fn(),
       findFirst: jest.fn(),
     },
+    userManager: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+    },
     productivityScore: {
       findMany: jest.fn(),
       count: jest.fn(),
@@ -106,7 +110,6 @@ const mockAdminSession = {
     firstName: "Admin",
     lastName: "User",
     role: "ADMIN",
-    managerId: null,
     departmentId: "dept-1",
   },
 };
@@ -118,7 +121,6 @@ const mockManagerSession = {
     firstName: "Manager",
     lastName: "User",
     role: "MANAGER",
-    managerId: null,
     departmentId: "dept-1",
   },
 };
@@ -130,7 +132,6 @@ const mockDeptHeadSession = {
     firstName: "Dept",
     lastName: "Head",
     role: "DEPARTMENT_HEAD",
-    managerId: null,
     departmentId: "dept-1",
   },
 };
@@ -142,7 +143,6 @@ const mockEmployeeSession = {
     firstName: "John",
     lastName: "Doe",
     role: "EMPLOYEE",
-    managerId: "mgr-1",
     departmentId: "dept-1",
   },
 };
@@ -256,7 +256,10 @@ describe("Productivity Scoring API", () => {
 
     it("should return scores for manager (subordinates only)", async () => {
       mockGetServerSession.mockResolvedValue(mockManagerSession as any);
-      (prisma.user.findMany as jest.Mock).mockResolvedValue([{ id: "emp-1" }, { id: "emp-2" }]);
+      ((prisma as any).userManager.findMany as jest.Mock).mockResolvedValue([
+        { userId: "emp-1" },
+        { userId: "emp-2" },
+      ]);
       (prisma.productivityScore.count as jest.Mock).mockResolvedValue(2);
       (prisma.productivityScore.findMany as jest.Mock).mockResolvedValue([
         {
@@ -443,7 +446,10 @@ describe("Productivity Scoring API", () => {
 
     it("should return 200 when manager views subordinate", async () => {
       mockGetServerSession.mockResolvedValue(mockManagerSession as any);
-      (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: "emp-1" });
+      ((prisma as any).userManager.findUnique as jest.Mock).mockResolvedValue({
+        userId: "emp-1",
+        managerId: "mgr-1",
+      });
       (prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: "emp-1",
         departmentId: "dept-1",
@@ -459,7 +465,7 @@ describe("Productivity Scoring API", () => {
 
     it("should return 403 when manager views non-subordinate", async () => {
       mockGetServerSession.mockResolvedValue(mockManagerSession as any);
-      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+      ((prisma as any).userManager.findUnique as jest.Mock).mockResolvedValue(null);
 
       const response = await getScoreByUser(
         createMockRequest("/api/productivity/scores/emp-other"),

@@ -56,37 +56,37 @@ describe("User Management Validation Schemas", () => {
         }
       });
 
-      it("should accept optional departmentId and managerId", () => {
+      it("should accept optional departmentId and managerIds", () => {
         const result = createUserSchema.safeParse({
           email: "test@example.com",
           firstName: "Test",
           lastName: "User",
           role: "EMPLOYEE",
           departmentId: "cm7qk0b0a0000abcddeptid01",
-          managerId: "cm7qk0b0a0000abcdmgrid001",
+          managerIds: ["cm7qk0b0a0000abcdmgrid001"],
           autoGeneratePassword: true,
         });
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.data.departmentId).toBe("cm7qk0b0a0000abcddeptid01");
-          expect(result.data.managerId).toBe("cm7qk0b0a0000abcdmgrid001");
+          expect(result.data.managerIds).toEqual(["cm7qk0b0a0000abcdmgrid001"]);
         }
       });
 
-      it("should accept null departmentId and managerId", () => {
+      it("should accept null departmentId and empty managerIds", () => {
         const result = createUserSchema.safeParse({
           email: "test@example.com",
           firstName: "Test",
           lastName: "User",
           role: "EMPLOYEE",
           departmentId: null,
-          managerId: null,
+          managerIds: [],
           autoGeneratePassword: true,
         });
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.data.departmentId).toBeNull();
-          expect(result.data.managerId).toBeNull();
+          expect(result.data.managerIds).toEqual([]);
         }
       });
 
@@ -338,7 +338,7 @@ describe("User Management Validation Schemas", () => {
           lastName: "Smith",
           role: "DEPARTMENT_HEAD",
           departmentId: "cm7qk0b0a0000abcddeptid01",
-          managerId: "cm7qk0b0a0000abcdmgrid001",
+          managerIds: ["cm7qk0b0a0000abcdmgrid001"],
           isActive: true,
         });
         expect(result.success).toBe(true);
@@ -354,13 +354,13 @@ describe("User Management Validation Schemas", () => {
         }
       });
 
-      it("should accept null for managerId", () => {
+      it("should accept empty managerIds array", () => {
         const result = updateUserSchema.safeParse({
-          managerId: null,
+          managerIds: [],
         });
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.data.managerId).toBeNull();
+          expect(result.data.managerIds).toEqual([]);
         }
       });
     });

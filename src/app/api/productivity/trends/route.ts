@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { productivityTrendsQuerySchema } from "@/lib/validations/productivity";
 import { Role } from "@prisma/client";
+import { isManagerOf } from "@/lib/utils/manager-helpers";
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,11 +36,8 @@ export async function GET(request: NextRequest) {
       }
 
       if (viewerRole === "MANAGER") {
-        const subordinate = await prisma.user.findFirst({
-          where: { id: targetUserId, managerId: viewerId },
-          select: { id: true },
-        });
-        if (!subordinate) {
+        const isMgr = await isManagerOf(viewerId, targetUserId);
+        if (!isMgr) {
           return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
       }

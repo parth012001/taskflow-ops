@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { TaskStatus } from "@prisma/client";
+import { getSubordinateIds } from "@/lib/utils/manager-helpers";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,11 +21,7 @@ export async function GET(request: NextRequest) {
     let subordinateIds: string[] = [];
 
     if (session.user.role === "MANAGER") {
-      const subordinates = await prisma.user.findMany({
-        where: { managerId: session.user.id, isActive: true },
-        select: { id: true },
-      });
-      subordinateIds = subordinates.map((s) => s.id);
+      subordinateIds = await getSubordinateIds(session.user.id);
     } else if (session.user.role === "DEPARTMENT_HEAD") {
       // Get all users in department
       if (!session.user.departmentId) {
@@ -50,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     // Get team members with their task stats
     const teamMembers = await prisma.user.findMany({
-      where: { id: { in: subordinateIds } },
+      where: { id: { in: subordinateIds }, isActive: true },
       select: {
         id: true,
         firstName: true,

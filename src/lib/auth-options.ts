@@ -61,7 +61,6 @@ export const authOptions: NextAuthOptions = {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
-          managerId: user.managerId,
           departmentId: user.departmentId,
           mustChangePassword: user.mustChangePassword,
         };
@@ -76,7 +75,6 @@ export const authOptions: NextAuthOptions = {
         token.firstName = user.firstName;
         token.lastName = user.lastName;
         token.role = user.role;
-        token.managerId = user.managerId;
         token.departmentId = user.departmentId;
         token.mustChangePassword = user.mustChangePassword;
       }
@@ -90,7 +88,6 @@ export const authOptions: NextAuthOptions = {
               firstName: true,
               lastName: true,
               role: true,
-              managerId: true,
               departmentId: true,
               mustChangePassword: true,
             },
@@ -99,7 +96,6 @@ export const authOptions: NextAuthOptions = {
             token.firstName = freshUser.firstName;
             token.lastName = freshUser.lastName;
             token.role = freshUser.role;
-            token.managerId = freshUser.managerId;
             token.departmentId = freshUser.departmentId;
             token.mustChangePassword = freshUser.mustChangePassword;
           }
@@ -121,7 +117,6 @@ export const authOptions: NextAuthOptions = {
         session.user.firstName = token.firstName;
         session.user.lastName = token.lastName;
         session.user.role = token.role;
-        session.user.managerId = token.managerId;
         session.user.departmentId = token.departmentId;
         session.user.mustChangePassword = token.mustChangePassword;
       }

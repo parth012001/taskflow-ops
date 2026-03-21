@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { TaskStatus, Prisma } from "@prisma/client";
+import { getSubordinateIds } from "@/lib/utils/manager-helpers";
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,13 +17,9 @@ export async function GET(request: NextRequest) {
 
     // Build base where clause based on role
     let ownerFilter: Prisma.TaskWhereInput = { ownerId: userId };
+    const subordinateIds = userRole !== "EMPLOYEE" ? await getSubordinateIds(userId) : [];
 
     if (userRole === "MANAGER") {
-      const subordinates = await prisma.user.findMany({
-        where: { managerId: userId },
-        select: { id: true },
-      });
-      const subordinateIds = subordinates.map((s) => s.id);
       ownerFilter = { ownerId: { in: [userId, ...subordinateIds] } };
     } else if (userRole === "DEPARTMENT_HEAD" || userRole === "ADMIN") {
       ownerFilter = {}; // All tasks
@@ -95,13 +92,6 @@ export async function GET(request: NextRequest) {
     // Get tasks pending review (for managers)
     let pendingReviewCount = 0;
     if (userRole !== "EMPLOYEE") {
-      const subordinateIds = await prisma.user
-        .findMany({
-          where: { managerId: userId },
-          select: { id: true },
-        })
-        .then((s) => s.map((u) => u.id));
-
       pendingReviewCount = await prisma.task.count({
         where: {
           ownerId: { in: subordinateIds },

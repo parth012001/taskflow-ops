@@ -9,7 +9,6 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   role: Role;
-  managerId: string | null;
   departmentId: string | null;
   mustChangePassword: boolean;
 }
@@ -49,7 +48,6 @@ export function useAuth(): UseAuthReturn {
         firstName: session.user.firstName,
         lastName: session.user.lastName,
         role: session.user.role,
-        managerId: session.user.managerId,
         departmentId: session.user.departmentId,
         mustChangePassword: session.user.mustChangePassword ?? false,
       }

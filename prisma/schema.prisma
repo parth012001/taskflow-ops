@@ -111,10 +111,9 @@ model User {
   departmentId String?
   department   Department? @relation("DepartmentUsers", fields: [departmentId], references: [id])
 
-  // Manager-Employee relationship (self-referencing)
-  managerId    String?
-  manager      User?   @relation("ManagerSubordinates", fields: [managerId], references: [id])
-  subordinates User[]  @relation("ManagerSubordinates")
+  // Multi-manager relationships (many-to-many via join table)
+  managerRelations     UserManager[] @relation("UserManagerEmployee")
+  subordinateRelations UserManager[] @relation("UserManagerManager")
 
   // Department Head relation
   headOfDepartment Department? @relation("DepartmentHead")
@@ -183,10 +182,26 @@ model User {
   lastLoginAt DateTime?
 
   @@index([email])
-  @@index([managerId])
   @@index([departmentId])
   @@index([role])
   @@index([organizationId])
+}
+
+// ============================================
+// 2B. USER MANAGER (Multi-Manager Join Table)
+// ============================================
+
+model UserManager {
+  id        String   @id @default(cuid())
+  userId    String
+  managerId String
+  user      User     @relation("UserManagerEmployee", fields: [userId], references: [id], onDelete: Cascade)
+  manager   User     @relation("UserManagerManager", fields: [managerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, managerId])
+  @@index([userId])
+  @@index([managerId])
 }
 
 // ============================================

@@ -172,7 +172,6 @@ async function main() {
       lastName: "Sharma",
       role: Role.MANAGER,
       departmentId: procurementDept.id,
-      managerId: deptHead.id,
     },
   });
 
@@ -184,11 +183,10 @@ async function main() {
       lastName: "Patel",
       role: Role.MANAGER,
       departmentId: procurementDept.id,
-      managerId: deptHead.id,
     },
   });
 
-  // Employees under Manager 1
+  // Employees
   const employee1 = await prisma.user.create({
     data: {
       email: "employee1@taskflow.com",
@@ -197,7 +195,6 @@ async function main() {
       lastName: "Gupta",
       role: Role.EMPLOYEE,
       departmentId: procurementDept.id,
-      managerId: manager1.id,
     },
   });
 
@@ -209,7 +206,6 @@ async function main() {
       lastName: "Singh",
       role: Role.EMPLOYEE,
       departmentId: procurementDept.id,
-      managerId: manager1.id,
     },
   });
 
@@ -221,11 +217,9 @@ async function main() {
       lastName: "Verma",
       role: Role.EMPLOYEE,
       departmentId: procurementDept.id,
-      managerId: manager1.id,
     },
   });
 
-  // Employees under Manager 2
   const employee4 = await prisma.user.create({
     data: {
       email: "employee4@taskflow.com",
@@ -234,7 +228,6 @@ async function main() {
       lastName: "Mehta",
       role: Role.EMPLOYEE,
       departmentId: procurementDept.id,
-      managerId: manager2.id,
     },
   });
 
@@ -246,8 +239,25 @@ async function main() {
       lastName: "Reddy",
       role: Role.EMPLOYEE,
       departmentId: procurementDept.id,
-      managerId: manager2.id,
     },
+  });
+
+  // Create manager relationships via join table
+  await prisma.userManager.createMany({
+    data: [
+      // Managers report to dept head
+      { userId: manager1.id, managerId: deptHead.id },
+      { userId: manager2.id, managerId: deptHead.id },
+      // Employees under Manager 1
+      { userId: employee1.id, managerId: manager1.id },
+      { userId: employee2.id, managerId: manager1.id },
+      { userId: employee3.id, managerId: manager1.id },
+      // Employees under Manager 2
+      { userId: employee4.id, managerId: manager2.id },
+      { userId: employee5.id, managerId: manager2.id },
+      // Multi-manager demo: employee3 also reports to manager2
+      { userId: employee3.id, managerId: manager2.id },
+    ],
   });
 
   console.log("Created 9 users (1 admin, 1 dept head, 2 managers, 5 employees)");

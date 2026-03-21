@@ -32,6 +32,9 @@ jest.mock("@/lib/prisma", () => ({
       findMany: jest.fn(),
       findUnique: jest.fn(),
     },
+    userManager: {
+      findMany: jest.fn(),
+    },
   },
 }));
 
@@ -121,6 +124,12 @@ describe("GET /api/tasks/assignees", () => {
         user: { id: managerId, role: "MANAGER" },
       } as any);
       mockCanAssignTasks.mockReturnValue(true);
+      // First: getSubordinateIds via userManager.findMany
+      ((prisma as any).userManager.findMany as jest.Mock).mockResolvedValue([
+        { userId: "emp-1" },
+        { userId: "emp-2" },
+      ]);
+      // Second: user.findMany with subordinate IDs
       mockPrismaUserFindMany.mockResolvedValue(subordinates as any);
 
       const response = await GET();
@@ -131,10 +140,16 @@ describe("GET /api/tasks/assignees", () => {
       expect(data[0].firstName).toBe("John");
       expect(data[1].firstName).toBe("Jane");
 
-      // Verify the query filters by managerId
+      // Verify getSubordinateIds was called via userManager
+      expect((prisma as any).userManager.findMany).toHaveBeenCalledWith({
+        where: { managerId },
+        select: { userId: true },
+      });
+
+      // Verify the query filters by subordinate IDs
       expect(mockPrismaUserFindMany).toHaveBeenCalledWith({
         where: {
-          managerId: managerId,
+          id: { in: ["emp-1", "emp-2"] },
           isActive: true,
           deletedAt: null,
         },
@@ -154,6 +169,7 @@ describe("GET /api/tasks/assignees", () => {
         user: { id: "manager-lonely", role: "MANAGER" },
       } as any);
       mockCanAssignTasks.mockReturnValue(true);
+      ((prisma as any).userManager.findMany as jest.Mock).mockResolvedValue([]);
       mockPrismaUserFindMany.mockResolvedValue([]);
 
       const response = await GET();

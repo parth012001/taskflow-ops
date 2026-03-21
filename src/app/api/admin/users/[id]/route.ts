@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { updateUserSchema } from "@/lib/validations/user-management";
+import { validateManagerIds, replaceManagers } from "@/lib/utils/manager-helpers";
 
 // GET /api/admin/users/[id] - Get a single user
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -34,11 +35,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         department: {
           select: { id: true, name: true },
         },
-        manager: {
-          select: { id: true, firstName: true, lastName: true },
+        managerRelations: {
+          select: {
+            manager: {
+              select: { id: true, firstName: true, lastName: true },
+            },
+          },
         },
         _count: {
-          select: { subordinates: true },
+          select: { subordinateRelations: true },
         },
       },
     });
@@ -47,10 +52,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const managers = user.managerRelations.map((r) => r.manager);
+    const firstManager = managers[0];
+    const managerName = firstManager
+      ? `${firstManager.firstName} ${firstManager.lastName}${managers.length > 1 ? ` +${managers.length - 1}` : ""}`
+      : null;
+
     return NextResponse.json({
       ...user,
-      managerName: user.manager ? `${user.manager.firstName} ${user.manager.lastName}` : null,
-      subordinateCount: user._count.subordinates,
+      managers,
+      managerName,
+      subordinateCount: user._count.subordinateRelations,
     });
   } catch (error) {
     console.error("GET /api/admin/users/[id] error:", error);
@@ -79,7 +91,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
-    const { firstName, lastName, role, departmentId, managerId, isActive } = validationResult.data;
+    const { firstName, lastName, role, departmentId, managerIds, isActive } = validationResult.data;
 
     // Find the user
     const existingUser = await prisma.user.findUnique({
@@ -104,31 +116,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: "You cannot change your own role" }, { status: 400 });
     }
 
-    // Validate managerId if provided
-    if (managerId !== undefined && managerId !== null) {
-      // Cannot set self as manager
-      if (managerId === id) {
-        return NextResponse.json({ error: "A user cannot be their own manager" }, { status: 400 });
-      }
-
-      const manager = await prisma.user.findUnique({
-        where: { id: managerId },
-        select: { role: true, isActive: true },
-      });
-
-      if (!manager) {
-        return NextResponse.json({ error: "Manager not found" }, { status: 400 });
-      }
-
-      if (!manager.isActive) {
-        return NextResponse.json({ error: "Selected manager is inactive" }, { status: 400 });
-      }
-
-      if (manager.role === "EMPLOYEE") {
-        return NextResponse.json(
-          { error: "Selected user cannot be a manager (role too low)" },
-          { status: 400 }
-        );
+    // Validate managerIds if provided
+    if (managerIds !== undefined) {
+      const validation = await validateManagerIds(managerIds, id);
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
       }
     }
 
@@ -149,7 +141,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       lastName?: string;
       role?: "EMPLOYEE" | "MANAGER" | "DEPARTMENT_HEAD" | "ADMIN";
       departmentId?: string | null;
-      managerId?: string | null;
       isActive?: boolean;
     } = {};
 
@@ -157,44 +148,67 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (lastName !== undefined) updateData.lastName = lastName;
     if (role !== undefined) updateData.role = role;
     if (departmentId !== undefined) updateData.departmentId = departmentId;
-    if (managerId !== undefined) updateData.managerId = managerId;
     if (isActive !== undefined) updateData.isActive = isActive;
 
-    if (Object.keys(updateData).length === 0) {
+    const hasFieldUpdates = Object.keys(updateData).length > 0;
+    const hasManagerUpdates = managerIds !== undefined;
+
+    if (!hasFieldUpdates && !hasManagerUpdates) {
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: updateData,
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        lastLoginAt: true,
-        mustChangePassword: true,
-        department: {
-          select: { id: true, name: true },
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      if (hasFieldUpdates) {
+        await tx.user.update({
+          where: { id },
+          data: updateData,
+        });
+      }
+
+      if (hasManagerUpdates) {
+        await replaceManagers(tx, id, managerIds!);
+      }
+
+      return tx.user.findUniqueOrThrow({
+        where: { id },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          isActive: true,
+          createdAt: true,
+          lastLoginAt: true,
+          mustChangePassword: true,
+          department: {
+            select: { id: true, name: true },
+          },
+          managerRelations: {
+            select: {
+              manager: {
+                select: { id: true, firstName: true, lastName: true },
+              },
+            },
+          },
+          _count: {
+            select: { subordinateRelations: true },
+          },
         },
-        manager: {
-          select: { id: true, firstName: true, lastName: true },
-        },
-        _count: {
-          select: { subordinates: true },
-        },
-      },
+      });
     });
+
+    const managers = updatedUser.managerRelations.map((r) => r.manager);
+    const firstManager = managers[0];
+    const managerName = firstManager
+      ? `${firstManager.firstName} ${firstManager.lastName}${managers.length > 1 ? ` +${managers.length - 1}` : ""}`
+      : null;
 
     return NextResponse.json({
       ...updatedUser,
-      managerName: updatedUser.manager
-        ? `${updatedUser.manager.firstName} ${updatedUser.manager.lastName}`
-        : null,
-      subordinateCount: updatedUser._count.subordinates,
+      managers,
+      managerName,
+      subordinateCount: updatedUser._count.subordinateRelations,
     });
   } catch (error) {
     console.error("PATCH /api/admin/users/[id] error:", error);
