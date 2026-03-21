@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { productivityScoresQuerySchema } from "@/lib/validations/productivity";
 import { Role, Prisma } from "@prisma/client";
+import { getSubordinateIds } from "@/lib/utils/manager-helpers";
 import { generalLimiter } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
@@ -41,11 +42,7 @@ export async function GET(request: NextRequest) {
 
     if (session.user.role === "MANAGER") {
       // Manager can only see subordinates
-      const subordinates = await prisma.user.findMany({
-        where: { managerId: session.user.id },
-        select: { id: true },
-      });
-      const subordinateIds = subordinates.map((s) => s.id);
+      const subordinateIds = await getSubordinateIds(session.user.id);
       userFilter = { userId: { in: subordinateIds } };
     } else if (session.user.role === "DEPARTMENT_HEAD") {
       // Dept head always scoped to own department — ignore incoming departmentId

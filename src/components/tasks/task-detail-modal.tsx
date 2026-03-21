@@ -51,7 +51,6 @@ interface TaskOwner {
   lastName: string;
   email: string;
   avatarUrl?: string | null;
-  managerId?: string | null;
 }
 
 interface TaskComment {
@@ -133,6 +132,7 @@ interface TaskDetail {
   carryForwardLogs?: CarryForwardLogItem[];
   editHistory?: EditHistoryItem[];
   _count: { comments: number; attachments: number };
+  isCurrentUserManager?: boolean;
 }
 
 interface TaskDetailModalProps {
@@ -213,7 +213,7 @@ export function TaskDetailModal({
       taskOwnerId: task.owner.id,
       currentUserId: session.user.id,
       currentUserRole: session.user.role,
-      isManager: task.owner.managerId === session.user.id,
+      isManager: task.isCurrentUserManager === true,
       reason: transitionReason,
       onHoldReason: transitionReason,
       requiresReview: task.requiresReview,

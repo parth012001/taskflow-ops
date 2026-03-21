@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { canViewTask } from "@/lib/utils/permissions";
+import { getSubordinateIds } from "@/lib/utils/manager-helpers";
 
 interface RouteParams {
   params: Promise<{ taskId: string }>;
@@ -33,11 +34,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Check view permission
-    const subordinates = await prisma.user.findMany({
-      where: { managerId: session.user.id },
-      select: { id: true },
-    });
-    const subordinateIds = subordinates.map((s) => s.id);
+    const subordinateIds = await getSubordinateIds(session.user.id);
 
     if (!canViewTask(session.user.role, session.user.id, task.ownerId, subordinateIds)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -88,11 +85,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Check view permission (if you can view, you can comment)
-    const subordinates = await prisma.user.findMany({
-      where: { managerId: session.user.id },
-      select: { id: true },
-    });
-    const subordinateIds = subordinates.map((s) => s.id);
+    const subordinateIds = await getSubordinateIds(session.user.id);
 
     if (!canViewTask(session.user.role, session.user.id, task.ownerId, subordinateIds)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

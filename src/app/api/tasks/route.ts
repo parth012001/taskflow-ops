@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createTaskSchema, taskQuerySchema } from "@/lib/validations/task";
 import { canViewTask, canAssignTasks } from "@/lib/utils/permissions";
 import { Prisma, TaskStatus, AssignedByType, Role } from "@prisma/client";
+import { getSubordinateIds, isManagerOf } from "@/lib/utils/manager-helpers";
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,11 +51,7 @@ export async function GET(request: NextRequest) {
       where.ownerId = userId;
     } else if (userRole === "MANAGER") {
       // Managers can see own tasks + subordinates' tasks
-      const subordinates = await prisma.user.findMany({
-        where: { managerId: userId },
-        select: { id: true },
-      });
-      const subordinateIds = subordinates.map((s) => s.id);
+      const subordinateIds = await getSubordinateIds(userId);
       const allowedIds = [userId, ...subordinateIds];
 
       if (ownerIds.length > 0) {
@@ -207,9 +204,7 @@ export async function POST(request: NextRequest) {
 
       // Verify assignee is subordinate (for MANAGER role)
       if (session.user.role === "MANAGER") {
-        const isSubordinate = await prisma.user.findFirst({
-          where: { id: assigneeId, managerId: session.user.id },
-        });
+        const isSubordinate = await isManagerOf(session.user.id, assigneeId);
         if (!isSubordinate) {
           return NextResponse.json(
             { error: "You can only assign tasks to your subordinates" },
@@ -254,13 +249,8 @@ export async function POST(request: NextRequest) {
         }
         // reviewerId is optional for managers - if not set, fallback to managerId at review time
       } else if (userRole === Role.EMPLOYEE) {
-        // Employee with review ON: auto-set reviewer to their manager
-        const taskOwnerId = ownerId; // could be self or assigned user
-        const taskOwner = await prisma.user.findUnique({
-          where: { id: taskOwnerId },
-          select: { managerId: true },
-        });
-        reviewerId = taskOwner?.managerId ?? null;
+        // Employee with review ON: reviewer set to null, all managers notified at review time
+        reviewerId = null;
       }
     } else {
       // Review OFF

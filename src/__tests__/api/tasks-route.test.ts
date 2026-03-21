@@ -30,6 +30,9 @@ jest.mock("@/lib/prisma", () => ({
     user: {
       findMany: jest.fn(),
     },
+    userManager: {
+      findMany: jest.fn(),
+    },
     task: {
       findMany: jest.fn(),
       count: jest.fn(),
@@ -48,9 +51,8 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-const mockPrismaUserFindMany = prisma.user.findMany as jest.MockedFunction<
-  typeof prisma.user.findMany
->;
+const mockPrismaUserManagerFindMany = (prisma as any).userManager
+  .findMany as jest.MockedFunction<any>;
 const mockPrismaTaskFindMany = prisma.task.findMany as jest.MockedFunction<
   typeof prisma.task.findMany
 >;
@@ -128,13 +130,17 @@ describe("GET /api/tasks", () => {
 
   describe("MANAGER role - ownerId filtering", () => {
     const managerId = MGR_1;
-    const subordinates = [{ id: EMP_1 }, { id: EMP_2 }, { id: EMP_3 }];
+    const subordinateRelations = [
+      { userId: EMP_1 },
+      { userId: EMP_2 },
+      { userId: EMP_3 },
+    ];
 
     beforeEach(() => {
       mockGetServerSession.mockResolvedValue({
         user: { id: managerId, role: "MANAGER" },
       } as any);
-      mockPrismaUserFindMany.mockResolvedValue(subordinates as any);
+      mockPrismaUserManagerFindMany.mockResolvedValue(subordinateRelations as any);
     });
 
     it("should see own + subordinate tasks when no ownerIds specified", async () => {
@@ -251,7 +257,7 @@ describe("GET /api/tasks", () => {
       mockGetServerSession.mockResolvedValue({
         user: { id: managerId, role: "MANAGER" },
       } as any);
-      mockPrismaUserFindMany.mockResolvedValue([{ id: EMP_1 }] as any);
+      mockPrismaUserManagerFindMany.mockResolvedValue([{ userId: EMP_1 }] as any);
 
       // Single ownerId = self (my tasks view)
       await GET(createMockNextRequest({ ownerId: managerId }));

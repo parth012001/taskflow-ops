@@ -12,7 +12,14 @@ async function main() {
       email: true,
       role: true,
       isActive: true,
-      managerId: true,
+      managerRelations: {
+        select: {
+          manager: { select: { id: true, firstName: true, lastName: true } },
+        },
+      },
+      subordinateRelations: {
+        select: { userId: true },
+      },
     },
     orderBy: { role: "asc" },
   });
@@ -31,21 +38,25 @@ async function main() {
 
   // Print all users
   users.forEach((u) => {
+    const managerNames = u.managerRelations
+      .map((r) => `${r.manager.firstName} ${r.manager.lastName}`)
+      .join(", ");
     console.log(
-      `- ${u.firstName} ${u.lastName} (${u.email}) | ${u.role} | Active: ${u.isActive} | ManagerId: ${u.managerId || "None"}`
+      `- ${u.firstName} ${u.lastName} (${u.email}) | ${u.role} | Active: ${u.isActive} | Managers: ${managerNames || "None"}`
     );
   });
 
   console.log("");
   console.log("=== HIERARCHY TREE ===");
 
-  // Build tree
-  const roots = users.filter((u) => u.managerId === null);
+  // Build tree using subordinateRelations
+  const roots = users.filter((u) => u.managerRelations.length === 0);
 
   function printTree(user: (typeof users)[0], indent = 0) {
     const prefix = "  ".repeat(indent) + (indent > 0 ? "└── " : "");
     console.log(`${prefix}${user.firstName} ${user.lastName} (${user.role})`);
-    const subs = users.filter((u) => u.managerId === user.id);
+    const subIds = user.subordinateRelations.map((r) => r.userId);
+    const subs = users.filter((u) => subIds.includes(u.id));
     subs.forEach((sub) => printTree(sub, indent + 1));
   }
 

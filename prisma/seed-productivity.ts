@@ -444,12 +444,11 @@ async function main() {
     const dept = departments[deptIdx];
 
     // Determine manager
-    let managerId: string | null = null;
+    let resolvedManagerId: string | null = null;
     if (role === "DEPARTMENT_HEAD") {
-      // Dept heads report to no one in seed
-      managerId = null;
+      resolvedManagerId = null;
     } else if (role === "MANAGER") {
-      managerId = deptHeadIds[deptIdx] ?? null;
+      resolvedManagerId = deptHeadIds[deptIdx] ?? null;
     } else {
       // Employees: find a manager in the same department
       const deptManagers = [
@@ -457,9 +456,9 @@ async function main() {
         ...newUsers.filter((u) => u.role === "MANAGER" && u.departmentId === dept.id),
       ];
       if (deptManagers.length > 0) {
-        managerId = deptManagers[i % deptManagers.length].id;
+        resolvedManagerId = deptManagers[i % deptManagers.length].id;
       } else if (deptHeadIds[deptIdx]) {
-        managerId = deptHeadIds[deptIdx];
+        resolvedManagerId = deptHeadIds[deptIdx];
       }
     }
 
@@ -470,7 +469,6 @@ async function main() {
         lastName: last,
         role,
         departmentId: dept.id,
-        managerId,
         isActive: true,
         deletedAt: null,
       },
@@ -481,10 +479,18 @@ async function main() {
         lastName: last,
         role,
         departmentId: dept.id,
-        managerId,
       },
     });
     newUsers.push(user);
+
+    // Create manager relationship via join table
+    if (resolvedManagerId) {
+      await prisma.userManager.upsert({
+        where: { userId_managerId: { userId: user.id, managerId: resolvedManagerId } },
+        update: {},
+        create: { userId: user.id, managerId: resolvedManagerId },
+      });
+    }
 
     // Track dept heads
     if (role === "DEPARTMENT_HEAD") {

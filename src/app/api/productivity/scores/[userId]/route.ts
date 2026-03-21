@@ -6,6 +6,7 @@ import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { calculateForUser } from "@/lib/productivity/calculate";
 import { MIN_COMPLETED_TASKS } from "@/lib/productivity/scoring-engine";
 import { Role } from "@prisma/client";
+import { isManagerOf } from "@/lib/utils/manager-helpers";
 
 export async function GET(
   request: NextRequest,
@@ -29,11 +30,8 @@ export async function GET(
 
       // Managers can only see subordinates
       if (viewerRole === "MANAGER") {
-        const subordinate = await prisma.user.findFirst({
-          where: { id: userId, managerId: viewerId },
-          select: { id: true },
-        });
-        if (!subordinate) {
+        const isMgr = await isManagerOf(viewerId, userId);
+        if (!isMgr) {
           return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
       }

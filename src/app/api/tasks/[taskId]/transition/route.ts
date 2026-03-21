@@ -9,6 +9,7 @@ import {
   TransitionContext,
 } from "@/lib/utils/task-state-machine";
 import { TaskStatus } from "@prisma/client";
+import { isManagerOf, getManagerIds } from "@/lib/utils/manager-helpers";
 
 interface RouteParams {
   params: Promise<{ taskId: string }>;
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       where: { id: taskId, deletedAt: null },
       include: {
         owner: {
-          select: { id: true, managerId: true },
+          select: { id: true },
         },
         reviewer: {
           select: { id: true, firstName: true, lastName: true },
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { toStatus, reason, onHoldReason } = validatedData.data;
 
     // Check if current user is the task owner's manager
-    const isManager = task.owner.managerId === session.user.id;
+    const isManager = await isManagerOf(session.user.id, task.ownerId);
 
     // Build transition context
     const context: TransitionContext = {
@@ -160,11 +161,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
       // Create notification for relevant parties
       if (toStatus === TaskStatus.COMPLETED_PENDING_REVIEW) {
-        const reviewNotifyId = task.reviewerId ?? task.owner.managerId;
-        if (reviewNotifyId) {
+        if (task.reviewerId) {
           await tx.notification.create({
             data: {
-              userId: reviewNotifyId,
+              userId: task.reviewerId,
               type: "TASK_PENDING_REVIEW",
               title: "Task pending review",
               message: `${session.user.firstName} ${session.user.lastName} submitted "${task.title}" for review`,
@@ -172,6 +172,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
               entityId: taskId,
             },
           });
+        } else {
+          // Notify ALL managers of the task owner (fire-and-forget per manager)
+          const ownerManagerIds = await getManagerIds(task.ownerId);
+          for (const mgrId of ownerManagerIds) {
+            try {
+              await tx.notification.create({
+                data: {
+                  userId: mgrId,
+                  type: "TASK_PENDING_REVIEW",
+                  title: "Task pending review",
+                  message: `${session.user.firstName} ${session.user.lastName} submitted "${task.title}" for review`,
+                  entityType: "Task",
+                  entityId: taskId,
+                },
+              });
+            } catch {
+              // Fire-and-forget: don't block task transition if notification fails
+            }
+          }
         }
       }
 
@@ -207,12 +226,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             },
           });
         } else {
-          // Owner reopened their own completed task — notify reviewer or manager
-          const notifyId = task.reviewerId ?? task.owner.managerId;
-          if (notifyId) {
+          // Owner reopened their own completed task — notify reviewer or all managers
+          if (task.reviewerId) {
             await tx.notification.create({
               data: {
-                userId: notifyId,
+                userId: task.reviewerId,
                 type: "TASK_REOPENED",
                 title: "Task reopened by owner",
                 message: `${session.user.firstName} ${session.user.lastName} reopened "${task.title}": ${reason}`,
@@ -220,6 +238,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
                 entityId: taskId,
               },
             });
+          } else {
+            const ownerManagerIds = await getManagerIds(task.ownerId);
+            for (const mgrId of ownerManagerIds) {
+              try {
+                await tx.notification.create({
+                  data: {
+                    userId: mgrId,
+                    type: "TASK_REOPENED",
+                    title: "Task reopened by owner",
+                    message: `${session.user.firstName} ${session.user.lastName} reopened "${task.title}": ${reason}`,
+                    entityType: "Task",
+                    entityId: taskId,
+                  },
+                });
+              } catch {
+                // Fire-and-forget
+              }
+            }
           }
         }
       }

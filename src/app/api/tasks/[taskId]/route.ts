@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { updateTaskSchema } from "@/lib/validations/task";
 import { canViewTask, canEditTask } from "@/lib/utils/permissions";
+import { getSubordinateIds, isManagerOf } from "@/lib/utils/manager-helpers";
 
 interface RouteParams {
   params: Promise<{ taskId: string }>;
@@ -28,7 +29,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             lastName: true,
             email: true,
             avatarUrl: true,
-            managerId: true,
           },
         },
         assigner: {
@@ -97,17 +97,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Check view permission
-    const subordinates = await prisma.user.findMany({
-      where: { managerId: session.user.id },
-      select: { id: true },
-    });
-    const subordinateIds = subordinates.map((s) => s.id);
+    const subordinateIds = await getSubordinateIds(session.user.id);
+    const isCurrentUserManager = await isManagerOf(session.user.id, task.ownerId);
 
     if (!canViewTask(session.user.role, session.user.id, task.ownerId, subordinateIds)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json(task);
+    return NextResponse.json({ ...task, isCurrentUserManager });
   } catch (error) {
     console.error("GET /api/tasks/[taskId] error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

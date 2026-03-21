@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { reassignTaskSchema } from "@/lib/validations/reassign";
 import { isManagerOrAbove } from "@/lib/utils/permissions";
 import { Role, TaskStatus, AssignedByType } from "@prisma/client";
+import { isManagerOf } from "@/lib/utils/manager-helpers";
 
 function roleToAssignedByType(role: Role): AssignedByType {
   switch (role) {
@@ -67,7 +68,6 @@ export async function POST(
             id: true,
             firstName: true,
             lastName: true,
-            managerId: true,
             departmentId: true,
           },
         },
@@ -95,7 +95,7 @@ export async function POST(
     } else if (userRole === Role.DEPARTMENT_HEAD) {
       hasAuthority = task.owner.departmentId === session.user.departmentId;
     } else if (userRole === Role.MANAGER) {
-      hasAuthority = task.owner.managerId === session.user.id;
+      hasAuthority = await isManagerOf(session.user.id, task.ownerId);
     }
 
     if (!hasAuthority) {
@@ -112,7 +112,6 @@ export async function POST(
         id: true,
         firstName: true,
         lastName: true,
-        managerId: true,
         departmentId: true,
       },
     });
@@ -127,7 +126,7 @@ export async function POST(
     } else if (userRole === Role.DEPARTMENT_HEAD) {
       newOwnerInScope = newOwner.departmentId === session.user.departmentId;
     } else if (userRole === Role.MANAGER) {
-      newOwnerInScope = newOwner.managerId === session.user.id;
+      newOwnerInScope = await isManagerOf(session.user.id, newOwnerId);
     }
 
     if (!newOwnerInScope) {

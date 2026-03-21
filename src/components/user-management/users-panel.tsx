@@ -59,7 +59,8 @@ interface User {
   lastLoginAt: string | null;
   mustChangePassword: boolean;
   department: { id: string; name: string } | null;
-  manager: { id: string; firstName: string; lastName: string } | null;
+  managers?: { id: string; firstName: string; lastName: string }[];
+  manager?: { id: string; firstName: string; lastName: string } | null;
   managerName: string | null;
   subordinateCount: number;
 }

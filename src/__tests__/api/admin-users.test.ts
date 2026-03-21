@@ -31,21 +31,31 @@ jest.mock("bcryptjs", () => ({
 }));
 
 // Mock prisma
-jest.mock("@/lib/prisma", () => ({
-  prisma: {
+jest.mock("@/lib/prisma", () => {
+  const prismaMock: any = {
     user: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
       count: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+    },
+    userManager: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      deleteMany: jest.fn(),
+      createMany: jest.fn(),
     },
     department: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
     },
-  },
-}));
+    $transaction: jest.fn((fn: any) => fn(prismaMock)),
+  };
+  return { prisma: prismaMock };
+});
 
 import { GET, POST } from "@/app/api/admin/users/route";
 import { GET as getUserById, PATCH } from "@/app/api/admin/users/[id]/route";
@@ -92,7 +102,6 @@ const mockAdminSession = {
     firstName: "Admin",
     lastName: "User",
     role: "ADMIN",
-    managerId: null,
     departmentId: null,
   },
 };
@@ -104,7 +113,6 @@ const mockManagerSession = {
     firstName: "Manager",
     lastName: "User",
     role: "MANAGER",
-    managerId: null,
     departmentId: "dept-1",
   },
 };
@@ -120,8 +128,10 @@ const mockUser = {
   lastLoginAt: null,
   mustChangePassword: false,
   department: { id: "dept-1", name: "Engineering" },
-  manager: { id: "mgr-1", firstName: "Manager", lastName: "User" },
-  _count: { subordinates: 0 },
+  managerRelations: [
+    { manager: { id: "mgr-1", firstName: "Manager", lastName: "User" } },
+  ],
+  _count: { subordinateRelations: 0 },
 };
 
 describe("Admin User Management API", () => {
@@ -226,6 +236,10 @@ describe("Admin User Management API", () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession as any);
       mockPrismaUserFindUnique.mockResolvedValue(null); // No existing user
       mockPrismaUserCreate.mockResolvedValue(mockUser as any);
+      ((prisma as any).user.findUniqueOrThrow as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        managerRelations: [],
+      });
     });
 
     it("should return 401 when not authenticated", async () => {
@@ -316,13 +330,15 @@ describe("Admin User Management API", () => {
     });
 
     it("should validate manager role", async () => {
-      mockPrismaUserFindUnique
-        .mockResolvedValueOnce(null) // First call: email check
-        .mockResolvedValueOnce({
+      mockPrismaUserFindUnique.mockResolvedValueOnce(null); // email check
+      // validateManagerIds calls prisma.user.findMany to check manager roles
+      mockPrismaUserFindMany.mockResolvedValueOnce([
+        {
           id: "cm7qk0b0a0000abcdmgrid001",
           role: "EMPLOYEE",
           isActive: true,
-        } as any); // Second call: manager check
+        },
+      ] as any);
 
       const response = await POST(
         createMockRequest("/api/admin/users", {
@@ -332,7 +348,7 @@ describe("Admin User Management API", () => {
             firstName: "New",
             lastName: "User",
             role: "EMPLOYEE",
-            managerId: "cm7qk0b0a0000abcdmgrid001",
+            managerIds: ["cm7qk0b0a0000abcdmgrid001"],
             autoGeneratePassword: true,
           },
         })
@@ -379,6 +395,7 @@ describe("Admin User Management API", () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession as any);
       mockPrismaUserFindUnique.mockResolvedValue(mockUser as any);
       mockPrismaUserUpdate.mockResolvedValue(mockUser as any);
+      ((prisma as any).user.findUniqueOrThrow as jest.Mock).mockResolvedValue(mockUser as any);
     });
 
     it("should update user details", async () => {
@@ -439,10 +456,16 @@ describe("Admin User Management API", () => {
     });
 
     it("should prevent user from being own manager", async () => {
+      mockPrismaUserFindUnique.mockResolvedValue({
+        ...mockUser,
+        id: "cm7qk0b0a0000abcduserid01",
+        role: "EMPLOYEE",
+      } as any);
+
       const response = await PATCH(
-        createMockRequest("/api/admin/users/user-1", {
+        createMockRequest("/api/admin/users/cm7qk0b0a0000abcduserid01", {
           method: "PATCH",
-          body: { managerId: "cm7qk0b0a0000abcduserid01" },
+          body: { managerIds: ["cm7qk0b0a0000abcduserid01"] },
         }),
         { params: Promise.resolve({ id: "cm7qk0b0a0000abcduserid01" }) }
       );

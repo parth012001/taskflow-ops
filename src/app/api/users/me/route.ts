@@ -36,8 +36,12 @@ export async function GET() {
         department: {
           select: { id: true, name: true },
         },
-        manager: {
-          select: { id: true, firstName: true, lastName: true },
+        managerRelations: {
+          select: {
+            manager: {
+              select: { id: true, firstName: true, lastName: true },
+            },
+          },
         },
       },
     });
@@ -46,10 +50,15 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const managers = user.managerRelations.map((r) => r.manager);
+    const managerNames = managers.map((m) => `${m.firstName} ${m.lastName}`);
+
     return NextResponse.json({
       ...user,
+      managers,
       departmentName: user.department?.name || null,
-      managerName: user.manager ? `${user.manager.firstName} ${user.manager.lastName}` : null,
+      managerName: managerNames.length > 0 ? managerNames[0] : null,
+      managerNames,
     });
   } catch (error) {
     console.error("GET /api/users/me error:", error);

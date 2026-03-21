@@ -22,6 +22,7 @@ interface UserProfile {
   avatarUrl: string | null;
   departmentName: string | null;
   managerName: string | null;
+  managerNames?: string[];
   createdAt: string;
   lastLoginAt: string | null;
 }
@@ -272,7 +273,12 @@ export default function SettingsPage() {
             <div>
               <Label className="text-gray-500">Reports To</Label>
               <p className="font-medium flex items-center gap-2">
-                {profile?.managerName ? (
+                {profile?.managerNames && profile.managerNames.length > 0 ? (
+                  <>
+                    <Users className="h-4 w-4 text-gray-400" />
+                    {profile.managerNames.join(", ")}
+                  </>
+                ) : profile?.managerName ? (
                   <>
                     <Users className="h-4 w-4 text-gray-400" />
                     {profile.managerName}

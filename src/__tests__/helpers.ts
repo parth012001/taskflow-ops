@@ -7,7 +7,6 @@ export const mockUsers = {
     firstName: "John",
     lastName: "Doe",
     role: Role.EMPLOYEE,
-    managerId: "mgr-1",
     departmentId: "dept-1",
   },
   manager: {
@@ -16,7 +15,6 @@ export const mockUsers = {
     firstName: "Jane",
     lastName: "Smith",
     role: Role.MANAGER,
-    managerId: null,
     departmentId: "dept-1",
   },
   admin: {
@@ -25,7 +23,6 @@ export const mockUsers = {
     firstName: "Admin",
     lastName: "User",
     role: Role.ADMIN,
-    managerId: null,
     departmentId: "dept-1",
   },
 };
@@ -72,7 +69,6 @@ export function createMockSession(user: typeof mockUsers.employee) {
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
-      managerId: user.managerId,
       departmentId: user.departmentId,
     },
     expires: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),

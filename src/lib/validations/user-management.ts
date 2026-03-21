@@ -34,7 +34,7 @@ export const createUserSchema = z
       .trim(),
     role: roleEnum,
     departmentId: z.string().cuid().optional().nullable(),
-    managerId: z.string().cuid().optional().nullable(),
+    managerIds: z.array(z.string().cuid()).max(5).default([]),
     password: passwordSchema.optional(),
     autoGeneratePassword: z.boolean().default(false),
   })
@@ -59,7 +59,7 @@ export const updateUserSchema = z.object({
     .optional(),
   role: roleEnum.optional(),
   departmentId: z.string().cuid().optional().nullable(),
-  managerId: z.string().cuid().optional().nullable(),
+  managerIds: z.array(z.string().cuid()).max(5).optional(),
   isActive: z.boolean().optional(),
 });
 
