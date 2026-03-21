@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     // Get team members with their task stats
     const teamMembers = await prisma.user.findMany({
-      where: { id: { in: subordinateIds } },
+      where: { id: { in: subordinateIds }, isActive: true },
       select: {
         id: true,
         firstName: true,

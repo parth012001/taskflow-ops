@@ -61,7 +61,7 @@ export async function validateManagerIds(
   }
 
   const managers = await prisma.user.findMany({
-    where: { id: { in: deduped } },
+    where: { id: { in: deduped }, deletedAt: null },
     select: { id: true, role: true, isActive: true },
   });
 

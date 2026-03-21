@@ -17,9 +17,9 @@ export async function GET(request: NextRequest) {
 
     // Build base where clause based on role
     let ownerFilter: Prisma.TaskWhereInput = { ownerId: userId };
+    const subordinateIds = userRole !== "EMPLOYEE" ? await getSubordinateIds(userId) : [];
 
     if (userRole === "MANAGER") {
-      const subordinateIds = await getSubordinateIds(userId);
       ownerFilter = { ownerId: { in: [userId, ...subordinateIds] } };
     } else if (userRole === "DEPARTMENT_HEAD" || userRole === "ADMIN") {
       ownerFilter = {}; // All tasks
@@ -92,8 +92,6 @@ export async function GET(request: NextRequest) {
     // Get tasks pending review (for managers)
     let pendingReviewCount = 0;
     if (userRole !== "EMPLOYEE") {
-      const subordinateIds = await getSubordinateIds(userId);
-
       pendingReviewCount = await prisma.task.count({
         where: {
           ownerId: { in: subordinateIds },

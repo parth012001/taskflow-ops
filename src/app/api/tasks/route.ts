@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
             );
           }
         }
-        // reviewerId is optional for managers - if not set, fallback to managerId at review time
+        // reviewerId is optional for managers - if not set, all managers are notified at review time
       } else if (userRole === Role.EMPLOYEE) {
         // Employee with review ON: reviewer set to null, all managers notified at review time
         reviewerId = null;

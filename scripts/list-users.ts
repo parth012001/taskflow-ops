@@ -52,12 +52,14 @@ async function main() {
   // Build tree using subordinateRelations
   const roots = users.filter((u) => u.managerRelations.length === 0);
 
-  function printTree(user: (typeof users)[0], indent = 0) {
+  function printTree(user: (typeof users)[0], indent = 0, visited = new Set<string>()) {
     const prefix = "  ".repeat(indent) + (indent > 0 ? "└── " : "");
     console.log(`${prefix}${user.firstName} ${user.lastName} (${user.role})`);
+    if (visited.has(user.id)) return;
+    visited.add(user.id);
     const subIds = user.subordinateRelations.map((r) => r.userId);
     const subs = users.filter((u) => subIds.includes(u.id));
-    subs.forEach((sub) => printTree(sub, indent + 1));
+    subs.forEach((sub) => printTree(sub, indent + 1, visited));
   }
 
   roots.forEach((r) => printTree(r));

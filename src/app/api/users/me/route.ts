@@ -53,8 +53,10 @@ export async function GET() {
     const managers = user.managerRelations.map((r) => r.manager);
     const managerNames = managers.map((m) => `${m.firstName} ${m.lastName}`);
 
+    const { managerRelations: _, ...userWithoutRelations } = user;
+
     return NextResponse.json({
-      ...user,
+      ...userWithoutRelations,
       managers,
       departmentName: user.department?.name || null,
       managerName: managerNames.length > 0 ? managerNames[0] : null,

@@ -402,12 +402,15 @@ export function UserFormModal({ open, onOpenChange, user, onSuccess }: UserFormM
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {managerIds.map((mId) => {
                     const mgr = filteredManagers.find((m) => m.id === mId);
-                    if (!mgr) return null;
+                    const displayName = mgr
+                      ? `${mgr.firstName} ${mgr.lastName}`
+                      : "Unknown manager";
                     return (
                       <Badge key={mId} variant="secondary" className="gap-1 pr-1">
-                        {mgr.firstName} {mgr.lastName}
+                        {displayName}
                         <button
                           type="button"
+                          aria-label={`Remove ${displayName}`}
                           className="ml-1 rounded-full hover:bg-gray-300 p-0.5"
                           onClick={() =>
                             setManagerIds((prev) => prev.filter((id) => id !== mId))
