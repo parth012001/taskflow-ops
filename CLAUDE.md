@@ -24,6 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run db:migrate` — Create and apply migration
 - `npm run db:push` — Push schema changes without migration files
 - `npm run db:seed` — Run base seed
+- `npm run db:seed:demo` — Seed demo data
 - `npm run db:seed:productivity` — Seed productivity test data
 - `npm run db:studio` — Open Prisma Studio
 - `npm run db:reset` — Full database reset (destructive)
@@ -84,7 +85,7 @@ Department-level weights are configured via `ScoringConfig`. Scores are persiste
 ## Key Conventions
 
 - Import alias: `@/*` maps to `src/*`
-- Prisma schema: `prisma/schema.prisma` (20 models)
+- Prisma schema: `prisma/schema.prisma` (21 models)
 - Prisma singleton: `import { prisma } from "@/lib/prisma"`
 - Transactions use `prisma.$transaction` with callback pattern (`async (tx) => { ... }`)
 - API routes validate with Zod, return `NextResponse.json()`
